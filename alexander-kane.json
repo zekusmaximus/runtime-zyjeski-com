@@ -1,0 +1,342 @@
+{
+  "id": "alexander-kane",
+  "name": "Alexander Kane",
+  "status": "critical",
+  "description": "Temporal physicist experiencing severe consciousness fragmentation following the loss of his son Leo in a time experiment. Multiple critical processes are malfunctioning, creating recursive grief loops and memory leaks.",
+  "consciousness": {
+    "processes": [
+      {
+        "pid": 1001,
+        "name": "Grief_Manager.exe",
+        "status": "error",
+        "cpu_usage": 89.7,
+        "memory_mb": 847.2,
+        "priority": -5,
+        "start_time": "2024-03-15T14:30:00Z",
+        "last_activity": "2024-06-21T12:45:33Z",
+        "description": "Primary grief processing system - experiencing severe memory leak",
+        "error_message": "MEMORY_LEAK: Emotional attachment to Leo consuming increasing resources"
+      },
+      {
+        "pid": 1002,
+        "name": "Temporal_Sync.dll",
+        "status": "error",
+        "cpu_usage": 23.4,
+        "memory_mb": 156.8,
+        "priority": 0,
+        "start_time": "2024-03-15T14:30:00Z",
+        "last_activity": "2024-06-21T12:45:31Z",
+        "description": "Temporal perception synchronization module",
+        "error_message": "DESYNC_ERROR: Unable to maintain consistent temporal reference frame"
+      },
+      {
+        "pid": 1003,
+        "name": "Search_Protocol.exe",
+        "status": "error",
+        "cpu_usage": 67.2,
+        "memory_mb": 234.5,
+        "priority": -3,
+        "start_time": "2024-03-15T14:35:00Z",
+        "last_activity": "2024-06-21T12:45:33Z",
+        "description": "Continuous search algorithm for Leo across timelines",
+        "error_message": "INFINITE_LOOP: Search parameters never satisfied, consuming excessive CPU"
+      },
+      {
+        "pid": 1004,
+        "name": "Relationship_Handler.exe",
+        "status": "sleeping",
+        "cpu_usage": 2.1,
+        "memory_mb": 45.3,
+        "priority": 5,
+        "start_time": "2024-03-15T14:30:00Z",
+        "last_activity": "2024-06-20T08:22:15Z",
+        "description": "Manages relationships with Emily, Evelyn, and Marcus",
+        "error_message": "THREAD_STARVATION: Insufficient attention allocation"
+      },
+      {
+        "pid": 1005,
+        "name": "Physics_Engine.dll",
+        "status": "running",
+        "cpu_usage": 15.8,
+        "memory_mb": 89.7,
+        "priority": 2,
+        "start_time": "2024-03-15T14:30:00Z",
+        "last_activity": "2024-06-21T12:45:30Z",
+        "description": "Theoretical physics processing and calculations"
+      },
+      {
+        "pid": 1006,
+        "name": "Reality_Parser.exe",
+        "status": "error",
+        "cpu_usage": 34.6,
+        "memory_mb": 178.9,
+        "priority": 1,
+        "start_time": "2024-03-15T14:30:00Z",
+        "last_activity": "2024-06-21T12:45:32Z",
+        "description": "Processes and interprets sensory input from current reality",
+        "error_message": "IO_PROCESSING_ERROR: Difficulty distinguishing between timelines"
+      },
+      {
+        "pid": 1007,
+        "name": "Memory_Defrag.sys",
+        "status": "running",
+        "cpu_usage": 8.3,
+        "memory_mb": 67.4,
+        "priority": 10,
+        "start_time": "2024-06-21T12:00:00Z",
+        "last_activity": "2024-06-21T12:45:29Z",
+        "description": "Attempts to defragment corrupted memories"
+      }
+    ],
+    "memory": {
+      "0x7FF8A1B2C000": {
+        "type": "relationship",
+        "size": 2048576,
+        "description": "Leo Kane - Son, age 8, lost in temporal experiment",
+        "access_count": 15847,
+        "last_accessed": "2024-06-21T12:45:33Z",
+        "fragmented": true,
+        "protected": true
+      },
+      "0x7FF8A1B2D000": {
+        "type": "relationship",
+        "size": 1048576,
+        "description": "Emily Kane - Wife, relationship strained by grief",
+        "access_count": 3421,
+        "last_accessed": "2024-06-20T08:22:15Z",
+        "fragmented": false,
+        "protected": false
+      },
+      "0x7FF8A1B2E000": {
+        "type": "trauma",
+        "size": 3145728,
+        "description": "Temporal experiment failure - March 15, 2024",
+        "access_count": 8934,
+        "last_accessed": "2024-06-21T12:45:32Z",
+        "fragmented": true,
+        "protected": true
+      },
+      "0x7FF8A1B2F000": {
+        "type": "relationship",
+        "size": 524288,
+        "description": "Dr. Evelyn Cross - Research partner, guilt over experiment",
+        "access_count": 1256,
+        "last_accessed": "2024-06-19T16:30:22Z",
+        "fragmented": false,
+        "protected": false
+      },
+      "0x7FF8A1B30000": {
+        "type": "relationship",
+        "size": 786432,
+        "description": "Marcus Webb - Lab assistant, witness to accident",
+        "access_count": 892,
+        "last_accessed": "2024-06-18T14:15:08Z",
+        "fragmented": false,
+        "protected": false
+      },
+      "0x7FF8A1B31000": {
+        "type": "knowledge",
+        "size": 4194304,
+        "description": "Temporal physics theories and equations",
+        "access_count": 5678,
+        "last_accessed": "2024-06-21T12:45:30Z",
+        "fragmented": false,
+        "protected": false
+      },
+      "0x7FF8A1B32000": {
+        "type": "emotion",
+        "size": 1572864,
+        "description": "Guilt over Leo's disappearance",
+        "access_count": 12456,
+        "last_accessed": "2024-06-21T12:45:33Z",
+        "fragmented": true,
+        "protected": true
+      },
+      "0x7FF8A1B33000": {
+        "type": "emotion",
+        "size": 1048576,
+        "description": "Hope for Leo's return",
+        "access_count": 7823,
+        "last_accessed": "2024-06-21T12:45:31Z",
+        "fragmented": false,
+        "protected": false
+      }
+    },
+    "threads": [
+      {
+        "tid": 2001,
+        "name": "Continuous_Leo_Search",
+        "status": "running",
+        "priority": 1,
+        "cpu_time": 847.3,
+        "related_process": 1003
+      },
+      {
+        "tid": 2002,
+        "name": "Guilt_Processing",
+        "status": "running",
+        "priority": 2,
+        "cpu_time": 623.7,
+        "related_process": 1001
+      },
+      {
+        "tid": 2003,
+        "name": "Emily_Relationship_Monitor",
+        "status": "waiting",
+        "priority": 6,
+        "cpu_time": 45.2,
+        "wait_reason": "Insufficient emotional energy allocation",
+        "related_process": 1004
+      },
+      {
+        "tid": 2004,
+        "name": "Timeline_Analysis",
+        "status": "blocked",
+        "priority": 3,
+        "cpu_time": 234.8,
+        "wait_reason": "Temporal_Sync.dll malfunction",
+        "related_process": 1002
+      },
+      {
+        "tid": 2005,
+        "name": "Memory_Reconstruction",
+        "status": "running",
+        "priority": 8,
+        "cpu_time": 156.4,
+        "related_process": 1007
+      }
+    ],
+    "system_errors": [
+      {
+        "type": "MEMORY_LEAK_DETECTED",
+        "message": "Grief_Manager.exe consuming excessive memory - 847MB and growing",
+        "timestamp": "2024-06-21T12:45:33Z",
+        "severity": "critical",
+        "related_process": 1001,
+        "stack_trace": [
+          "grief_manager.cpp:line 234 - emotional_attachment_loop()",
+          "memory_allocator.cpp:line 89 - allocate_emotional_memory()",
+          "consciousness_core.cpp:line 456 - process_grief_event()"
+        ],
+        "recovery_suggestion": "Implement grief processing limits or restart Grief_Manager.exe"
+      },
+      {
+        "type": "INFINITE_LOOP_WARNING",
+        "message": "Search_Protocol.exe stuck in infinite search loop for Leo",
+        "timestamp": "2024-06-21T12:45:32Z",
+        "severity": "error",
+        "related_process": 1003,
+        "stack_trace": [
+          "search_protocol.cpp:line 167 - search_all_timelines()",
+          "temporal_interface.cpp:line 203 - scan_timeline_branch()",
+          "quantum_observer.cpp:line 78 - collapse_probability_wave()"
+        ],
+        "recovery_suggestion": "Set search timeout parameters or modify search criteria"
+      },
+      {
+        "type": "THREAD_STARVATION",
+        "message": "Relationship processing threads starved of CPU time",
+        "timestamp": "2024-06-21T12:45:31Z",
+        "severity": "warning",
+        "related_process": 1004,
+        "recovery_suggestion": "Increase priority of Relationship_Handler.exe or allocate more attention resources"
+      },
+      {
+        "type": "IO_PROCESSING_ERROR",
+        "message": "Reality_Parser.exe unable to distinguish between timeline memories",
+        "timestamp": "2024-06-21T12:45:30Z",
+        "severity": "error",
+        "related_process": 1006,
+        "recovery_suggestion": "Recalibrate temporal reference frame or restart Reality_Parser.exe"
+      },
+      {
+        "type": "SEGMENTATION_FAULT",
+        "message": "Attempted to access protected memory region containing Leo's data",
+        "timestamp": "2024-06-21T12:44:15Z",
+        "severity": "warning",
+        "stack_trace": [
+          "memory_manager.cpp:line 445 - access_protected_memory()",
+          "grief_manager.cpp:line 189 - retrieve_leo_memories()"
+        ],
+        "recovery_suggestion": "Implement proper memory access protocols for protected emotional data"
+      }
+    ],
+    "resources": {
+      "attention": {
+        "current": 23.4,
+        "max": 100.0,
+        "allocation": {
+          "Leo_Search": 67.2,
+          "Grief_Processing": 22.5,
+          "Reality_Parsing": 8.1,
+          "Relationships": 2.2
+        }
+      },
+      "emotional_energy": {
+        "current": 15.7,
+        "max": 100.0,
+        "regeneration_rate": 2.3
+      },
+      "processing_capacity": {
+        "current": 94.8,
+        "max": 100.0,
+        "efficiency": 34.2
+      }
+    },
+    "debug_hooks": [
+      {
+        "id": "grief_memory_leak",
+        "name": "Grief Manager Memory Leak",
+        "type": "breakpoint",
+        "target": "Grief_Manager.exe",
+        "condition": "memory_usage > 800MB",
+        "enabled": true,
+        "description": "Triggers when grief processing consumes excessive memory"
+      },
+      {
+        "id": "search_loop_timeout",
+        "name": "Search Protocol Timeout",
+        "type": "watchpoint",
+        "target": "Search_Protocol.exe",
+        "condition": "cpu_usage > 60% for 30 seconds",
+        "enabled": true,
+        "description": "Monitors for infinite search loops"
+      },
+      {
+        "id": "leo_memory_access",
+        "name": "Leo Memory Protection",
+        "type": "memory_edit",
+        "target": "0x7FF8A1B2C000",
+        "condition": "unauthorized_access_attempt",
+        "enabled": true,
+        "description": "Protects Leo's memory from corruption"
+      },
+      {
+        "id": "attention_rebalance",
+        "name": "Attention Resource Rebalancing",
+        "type": "resource_adjustment",
+        "target": "attention",
+        "condition": "relationship_allocation < 10%",
+        "enabled": false,
+        "description": "Automatically rebalances attention to maintain relationships"
+      },
+      {
+        "id": "temporal_sync_restart",
+        "name": "Temporal Sync Recovery",
+        "type": "process_control",
+        "target": "Temporal_Sync.dll",
+        "condition": "desync_error_count > 5",
+        "enabled": true,
+        "description": "Restarts temporal synchronization when errors accumulate"
+      }
+    ]
+  },
+  "metadata": {
+    "created": "2024-03-15T14:30:00Z",
+    "last_updated": "2024-06-21T12:45:33Z",
+    "version": "1.0",
+    "story_context": "Fractured Time",
+    "debug_difficulty": "advanced"
+  }
+}
+

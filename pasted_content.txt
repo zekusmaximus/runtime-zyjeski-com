@@ -1,0 +1,227 @@
+# Runtime.zyjeski.com - Complete Project Repository Creation
+
+Create a complete, production-ready project repository for runtime.zyjeski.com, an interactive fiction platform where readers debug consciousness as executable code. This should be a full Node.js application ready for GitHub upload and local VSCode development.
+
+## Project Overview
+
+**Concept**: Interactive fiction platform where characters exist as running processes with observable mental states (memory allocation, CPU usage, thread management, system errors). Players debug consciousness malfunctions rather than passively reading stories.
+
+**Core Metaphor**: Consciousness as Code
+- Memory leaks = emotional attachments
+- Infinite loops = anxiety/obsessive thoughts  
+- Thread starvation = neglected relationships
+- CPU spikes = overwhelming emotions
+- I/O errors = reality processing issues
+
+## Technical Requirements
+
+### Backend Stack
+- **Node.js** with Express server
+- **Socket.io** for real-time consciousness state updates
+- **JSON data files** for character/story specifications
+- **REST API** for character consciousness data
+- **WebSocket handlers** for live debugging sessions
+
+### Frontend Stack  
+- **Vanilla JavaScript** (no frameworks)
+- **Canvas API** for process visualization
+- **Modern CSS** with VS Code-inspired dark theme
+- **Responsive design** for desktop and tablet
+- **WebWorker preparation** for background process simulation
+
+### Development Phases Architecture
+Create placeholder sections for all 4 development phases:
+
+1. **Terminal Interface** - Text-based debugging console
+2. **Process Monitor** - Visual consciousness dashboard  
+3. **Interactive Debugging** - Player intervention capabilities
+4. **Story Integration** - Convert fiction to debuggable processes
+
+## Required File Structure
+
+```
+runtime-zyjeski/
+├── package.json
+├── package-lock.json
+├── .gitignore
+├── README.md
+├── server.js
+├── public/
+│   ├── index.html
+│   ├── css/
+│   │   ├── main.css
+│   │   ├── terminal.css
+│   │   ├── monitor.css
+│   │   └── debug.css
+│   ├── js/
+│   │   ├── app.js
+│   │   ├── terminal.js
+│   │   ├── consciousness.js
+│   │   ├── monitor.js
+│   │   ├── debugger.js
+│   │   ├── socket-client.js
+│   │   └── state-manager.js
+│   ├── workers/
+│   │   └── process-simulator.js
+│   └── assets/
+│       ├── sounds/
+│       └── icons/
+├── data/
+│   ├── characters/
+│   │   ├── alexander-kane.json
+│   │   └── schema.json
+│   └── stories/
+│       └── fractured-time.json
+├── routes/
+│   ├── api.js
+│   └── consciousness.js
+├── lib/
+│   ├── consciousness-engine.js
+│   ├── process-simulator.js
+│   └── websocket-handlers.js
+└── docs/
+    ├── API.md
+    ├── CONSCIOUSNESS-SCHEMA.md
+    └── DEVELOPMENT.md
+```
+
+## Specific Implementation Requirements
+
+### 1. Character Consciousness Schema (data/characters/schema.json)
+Create a comprehensive JSON schema for character consciousness including:
+- **Processes**: Running mental processes with PID, name, CPU usage, memory allocation
+- **Memory**: Emotional attachments, traumas, relationships with memory addresses
+- **Threads**: Parallel thoughts, background processing, thread priorities
+- **System Errors**: Anxiety loops, recursive grief, memory leaks, I/O failures
+- **Resources**: Attention allocation, emotional energy, processing capacity
+- **Debug Hooks**: Player intervention points, optimization targets
+
+### 2. Alexander Kane Character (data/characters/alexander-kane.json)
+Based on "Fractured Time" story, create full consciousness profile:
+- `Grief_Manager.exe` - Memory leak consuming 847MB
+- `Temporal_Sync.dll` - Desynchronization errors
+- `Relationship_Handler.exe` - Thread starvation  
+- `Search_Protocol.exe` - Infinite loop seeking Leo
+- Include memory addresses for key relationships (Emily, Leo, Evelyn, Marcus)
+- System errors correlating to story emotional states
+
+### 3. Frontend Interface Architecture
+
+**Landing Page (index.html)**:
+- Hero section explaining consciousness debugging concept
+- Navigation to different interface phases
+- Live demo preview area
+- Modern dark theme with VS Code-inspired styling
+
+**Terminal Interface (Phase 1)**:
+- Full-screen terminal emulator
+- Command history and autocomplete
+- Real-time process output streaming
+- Commands: `ps`, `top`, `kill`, `debug`, `monitor`, `attach`
+
+**Process Monitor (Phase 2)**:  
+- Dashboard with consciousness metrics
+- Memory usage graphs
+- Thread visualization  
+- CPU load indicators
+- Error log streaming
+
+**Interactive Debugger (Phase 3)**:
+- Breakpoint setting on emotional processes
+- Variable inspection for memories/thoughts
+- Step-through debugging of consciousness flows
+- Process intervention controls
+
+### 4. Real-time Backend Features
+
+**WebSocket Events**:
+- `consciousness-update` - Live process state changes
+- `error-detected` - System errors in character consciousness  
+- `player-intervention` - Debugging actions from player
+- `process-spawn` - New mental processes starting
+- `memory-allocation` - Emotional memory changes
+
+**API Endpoints**:
+- `GET /api/characters` - List available consciousness profiles
+- `GET /api/character/:id` - Full consciousness state
+- `POST /api/debug/:characterId` - Start debugging session
+- `PUT /api/process/:pid/kill` - Terminate mental process
+- `GET /api/monitor/:characterId` - Real-time monitoring data
+
+### 5. Styling Requirements
+
+**Theme**: Modern VS Code dark theme with:
+- Background: `#1e1e1e` (VS Code dark)
+- Text: `#d4d4d4` (VS Code foreground)  
+- Accent: `#007acc` (VS Code blue)
+- Success: `#4ec9b0` (VS Code teal)
+- Warning: `#ffcc02` (VS Code yellow)
+- Error: `#f44747` (VS Code red)
+- Syntax highlighting colors for code-like elements
+
+**Typography**: 
+- Primary: `'Fira Code', 'Cascadia Code', 'SF Mono', monospace`
+- UI elements: `'Segoe UI', system-ui, sans-serif`
+
+### 6. State Management & Architecture
+
+**Global State Manager**:
+- Current character consciousness state
+- Active debugging session data
+- Player intervention history
+- Real-time process updates
+- WebSocket connection status
+
+**Modular Character System**:
+- Easy swapping between character consciousness profiles
+- Dynamic loading of character-specific debugging scenarios
+- Plugin architecture for new character types
+
+### 7. Accessibility & Performance
+
+**Accessibility**:
+- ARIA labels for all interactive elements
+- Keyboard navigation for terminal interface
+- Screen reader friendly process descriptions
+- High contrast mode option
+
+**Performance**:
+- WebWorker setup for background process simulation
+- Efficient Canvas rendering for visualizations
+- Debounced real-time updates
+- Lazy loading of character data
+
+### 8. Documentation & Development
+
+**README.md** should include:
+- Project overview and concept explanation
+- Installation and setup instructions
+- Development phases roadmap
+- Character consciousness schema documentation
+- API endpoint documentation
+- Contributing guidelines
+
+**Development Setup**:
+- NPM scripts for development, build, and deployment
+- Environment variable configuration
+- Database setup instructions (if needed)
+- Docker configuration (optional)
+
+## Package.json Dependencies
+
+Include all necessary dependencies:
+- express, socket.io, cors, helmet
+- Development: nodemon, concurrently
+- Optional: jest for testing, eslint for code quality
+
+## Deliverable
+
+Create a complete, functional project repository that:
+1. Runs immediately with `npm install && npm start`
+2. Demonstrates core consciousness debugging concept
+3. Has placeholder areas ready for all development phases
+4. Includes working Alexander Kane character consciousness
+5. Provides foundation for collaborative development
+6. Ready for GitHub upload and VSCode development
+
+The output should be a working demonstration of consciousness-as-code debugging that can be immediately extended and refined.
