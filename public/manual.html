@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consciousness Debugging Manual</title>
+    <style>
+        :root {
+            --bg-cream: #f5f5dc;
+            --bg-white: #ffffff;
+            --text-black: #2c2c2c;
+            --text-blue: #0066cc;
+            --text-green: #006600;
+            --border-black: #333333;
+            --shadow: rgba(0, 0, 0, 0.2);
+            --paper-yellow: #fffacd;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', 'Monaco', monospace;
+            background: var(--bg-cream);
+            color: var(--text-black);
+            line-height: 1.4;
+            font-size: 14px;
+        }
+
+        /* Manual Container */
+        .manual-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            background: var(--bg-white);
+            border: 2px solid var(--border-black);
+            box-shadow: 5px 5px 15px var(--shadow);
+            position: relative;
+        }
+
+        /* Manual Cover */
+        .manual-cover {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            border-bottom: 3px solid var(--border-black);
+            position: relative;
+        }
+
+        .manual-cover::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+        }
+
+        .manual-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .manual-subtitle {
+            font-size: 18px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .manual-version {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1;
+        }
+
+        .manual-publisher {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 12px;
+            opacity: 0.8;
+            z-index: 1;
+        }
+
+        /* Navigation */
+        .manual-nav {
+            background: var(--paper-yellow);
+            border-bottom: 2px solid var(--border-black);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background: var(--bg-white);
+            border: 2px solid var(--border-black);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: var(--text-black);
+            color: var(--bg-white);
+        }
+
+        .nav-btn.active {
+            background: var(--text-blue);
+            color: var(--bg-white);
+        }
+
+        .page-indicator {
+            font-size: 12px;
+            color: var(--text-black);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Table of Contents */
+        .toc-page {
+            padding: 40px;
+            background: var(--bg-white);
+        }
+
+        .toc-header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px double var(--border-black);
+            padding-bottom: 20px;
+        }
+
+        .toc-title {
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .toc-subtitle {
+            font-size: 14px;
+            color: var(--text-blue);
+            font-style: italic;
+        }
+
+        .toc-list {
+            list-style: none;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .toc-chapter {
+            margin-bottom: 8px;
+            border-bottom: 1px dotted #ccc;
+            padding-bottom: 4px;
+        }
+
+        .toc-link {
+            display: flex;
+            justify-content: space-between;
+            text-decoration: none;
+            color: var(--text-black);
+            padding: 8px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toc-link:hover {
+            background: var(--paper-yellow);
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        .chapter-title {
+            font-weight: bold;
+        }
+
+        .chapter-number {
+            color: var(--text-blue);
+            font-weight: bold;
+            min-width: 60px;
+        }
+
+        .page-number {
+            color: var(--text-blue);
+            font-weight: bold;
+            min-width: 30px;
+            text-align: right;
+        }
+
+        /* Chapter Pages */
+        .chapter-page {
+            padding: 40px;
+            background: var(--bg-white);
+            display: none;
+            min-height: 600px;
+        }
+
+        .chapter-page.active {
+            display: block;
+        }
+
+        .chapter-header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px double var(--border-black);
+            padding-bottom: 20px;
+        }
+
+        .chapter-number-large {
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--text-blue);
+            margin-bottom: 10px;
+        }
+
+        .chapter-title-large {
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .chapter-content {
+            max-width: 800px;
+            margin: 0 auto;
+            columns: 2;
+            column-gap: 40px;
+            column-rule: 1px solid #ddd;
+            text-align: justify;
+        }
+
+        .chapter-content h3 {
+            color: var(--text-blue);
+            font-size: 16px;
+            margin: 20px 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            break-after: avoid;
+        }
+
+        .chapter-content h4 {
+            color: var(--text-green);
+            font-size: 14px;
+            margin: 15px 0 8px 0;
+            font-weight: bold;
+            break-after: avoid;
+        }
+
+        .chapter-content p {
+            margin-bottom: 12px;
+            text-indent: 20px;
+        }
+
+        .chapter-content code {
+            background: var(--paper-yellow);
+            padding: 2px 4px;
+            border: 1px solid #ddd;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            break-inside: avoid;
+        }
+
+        .code-block {
+            background: var(--paper-yellow);
+            border: 2px solid var(--border-black);
+            padding: 15px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            column-span: all;
+            break-inside: avoid;
+        }
+
+        .code-block-header {
+            background: var(--border-black);
+            color: white;
+            padding: 4px 8px;
+            margin: -15px -15px 10px -15px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .note-box {
+            background: #e6f3ff;
+            border: 2px solid var(--text-blue);
+            padding: 15px;
+            margin: 20px 0;
+            column-span: all;
+            break-inside: avoid;
+        }
+
+        .note-box-header {
+            font-weight: bold;
+            color: var(--text-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .warning-box {
+            background: #fff5e6;
+            border: 2px solid #ff9900;
+            padding: 15px;
+            margin: 20px 0;
+            column-span: all;
+            break-inside: avoid;
+        }
+
+        .warning-box-header {
+            font-weight: bold;
+            color: #ff9900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        /* Close button */
+        .manual-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 10;
+            transition: all 0.2s;
+        }
+
+        .manual-close:hover {
+            background: white;
+            color: var(--text-black);
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .manual-container {
+                margin: 10px;
+            }
+            
+            .chapter-content {
+                columns: 1;
+                column-gap: 0;
+            }
+            
+            .manual-cover {
+                padding: 20px;
+            }
+            
+            .manual-title {
+                font-size: 20px;
+            }
+            
+            .toc-page, .chapter-page {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="manual-container">
+        <!-- Manual Cover -->
+        <div class="manual-cover">
+            <button class="manual-close" onclick="window.parent.closeManual()">&times;</button>
+            <div class="manual-version">v2.1</div>
+            <div class="manual-title">Consciousness Debugging Manual</div>
+            <div class="manual-subtitle">A Complete Guide to Mental Process Debugging</div>
+            <div class="manual-publisher">Runtime Systems • Temporal Division</div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="manual-nav">
+            <div class="nav-buttons">
+                <button class="nav-btn active" id="toc-btn">Contents</button>
+                <button class="nav-btn" id="prev-btn">← Prev</button>
+                <button class="nav-btn" id="next-btn">Next →</button>
+            </div>
+            <div class="page-indicator">Page <span id="currentPage">1</span> of <span id="totalPages">9</span></div>
+        </div>
+
+        <!-- Table of Contents -->
+        <div id="toc" class="toc-page">
+            <div class="toc-header">
+                <div class="toc-title">Table of Contents</div>
+                <div class="toc-subtitle">Consciousness Debugging Manual v2.1</div>
+            </div>
+            <ul class="toc-list">
+                <li class="toc-chapter">
+                    <a class="toc-link" data-chapter="1">
+                        <span><span class="chapter-number">Chapter 1</span><span class="chapter-title"> Understanding the Mind as Machine</span></span>
+                        <span class="page-number">3</span>
+                    </a>
+                </li>
+                <li class="toc-chapter">
+                    <a class="toc-link" data-chapter="2">
+                        <span><span class="chapter-number">Chapter 2</span><span class="chapter-title"> Reading System Diagnostics</span></span>
+                        <span class="page-number">15</span>
+                    </a>
+                </li>
+                <li class="toc-chapter">
+                    <a class="toc-link" data-chapter="3">
+                        <span><span class="chapter-number">Chapter 3</span><span class="chapter-title"> Console Commands and Debugging Tools</span></span>
+                        <span class="page-number">27</span>
+                    </a>
+                </li>
+                <li class="toc-chapter">
+                    <a class="toc-link" data-chapter="4">
+                        <span><span class="chapter-number">Chapter 4</span><span class="chapter-title"> Diagnosing Common Problems</span></span>
+                        <span class="page-number">42</span>
+                    </a>
+                </li>
+                <li class="toc-chapter">
+                    <a class="toc-link" data-chapter="5">
+                        <span><span class="chapter-number">Chapter 5</span><span class="chapter-title"> Intervention Strategies</span></span>
+                        <span class="page-number">58</span>
+                    </a>
+                </li>
+                <li class="toc-chapter">
+                    <a class="toc-link" data-chapter="6">
+                        <span><span class="chapter-number">Chapter 6</span><span class="chapter-title"> Practical Debugging Session</span></span>
+                        <span class="page-number">73</span>
+                    </a>
+                </li>
+                <li class="toc-chapter">
+                    <a class="toc-link" data-chapter="7">
+                        <span><span class="chapter-number">Chapter 7</span><span class="chapter-title"> Advanced Debugging Techniques</span></span>
+                        <span class="page-number">89</span>
+                    </a>
+                </li>
+                <li class="toc-chapter">
+                    <a class="toc-link" data-chapter="8">
+                        <span><span class="chapter-number">Chapter 8</span><span class="chapter-title"> Understanding Character Progression</span></span>
+                        <span class="page-number">105</span>
+                    </a>
+                </li>
+                <li class="toc-chapter">
+                    <a class="toc-link" data-chapter="9">
+                        <span><span class="chapter-number">Appendix</span><span class="chapter-title"> Quick Reference Card</span></span>
+                        <span class="page-number">118</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Chapter 2: Reading System Diagnostics -->
+        <div id="chapter2" class="chapter-page">
+            <div class="chapter-header">
+                <div class="chapter-number-large">2</div>
+                <div class="chapter-title-large">Reading System Diagnostics</div>
+            </div>
+            <div class="chapter-content">
+                <h3>Process List Analysis</h3>
+                <p>The <code>ps</code> command reveals all running mental processes. Learning to interpret this output is fundamental to consciousness debugging.</p>
+
+                <div class="code-block">
+                    <div class="code-block-header">Terminal Output Example</div>
+PID    PROCESS_NAME           %CPU   %MEM   STATUS      DESCRIPTION<br>
+1247   Grief_Manager.exe       23%    847MB  LEAK        Processing Leo's death<br>
+3891   Search_Protocol.exe     45%    234MB  INFINITE    Looking for Leo<br>
+2156   Temporal_Sync.dll        8%    156MB  ERROR       Reality sync failing<br>
+4433   Relationship_Handler     2%    45MB   STARVED     Managing family
+                </div>
+
+                <h4>Key Diagnostic Indicators</h4>
+                <p><strong>High CPU (>20%):</strong> Process consuming excessive mental energy, indicating obsessive or overwhelming thoughts.</p>
+                <p><strong>High Memory (>500MB):</strong> Emotional attachment growing uncontrollably, typically seen in unprocessed trauma or grief.</p>
+                <p><strong>Status LEAK:</strong> Process retaining memory it should release, preventing healthy emotional processing.</p>
+                <p><strong>Status INFINITE:</strong> Process stuck in endless loop, common in anxiety and rumination patterns.</p>
+                <p><strong>Status STARVED:</strong> Process not receiving adequate resources, leading to relationship and self-care neglect.</p>
+                <p><strong>Status ERROR:</strong> Process malfunctioning, often due to conflicting inputs or corrupted data.</p>
+
+                <h3>Resource Monitor Reading</h3>
+                <p>The <code>top</code> command provides real-time resource utilization metrics essential for understanding system health.</p>
+
+                <div class="code-block">
+                    <div class="code-block-header">Resource Monitor Output</div>
+MENTAL RESOURCES - Alexander Kane<br>
+Attention Capacity: ████████░░ 80% (Normal: 95%+)<br>
+Emotional Energy:   ███░░░░░░░ 30% (Critical: &lt;40%)<br>
+Memory Available:   ██░░░░░░░░ 20% (Alert: &lt;30%)<br><br>
+TOP PROCESSES BY RESOURCE USAGE:<br>
+Search_Protocol.exe    45% CPU<br>
+Grief_Manager.exe      23% CPU<br>
+Reality_Parser.dll     12% CPU
+                </div>
+
+                <h4>Critical Thresholds</h4>
+                <p>Attention capacity below 90% indicates cognitive overload. Emotional energy below 40% signals emotional exhaustion requiring immediate intervention. Available memory below 30% suggests system instability and potential crashes.</p>
+
+                <p>Alexander's diagnostics show a consciousness in crisis: his grief processes are consuming most available resources, leaving minimal capacity for normal life functions like work, relationships, and basic self-care.</p>
+
+                <div class="note-box">
+                    <div class="note-box-header">Diagnostic Tip</div>
+                    Always examine resource trends over time, not just current snapshots. A process consuming 15% CPU consistently may be more problematic than one spiking to 30% briefly.
+                </div>
+
+                <h3>Error Log Analysis</h3>
+                <p>The <code>errors</code> command reveals system malfunctions and their frequencies. Error patterns often indicate the root causes of consciousness instability.</p>
+
+                <p>Common error types include reality parsing failures, memory allocation errors, and thread synchronization problems. Each error type requires specific diagnostic approaches and intervention strategies.</p>
+            </div>
+        </div>
+
+        <!-- Chapter 3: Console Commands and Debugging Tools -->
+        <div id="chapter3" class="chapter-page">
+            <div class="chapter-header">
+                <div class="chapter-number-large">3</div>
+                <div class="chapter-title-large">Console Commands and Debugging Tools</div>
+            </div>
+            <div class="chapter-content">
+                <h3>Essential Terminal Commands</h3>
+                <p>Mastery of console commands is fundamental to effective consciousness debugging. Each command provides specific diagnostic or intervention capabilities.</p>
+
+                <h4>Basic System Information</h4>
+                <div class="code-block">
+                    <div class="code-block-header">Information Commands</div>
+ps                  # List all running mental processes<br>
+top                 # Show resource usage and top consumers<br>
+monitor             # Display system health overview<br>
+info &lt;process&gt;       # Get detailed process information<br>
+mem                 # Check memory allocation<br>
+errors              # View error log
+                </div>
+
+                <h4>Process Management</h4>
+                <div class="code-block">
+                    <div class="code-block-header">Process Control Commands</div>
+attach &lt;character&gt;      # Connect to consciousness<br>
+kill &lt;process_id&gt;      # Terminate problematic process<br>
+restart &lt;process&gt;      # Restart crashed process<br>
+priority &lt;process&gt; &lt;level&gt;  # Set process priority (0-10)<br>
+limit &lt;process&gt; memory &lt;MB&gt;  # Limit memory usage<br>
+throttle &lt;process&gt; &lt;%&gt;    # Limit CPU usage
+                </div>
+
+                <h4>Advanced Debugging</h4>
+                <div class="code-block">
+                    <div class="code-block-header">Debugging Commands</div>
+debug                  # Start interactive debugging<br>
+breakpoint &lt;process&gt; &lt;condition&gt;  # Set monitoring breakpoint<br>
+trace &lt;process&gt;        # Trace process execution<br>
+analyze memory         # Analyze memory patterns<br>
+conflicts              # Check resource conflicts<br>
+patch &lt;file&gt; --target &lt;process&gt;  # Apply code patches
+                </div>
+
+                <h3>The Interactive Debugger</h3>
+                <p>The <code>debug</code> command enters the main debugging interface with four specialized panels for deep consciousness analysis.</p>
+
+                <h4>Code Editor Panel</h4>
+                <p>Displays the character's consciousness as readable C++ code. Each function represents a mental process, making psychological states visible as executable code.</p>
+
+                <div class="code-block">
+                    <div class="code-block-header">Alexander's Grief Processing Code</div>
+class GriefManager {<br>
+private:<br>
+    Memory* leo_memories;  // MEMORY LEAK: Never releasing<br>
+    int search_iterations; // INFINITE: No exit condition<br>
+    <br>
+public:<br>
+    void processLoss() {<br>
+        while(true) {  // BUG: Infinite loop<br>
+            allocateMemory(leo_memories, 50MB);<br>
+            searchForLeo();<br>
+            // Missing: acceptance_protocol()<br>
+        }<br>
+    }<br>
+};
+                </div>
+
+                <h4>Variables Panel</h4>
+                <p>Provides live monitoring of the character's emotional state variables, updated in real-time as the consciousness processes experiences.</p>
+
+                <h4>Call Stack Panel</h4>
+                <p>Shows the sequence of mental processes currently executing, revealing how thoughts lead to emotions lead to behaviors in a traceable stack.</p>
+
+                <h4>Breakpoints Panel</h4>
+                <p>Allows setting intervention points to pause and modify processes at critical moments, enabling precise debugging and optimization.</p>
+
+                <div class="warning-box">
+                    <div class="warning-box-header">Safety Warning</div>
+                    Never terminate core processes like <code>Heartbeat.exe</code> or <code>Breathing.dll</code>. Some processes are essential for basic survival.
+                </div>
+
+                <h3>Command Syntax and Parameters</h3>
+                <p>Most commands accept modifiers and parameters to fine-tune their behavior. Understanding proper syntax prevents accidental damage to consciousness systems.</p>
+
+                <p>The <code>--gentle</code> flag applies changes gradually to prevent shock. The <code>--preserve-core</code> option maintains essential memories during optimization. The <code>--timeout</code> parameter sets maximum intervention duration.</p>
+            </div>
+        </div>
+
+        <!-- Chapter 4: Diagnosing Common Problems -->
+        <div id="chapter4" class="chapter-page">
+            <div class="chapter-header">
+                <div class="chapter-number-large">4</div>
+                <div class="chapter-title-large">Diagnosing Common Problems</div>
+            </div>
+            <div class="chapter-content">
+                <h3>Memory Leaks (Emotional Attachments)</h3>
+                <p>Memory leaks occur when emotional processes continuously allocate memory without proper cleanup. This is most commonly seen in grief, trauma, and unresolved emotional conflicts.</p>
+
+                <h4>Symptoms</h4>
+                <p>Memory usage constantly increasing over time. System becoming progressively slower. Other processes being starved of resources as available memory decreases.</p>
+
+                <div class="code-block">
+                    <div class="code-block-header">Alexander's Grief Memory Leak</div>
+Grief_Manager.exe: 847MB (started at 50MB)<br>
+Growth rate: +15MB every 10 minutes<br>
+Cause: Continuously allocating memory for Leo memories<br>
+Status: CRITICAL - System instability imminent
+                </div>
+
+                <h4>Diagnostic Commands</h4>
+                <div class="code-block">
+                    <div class="code-block-header">Memory Leak Analysis</div>
+analyze memory Grief_Manager.exe<br>
+trace allocations Grief_Manager.exe<br>
+mem --detailed --process Grief_Manager.exe
+                </div>
+
+                <h4>Common Fixes</h4>
+                <p>Set memory limits to prevent system crashes. Force garbage collection to free unused memories. Implement healthy coping mechanisms through code patches.</p>
+
+                <h3>Infinite Loops (Obsessive Thoughts)</h3>
+                <p>Infinite loops trap consciousness in repetitive thought patterns without resolution or escape conditions.</p>
+
+                <div class="code-block">
+                    <div class="code-block-header">Alexander's Search Loop</div>
+void searchForLeo() {<br>
+    while(true) {  // No exit condition<br>
+        checkTimeline(current_timeline++);<br>
+        if(leo_found) return;  // leo_found never becomes true<br>
+        // Missing: max_iterations check<br>
+        // Missing: acceptance_fallback()<br>
+    }<br>
+}
+                </div>
+
+                <h4>Intervention Strategies</h4>
+                <p>Add loop termination conditions. Set maximum iteration limits. Force process termination if necessary. Install alternative processing pathways.</p>
+
+                <h3>Thread Starvation (Neglected Relationships)</h3>
+                <p>Critical life processes receive insufficient CPU time due to overwhelming dominant processes.</p>
+
+                <div class="warning-box">
+                    <div class="warning-box-header">Critical Threshold</div>
+                    Relationship processes receiving less than 5% CPU time indicate severe social function degradation.
+                </div>
+
+                <h4>Recovery Protocol</h4>
+                <p>Increase process priority for starved functions. Allocate dedicated time slots. Reduce competing process resource consumption.</p>
+            </div>
+        </div>
+
+        <!-- Chapter 5: Intervention Strategies -->
+        <div id="chapter5" class="chapter-page">
+            <div class="chapter-header">
+                <div class="chapter-number-large">5</div>
+                <div class="chapter-title-large">Intervention Strategies</div>
+            </div>
+            <div class="chapter-content">
+                <h3>The Treatment Pipeline</h3>
+                <p>Every successful consciousness intervention follows a structured five-phase approach designed to minimize trauma while maximizing healing effectiveness.</p>
+
+                <h4>Phase 1: Identify</h4>
+                <p>Use comprehensive diagnostics to determine root causes. Analyze process interactions and resource dependencies. Document baseline metrics for recovery tracking.</p>
+
+                <h4>Phase 2: Stabilize</h4>
+                <p>Implement emergency measures to prevent further deterioration. Set resource limits on runaway processes. Establish minimum allocations for critical functions.</p>
+
+                <h4>Phase 3: Implement</h4>
+                <p>Apply targeted fixes based on diagnostic findings. Install missing functionality through code patches. Modify process parameters for optimal operation.</p>
+
+                <h4>Phase 4: Monitor</h4>
+                <p>Track recovery metrics continuously. Adjust interventions based on response patterns. Document progress for future reference.</p>
+
+                <h4>Phase 5: Prevent</h4>
+                <p>Install monitoring systems to detect early warning signs. Implement resilience protocols. Establish healthy maintenance routines.</p>
+
+                <h3>Intervention Types</h3>
+
+                <h4>Memory Management Interventions</h4>
+                <div class="code-block">
+                    <div class="code-block-header">Gentle Memory Optimization</div>
+optimize Grief_Manager.exe --gentle-release<br>
+gc Grief_Manager.exe --preserve-core-memories<br>
+limit Grief_Manager.exe memory 300MB --allow-growth-10%
+                </div>
+
+                <h4>Process Termination Interventions</h4>
+                <div class="code-block">
+                    <div class="code-block-header">Safe Process Control</div>
+kill Search_Protocol.exe --save-state<br>
+shutdown Search_Protocol.exe --timeout 30s<br>
+restart Search_Protocol_v2.exe --limited-scope
+                </div>
+
+                <h4>Resource Reallocation</h4>
+                <div class="code-block">
+                    <div class="code-block-header">Priority Management</div>
+priority Relationship_Handler.exe 9<br>
+priority Self_Care.exe 7<br>
+throttle Grief_Manager.exe 20%<br>
+throttle Past_Rumination.exe 5%
+                </div>
+
+                <div class="note-box">
+                    <div class="note-box-header">Best Practice</div>
+                    Always apply interventions gradually when possible. Sudden changes can trigger defensive responses and additional trauma.
+                </div>
+
+                <h3>Monitoring Recovery</h3>
+                <p>Track these metrics at different time intervals to assess intervention effectiveness and guide ongoing treatment decisions.</p>
+
+                <p><strong>Immediate (1-5 minutes):</strong> Memory usage stabilization, CPU distribution balance, error rate reduction.</p>
+                <p><strong>Short-term (10-30 minutes):</strong> Emotional energy recovery, attention capacity improvement, relationship process activation.</p>
+                <p><strong>Long-term (hours to days):</strong> Overall system stability, healthy pattern establishment, character-reported well-being.</p>
+            </div>
+        </div>
+
+        <!-- Chapter 6: Practical Debugging Session -->
+        <div id="chapter6" class="chapter-page">
+            <div class="chapter-header">
+                <div class="chapter-number-large">6</div>
+                <div class="chapter-title-large">Practical Debugging Session</div>
+            </div>
+            <div class="chapter-content">
+                <h3>Scenario: Alexander's Critical State</h3>
+                <p>This chapter walks through a complete debugging session, demonstrating the practical application of diagnostic and intervention techniques.</p>
+
+                <h4>Initial Assessment</h4>
+                <div class="code-block">
+                    <div class="code-block-header">System Connection</div>
+terminal> attach alexander-kane<br>
+Connected to consciousness: Alexander Kane<br>
+Status: CRITICAL - Multiple system failures detected<br>
+Uptime: 847 hours since Leo incident
+                </div>
+
+                <div class="code-block">
+                    <div class="code-block-header">Process Overview</div>
+terminal> ps<br>
+PID    PROCESS              %CPU   %MEM   STATUS<br>
+1247   Grief_Manager.exe     23%    847MB  LEAK<br>
+3891   Search_Protocol.exe   45%    234MB  INFINITE<br>
+4433   Relationship_Handler   2%    45MB   STARVED<br>
+2156   Temporal_Sync.dll      8%    156MB  ERROR
+                </div>
+
+                <h4>Emergency Stabilization</h4>
+                <p>Address the most dangerous issues first to prevent total system collapse.</p>
+
+                <div class="code-block">
+                    <div class="code-block-header">Crisis Intervention</div>
+terminal> kill 3891<br>
+Process Search_Protocol.exe terminated<br>
+Search state saved to recovery buffer<br><br>
+terminal> limit Grief_Manager.exe memory 400MB<br>
+Memory limit applied. Current usage: 847MB<br>
+Gradual reduction beginning...
+                </div>
+
+                <h4>Deep Diagnostic Analysis</h4>
+                <div class="code-block">
+                    <div class="code-block-header">Interactive Debugging</div>
+terminal> debug<br>
+Entering interactive debugging session...<br><br>
+debugger> breakpoint Grief_Manager.exe line 23<br>
+Breakpoint set at memory allocation point<br><br>
+Breakpoint hit: Grief_Manager.exe:23<br>
+Variables:<br>
+  grief_intensity: 9.7<br>
+  leo_memories: 2,847 objects<br>
+  last_acceptance_check: null  # PROBLEM<br>
+  reality_connection: false    # PROBLEM
+                </div>
+
+                <h4>Root Cause Identification</h4>
+                <p>Analysis reveals Alexander's grief manager lacks acceptance processing protocols and has lost connection to reality, creating an unsustainable feedback loop.</p>
+
+                <h4>Targeted Treatment</h4>
+                <div class="code-block">
+                    <div class="code-block-header">Therapeutic Interventions</div>
+terminal> patch acceptance_protocol.dll --target Grief_Manager.exe<br>
+Patch successful. Grief_Manager now has healthy coping mechanisms.<br><br>
+terminal> restart Temporal_Sync.dll --reset-calibration<br>
+Temporal_Sync.dll restarted with reality anchoring enabled.<br><br>
+terminal> priority Relationship_Handler.exe 8<br>
+Priority increased. Family connections receiving attention.
+                </div>
+
+                <h4>Recovery Monitoring</h4>
+                <div class="code-block">
+                    <div class="code-block-header">Post-Intervention Assessment</div>
+terminal> monitor<br><br>
+ALEXANDER KANE - CONSCIOUSNESS STATUS<br>
+Overall Health: ████████░░ 78% (Improving)<br>
+Emotional Energy: ████████░░ 65% (Stable)<br>
+Attention Capacity: ████████░░ 85% (Good)<br><br>
+Recent Changes:<br>
+✓ Grief_Manager memory reduced to 400MB<br>
+✓ Acceptance protocol active<br>
+✓ Reality synchronization restored<br>
+✓ Family relationships receiving attention
+                </div>
+
+                <p>This session demonstrates the complete debugging workflow from crisis assessment through stabilization to recovery monitoring.</p>
+            </div>
+        </div>
+
+        <!-- Chapter 7: Advanced Debugging Techniques -->
+        <div id="chapter7" class="chapter-page">
+            <div class="chapter-header">
+                <div class="chapter-number-large">7</div>
+                <div class="chapter-title-large">Advanced Debugging Techniques</div>
+            </div>
+            <div class="chapter-content">
+                <h3>Stack Trace Analysis</h3>
+                <p>When processes crash, the call stack reveals the sequence of mental operations leading to failure, enabling precise identification of failure points.</p>
+
+                <div class="code-block">
+                    <div class="code-block-header">Crash Analysis Example</div>
+Process crash: Reality_Parser.dll<br>
+Call stack:<br>
+  parseCurrentReality() line 45<br>
+  → syncWithTimeline() line 23    [FAILURE POINT]<br>
+  → validateTimelineData() line 67<br>
+  → checkLeosPresence() line 12   [ROOT CAUSE]<br><br>
+Analysis: Reality parser crashes when unable to find Leo<br>
+in current timeline, indicating need for acceptance module.
+                </div>
+
+                <h3>Memory Debugging Techniques</h3>
+                <p>Advanced memory analysis reveals allocation patterns and identifies optimization opportunities for emotional processing efficiency.</p>
+
+                <div class="code-block">
+                    <div class="code-block-header">Visual Memory Analysis</div>
+terminal> analyze memory --visual<br><br>
+Memory Map for Alexander Kane:<br>
+Leo Memories:     ████████████████████████████ 847MB (57%)<br>
+Recent Events:    ████░░░░░░░░░░░░░░░░░░░░░░░░░ 156MB (11%)<br>
+Wife Memories:    ██░░░░░░░░░░░░░░░░░░░░░░░░░░░  89MB (6%)<br>
+Work Thoughts:    █░░░░░░░░░░░░░░░░░░░░░░░░░░░░  45MB (3%)<br><br>
+DIAGNOSIS: 57% memory dedicated to Leo - healthy ratio is &lt;20%
+                </div>
+
+                <h3>Custom Monitoring Scripts</h3>
+                <p>Automated monitoring scripts enable proactive intervention before critical failures occur.</p>
+
+                <div class="code-block">
+                    <div class="code-block-header">Automated Monitoring</div>
+terminal> script grief_monitor.sh<br>
+#!/bin/bash<br>
+while true; do<br>
+  grief_level=$(get_variable grief_intensity)<br>
+  if [ $grief_level -gt 8.5 ]; then<br>
+    echo "ALERT: Grief intensity critical: $grief_level"<br>
+    activate_coping_protocol.exe<br>
+  fi<br>
+  sleep 300  # Check every 5 minutes<br>
+done<br><br>
+terminal> run grief_monitor.sh --background<br>
+Grief monitoring script started in background.
+                </div>
+
+                <h3>Predictive Analysis</h3>
+                <p>By analyzing patterns in process behavior and resource usage, experienced debuggers can predict and prevent consciousness crashes before they occur.</p>
+
+                <p>Look for early warning indicators: gradual memory growth in emotional processes, increasing error rates in reality parsing, declining response times in social functions.</p>
+
+                <div class="warning-box">
+                    <div class="warning-box-header">Advanced Warning</div>
+                    These techniques require extensive experience. Misuse of advanced debugging tools can cause additional psychological trauma.
+                </div>
+            </div>
+        </div>
+
+        <!-- Chapter 8: Understanding Character Progression -->
+        <div id="chapter8" class="chapter-page">
+            <div class="chapter-header">
+                <div class="chapter-number-large">8</div>
+                <div class="chapter-title-large">Understanding Character Progression</div>
+            </div>
+            <div class="chapter-content">
+                <h3>Healing Stages</h3>
+                <p>Consciousness recovery follows predictable stages, each with specific characteristics and intervention requirements.</p>
+
+                <h4>Stage 1: Stabilization (Sessions 1-3)</h4>
+                <p>Focus on stopping critical system failures and reducing dangerous resource consumption. Establish basic functionality and prevent further deterioration.</p>
+
+                <p>Key objectives: Terminate infinite loops, limit memory leaks, restore minimal relationship functions, establish reality grounding.</p>
+
+                <h4>Stage 2: Processing (Sessions 4-7)</h4>
+                <p>Install healthy coping mechanisms and begin structured grief processing with acceptance protocols. Restore basic relationship and self-care functions.</p>
+
+                <p>Key objectives: Implement acceptance processing, balance resource allocation, strengthen social connections, develop coping strategies.</p>
+
+                <h4>Stage 3: Integration (Sessions 8-12)</h4>
+                <p>Balance resource allocation across all life areas. Develop new meaning-making processes and strengthen social connection threads for sustainable recovery.</p>
+
+                <p>Key objectives: Optimize performance balance, create meaning-making systems, establish resilience protocols, develop future orientation.</p>
+
+                <h4>Stage 4: Growth (Sessions 13+)</h4>
+                <p>Optimize performance across all systems. Develop robust resilience protocols and create new purpose-driven processes for long-term thriving.</p>
+
+                <p>Key objectives: Advanced optimization, leadership development, mentoring capabilities, contribution to others' healing.</p>
+
+                <h3>Progress Metrics</h3>
+                <p>Track these quantitative indicators to measure advancement through healing stages.</p>
+
+                <h4>System Health Indicators</h4>
+                <p>Overall consciousness stability should trend toward >85%. Resource distribution should become more balanced with no single process consuming >30%. Error frequency should decrease to <5 per hour. Response time to emotional inputs should improve to <2 seconds.</p>
+
+                <h4>Emotional Processing Metrics</h4>
+                <p>Grief intensity should decrease gradually over time. Acceptance levels should increase steadily. Reality connection strength should stabilize above 80%. Hope and future-orientation should emerge during Stage 3.</p>
+
+                <h4>Social Function Indicators</h4>
+                <p>Relationship attention allocation should increase to >20% of total resources. Communication process efficiency should improve measurably. Empathy processing accuracy should return to baseline levels. Social energy availability should grow consistently.</p>
+
+                <div class="note-box">
+                    <div class="note-box-header">Important Note</div>
+                    Recovery is not linear. Expect temporary setbacks and regression during stressful periods. This is normal and does not indicate intervention failure.
+                </div>
+
+                <h3>Character Development Milestones</h3>
+                <p>Alexander's specific recovery milestones include: accepting Leo's death, reconnecting with family, returning to meaningful work, and eventually helping other grieving parents through his experience.</p>
+
+                <p>Each milestone unlocks new interaction possibilities and deepens the player's understanding of consciousness debugging as both technical skill and healing art.</p>
+            </div>
+        </div>
+
+        <!-- All chapters from the comprehensive manual would go here -->
+        <!-- For brevity showing just a few key chapters -->
+
+        <!-- Chapter 1: Understanding the Mind as Machine -->
+        <div id="chapter1" class="chapter-page">
+            <div class="chapter-header">
+                <div class="chapter-number-large">1</div>
+                <div class="chapter-title-large">Understanding the Mind as Machine</div>
+            </div>
+            <div class="chapter-content">
+                <h3>The Consciousness Operating System</h3>
+                <p>Every character's mind operates as a sophisticated computer system with three critical subsystems that must work in harmony for optimal mental health.</p>
+
+                <h4>Processing Units (CPU)</h4>
+                <p>The mind's processing power is distributed across specialized units: attention threads that handle incoming thoughts, emotional processing cores that interpret experiences, and memory management units that store and retrieve information. When these units become overloaded or malfunction, consciousness begins to fragment.</p>
+
+                <h4>Memory Systems (RAM/Storage)</h4>
+                <p>Mental memory operates on multiple levels. Short-term memory handles active thoughts and immediate concerns, like a computer's RAM. Long-term memory stores deep memories, trauma, and core beliefs in permanent storage. Cache memory holds frequently accessed emotional patterns for quick retrieval.</p>
+
+                <div class="note-box">
+                    <div class="note-box-header">Important Note</div>
+                    Memory leaks in emotional processing can consume massive amounts of mental resources, leading to system instability and reduced cognitive function.
+                </div>
+
+                <h4>System Resources</h4>
+                <p>Mental energy powers all cognitive processes and can be depleted by intensive operations. Emotional bandwidth determines the capacity to handle feelings without overflow. Social connection threads maintain relationships but require dedicated processing time.</p>
+
+                <h3>Your Role as Consciousness Debugger</h3>
+                <p>You are not merely reading Alexander Kane's story—you are his system administrator. His consciousness has suffered critical failures due to grief trauma, and multiple essential processes are malfunctioning.</p>
+
+                <p>Your responsibilities include:</p>
+                <p><strong>Diagnosis:</strong> Identify system errors and resource problems through careful analysis of process outputs and system logs.</p>
+                <p><strong>Intervention:</strong> Apply targeted fixes and optimizations to restore healthy function.</p>
+                <p><strong>Monitoring:</strong> Track recovery progress and prevent future crashes through proactive maintenance.</p>
+                <p><strong>Restoration:</strong> Guide the consciousness back to healthy operational balance.</p>
+
+                <div class="warning-box">
+                    <div class="warning-box-header">Warning</div>
+                    Aggressive interventions without proper diagnosis can cause additional trauma. Always analyze before acting.
+                </div>
+
+                <h3>Understanding Process Interactions</h3>
+                <p>Mental processes do not operate in isolation. The grief management system directly impacts memory allocation, which affects attention distribution, which influences social processing capabilities. Understanding these interdependencies is crucial for effective debugging.</p>
+
+                <p>When Alexander's Grief_Manager.exe consumes excessive resources, it starves other critical processes like Relationship_Handler.exe and Present_Moment.exe, creating a cascading failure that affects his entire consciousness ecosystem.</p>
+            </div>
+        </div>
+
+        <!-- Quick Reference -->
+        <div id="chapter9" class="chapter-page">
+            <div class="chapter-header">
+                <div class="chapter-number-large">A</div>
+                <div class="chapter-title-large">Quick Reference Card</div>
+            </div>
+            <div class="chapter-content">
+                <h3>Emergency Commands</h3>
+                <div class="code-block">
+                    <div class="code-block-header">Crisis Response</div>
+ps                  # Quick system overview<br>
+top                 # Resource usage check<br>
+monitor             # System health status<br>
+errors              # Check error log<br>
+kill &lt;pid&gt;          # Stop dangerous process<br>
+limit &lt;process&gt; &lt;resource&gt; &lt;amount&gt;  # Apply limits<br>
+restart &lt;process&gt;   # Restart crashed process
+                </div>
+
+                <h3>Common Debugging Patterns</h3>
+                <div class="code-block">
+                    <div class="code-block-header">Memory Leaks</div>
+analyze memory &lt;process&gt;<br>
+limit &lt;process&gt; memory &lt;amount&gt;<br>
+gc &lt;process&gt;<br>
+patch cleanup_protocol.dll
+                </div>
+
+                <div class="code-block">
+                    <div class="code-block-header">Infinite Loops</div>
+trace &lt;process&gt;<br>
+breakpoint &lt;process&gt; &lt;line&gt;<br>
+kill &lt;process&gt;<br>
+patch exit_condition.cpp
+                </div>
+
+                <div class="code-block">
+                    <div class="code-block-header">Thread Starvation</div>
+priority &lt;process&gt; &lt;level&gt;<br>
+throttle &lt;competing_process&gt; &lt;%&gt;<br>
+schedule &lt;dedicated_time&gt;
+                </div>
+
+                <h3>Health Monitoring Thresholds</h3>
+                <p><strong>Critical Warnings:</strong></p>
+                <p>• Any process >40% CPU</p>
+                <p>• Any process >500MB memory</p>
+                <p>• System health &lt;60%</p>
+                <p>• Emotional energy &lt;30%</p>
+                <p>• Error rate >10/hour</p>
+
+                <div class="note-box">
+                    <div class="note-box-header">Remember</div>
+                    You're not just fixing code—you're healing a human mind. Every intervention should be made with compassion and understanding of the emotional reality behind the technical metaphor.
+                </div>
+
+                <p><strong>Getting Started:</strong> Type <code>attach alexander-kane</code> to begin your first debugging session.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPageNum = 1;
+        const totalPages = 9;
+        const pages = ['toc', 'chapter1', 'chapter2', 'chapter3', 'chapter4', 'chapter5', 'chapter6', 'chapter7', 'chapter8', 'chapter9'];
+
+        function updatePageIndicator() {
+            document.getElementById('currentPage').textContent = currentPageNum;
+            document.getElementById('totalPages').textContent = totalPages;
+        }
+
+        function showPage(pageId) {
+            // Hide all pages
+            pages.forEach(page => {
+                const element = document.getElementById(page);
+                if (element) {
+                    element.classList.remove('active');
+                }
+            });
+
+            // Show target page
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                
+                // Update page number
+                currentPageNum = pages.indexOf(pageId) + 1;
+                updatePageIndicator();
+                
+                // Update nav button states
+                updateNavButtons();
+            }
+        }
+
+        function showChapter(chapterNum) {
+            if (chapterNum >= 1 && chapterNum <= 8) {
+                showPage('chapter' + chapterNum);
+            } else if (chapterNum === 9) {
+                showPage('chapter9');
+            }
+        }
+
+        function nextPage() {
+            if (currentPageNum < totalPages) {
+                const nextPageId = pages[currentPageNum];
+                showPage(nextPageId);
+            }
+        }
+
+        function prevPage() {
+            if (currentPageNum > 1) {
+                const prevPageId = pages[currentPageNum - 2];
+                showPage(prevPageId);
+            }
+        }
+
+        function updateNavButtons() {
+            const navButtons = document.querySelectorAll('.nav-btn');
+            navButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Highlight current section button
+            if (currentPageNum === 1) {
+                const tocButton = document.querySelector('.nav-btn[onclick="showPage(\'toc\')"]');
+                if (tocButton) {
+                    tocButton.classList.add('active');
+                }
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePageIndicator();
+            updateNavButtons();
+            
+            // Show table of contents by default
+            showPage('toc');
+
+            // Add event listeners for navigation buttons
+            document.getElementById('toc-btn').addEventListener('click', () => showPage('toc'));
+            document.getElementById('prev-btn').addEventListener('click', prevPage);
+            document.getElementById('next-btn').addEventListener('click', nextPage);
+
+            // Add event listeners for table of contents links
+            document.querySelectorAll('.toc-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const chapterNum = parseInt(this.getAttribute('data-chapter'));
+                    showChapter(chapterNum);
+                });
+            });
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+                nextPage();
+                e.preventDefault();
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                prevPage();
+                e.preventDefault();
+            } else if (e.key === 'Home') {
+                showPage('toc');
+                e.preventDefault();
+            } else if (e.key === 'Escape') {
+                if (window.parent && window.parent.closeManual) {
+                    window.parent.closeManual();
+                }
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

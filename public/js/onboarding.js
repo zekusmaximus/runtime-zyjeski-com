@@ -1,4 +1,4 @@
-// Enhanced Onboarding System - Better contrast and positioning
+// Enhanced Onboarding System with Manual Button
 class OnboardingSystem {
   constructor() {
     this.currentStep = 0;
@@ -32,9 +32,10 @@ class OnboardingSystem {
       },
       {
         title: "Ready to Debug",
-        content: "You're now ready to help characters resolve their consciousness malfunctions. Select Alexander Kane to begin with a sample debugging session.",
+        content: "You're now ready to help characters resolve their consciousness malfunctions. For comprehensive debugging techniques, read the complete manual below, or jump straight into debugging Alexander Kane.",
         target: "[data-character='alexander-kane']",
-        position: "top"
+        position: "top",
+        showManualButton: true // This tells us to show the manual button
       }
     ];
     
@@ -69,6 +70,9 @@ class OnboardingSystem {
         </div>
         <div class="onboarding-body">
           <p id="onboarding-text">Loading...</p>
+          <div id="onboarding-manual-section" style="display: none; margin-top: 20px; text-align: center;">
+            <button id="onboarding-manual-btn" class="onboarding-manual-btn">📖 Read the Complete Manual</button>
+          </div>
         </div>
         <div class="onboarding-footer">
           <div class="onboarding-progress">
@@ -110,7 +114,7 @@ class OnboardingSystem {
         display: none;
         opacity: 0;
         transition: opacity 0.3s ease;
-        pointer-events: none; /* Allow interaction with highlighted elements */
+        pointer-events: none;
       }
       
       .onboarding-overlay.active {
@@ -196,6 +200,50 @@ class OnboardingSystem {
         margin: 0;
         font-size: 1rem;
         color: #e0e0e0;
+      }
+
+      /* Manual Button Styling */
+      .onboarding-manual-btn {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-family: 'Courier New', 'Monaco', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        min-width: 200px;
+      }
+
+      .onboarding-manual-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+      }
+
+      .onboarding-manual-btn:hover::before {
+        left: 100%;
+      }
+
+      .onboarding-manual-btn:hover {
+        background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      }
+
+      .onboarding-manual-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
       }
 
       .onboarding-footer {
@@ -315,7 +363,7 @@ class OnboardingSystem {
         transform: translateY(-50%);
       }
 
-      /* Target highlighting - More prominent since overlay is lighter */
+      /* Target highlighting */
       .onboarding-highlight {
         position: relative;
         z-index: 49999;
@@ -384,6 +432,12 @@ class OnboardingSystem {
           flex: 1;
           min-width: 0;
         }
+
+        .onboarding-manual-btn {
+          min-width: auto;
+          padding: 10px 16px;
+          font-size: 12px;
+        }
       }
 
       /* Center positioning for modal steps */
@@ -396,21 +450,6 @@ class OnboardingSystem {
       .onboarding-overlay.active .onboarding-modal.center {
         transform: translate(-50%, -50%) scale(1);
       }
-
-      /* High contrast for accessibility */
-      @media (prefers-contrast: high) {
-        .onboarding-overlay {
-          background: rgba(0, 0, 0, 0.95);
-        }
-
-        .onboarding-modal {
-          border-width: 3px;
-        }
-
-        .onboarding-body p {
-          color: #ffffff;
-        }
-      }
     `;
 
     document.head.appendChild(styles);
@@ -422,11 +461,13 @@ class OnboardingSystem {
     const prevBtn = document.getElementById('onboarding-prev');
     const finishBtn = document.getElementById('onboarding-finish');
     const overlay = document.getElementById('onboarding-overlay');
+    const manualBtn = document.getElementById('onboarding-manual-btn');
 
     closeBtn.addEventListener('click', () => this.skipOnboarding());
     nextBtn.addEventListener('click', () => this.nextStep());
     prevBtn.addEventListener('click', () => this.prevStep());
     finishBtn.addEventListener('click', () => this.finishOnboarding());
+    manualBtn.addEventListener('click', () => this.openManual());
 
     // Close on overlay click (but not modal click)
     overlay.addEventListener('click', (e) => {
@@ -455,6 +496,56 @@ class OnboardingSystem {
     });
   }
 
+  openManual() {
+    // Create manual overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'manual-overlay';
+    overlay.style.display = 'block';
+    overlay.style.zIndex = '60000'; // Higher than onboarding
+    
+    // Create manual iframe
+    const iframe = document.createElement('iframe');
+    iframe.className = 'manual-iframe';
+    iframe.src = '/manual.html';
+    
+    // Handle iframe load errors
+    iframe.onerror = () => {
+      console.error('Failed to load manual.html');
+      alert('Could not load the manual. Please make sure manual.html is in the public folder.');
+    };
+    
+    overlay.appendChild(iframe);
+    document.body.appendChild(overlay);
+    
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        this.closeManual(overlay);
+      }
+    });
+    
+    // Close on escape key
+    const escapeHandler = (e) => {
+      if (e.key === 'Escape') {
+        this.closeManual(overlay);
+        document.removeEventListener('keydown', escapeHandler);
+      }
+    };
+    document.addEventListener('keydown', escapeHandler);
+    
+    // Make close function available globally
+    window.closeManual = () => {
+      this.closeManual(overlay);
+      document.removeEventListener('keydown', escapeHandler);
+    };
+  }
+
+  closeManual(overlay) {
+    if (overlay && overlay.parentNode) {
+      overlay.remove();
+    }
+  }
+
   startOnboarding() {
     this.isActive = true;
     this.currentStep = 0;
@@ -476,6 +567,14 @@ class OnboardingSystem {
     // Update content
     document.getElementById('onboarding-title').textContent = step.title;
     document.getElementById('onboarding-text').textContent = step.content;
+
+    // Show/hide manual button based on step
+    const manualSection = document.getElementById('onboarding-manual-section');
+    if (step.showManualButton) {
+      manualSection.style.display = 'block';
+    } else {
+      manualSection.style.display = 'none';
+    }
 
     // Update progress
     this.updateProgress();

@@ -504,3 +504,158 @@ p {
   background: var(--text-muted);
 }
 
+/* Add this to your main.css file */
+
+/* Home Page Manual Button */
+.btn-manual-home {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+  color: white !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-family: 'Courier New', 'Monaco', monospace !important;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.9rem;
+}
+
+.btn-manual-home::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-manual-home:hover::before {
+  left: 100%;
+}
+
+.btn-manual-home:hover {
+  background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(30, 60, 114, 0.4);
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.btn-manual-home:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
+}
+
+/* Ensure proper spacing in hero actions */
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Responsive design for manual button */
+@media (max-width: 768px) {
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .btn-manual-home {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-manual-home {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .btn-manual-home {
+    background: #000 !important;
+    color: #fff !important;
+    border: 2px solid #fff !important;
+  }
+  
+  .btn-manual-home:hover {
+    background: #fff !important;
+    color: #000 !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .btn-manual-home,
+  .btn-manual-home::before {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Focus accessibility */
+.btn-manual-home:focus {
+  outline: 2px solid var(--accent-blue, #007ACC);
+  outline-offset: 2px;
+}
+
+/* Manual overlay from home page */
+.manual-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 10000;
+  display: none;
+  backdrop-filter: blur(3px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(3px);
+  }
+}
+
+.manual-iframe {
+  width: 90%;
+  height: 90%;
+  margin: 5%;
+  border: none;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
