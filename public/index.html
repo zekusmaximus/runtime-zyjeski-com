@@ -188,10 +188,18 @@
                 <div class="debugger-header">
                     <h2>Interactive Consciousness Debugger</h2>
                     <div class="debugger-controls">
-                        <button class="btn btn-small" id="stepInto">Step Into</button>
-                        <button class="btn btn-small" id="stepOver">Step Over</button>
-                        <button class="btn btn-small" id="continue">Continue</button>
-                        <button class="btn btn-small" id="breakAll">Break All</button>
+                        <button class="btn btn-small" id="stepInto" type="button" aria-label="Step into next function">
+                            Step Into
+                        </button>
+                        <button class="btn btn-small" id="stepOver" type="button" aria-label="Step over current line">
+                            Step Over
+                        </button>
+                        <button class="btn btn-small" id="continue" type="button" aria-label="Continue execution">
+                            Continue
+                        </button>
+                         <button class="btn btn-small" id="breakAll" type="button" aria-label="Break all processes">
+                            Break All
+                        </button>
                     </div>
                 </div>
                 <div class="debugger-layout">
@@ -199,9 +207,22 @@
                         <div class="debugger-panel">
                             <h3>Breakpoints</h3>
                             <div class="breakpoints-list" id="breakpointsList">
-                                <!-- Breakpoints will be listed here -->
+                                <!-- Example breakpoint items with proper labels -->
+                                <div class="breakpoint-item" data-breakpoint-id="bp-1">
+                                    <input type="checkbox" id="breakpoint-checkbox-1" class="breakpoint-checkbox" checked>
+                                    <label for="breakpoint-checkbox-1" class="breakpoint-location">
+                                        Line 15: grief_manager.cpp
+                                    </label>
+                                </div>
+                                <div class="breakpoint-item" data-breakpoint-id="bp-2">
+                                    <input type="checkbox" id="breakpoint-checkbox-2" class="breakpoint-checkbox">
+                                    <label for="breakpoint-checkbox-2" class="breakpoint-location">
+                                        Line 23: search_protocol.cpp
+                                    </label>
+                                </div>
                             </div>
                         </div>
+                        
                         <div class="debugger-panel">
                             <h3>Call Stack</h3>
                             <div class="call-stack" id="callStack">

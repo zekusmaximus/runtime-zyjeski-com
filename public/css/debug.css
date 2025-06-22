@@ -62,6 +62,153 @@
   overflow-y: auto;
 }
 
+/* Code Editor - FIXED LAYOUT */
+.debugger-main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.code-editor {
+  flex: 1;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+
+.code-editor-header {
+  background-color: var(--bg-tertiary);
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.code-file-name {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.code-editor-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* FIXED: Proper code content layout */
+.code-content {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* FIXED: Individual code line layout */
+.code-line {
+  display: flex;
+  align-items: flex-start;
+  min-height: 1.5rem;
+  line-height: 1.5;
+  position: relative;
+  border-left: 3px solid transparent;
+}
+
+.code-line:hover {
+  background-color: var(--bg-hover);
+}
+
+.code-line.current-line {
+  background-color: rgba(0, 122, 204, 0.2);
+  border-left-color: var(--accent-blue);
+}
+
+.code-line.has-breakpoint {
+  background-color: rgba(244, 71, 71, 0.1);
+}
+
+.code-line.has-breakpoint .line-number {
+  background-color: var(--accent-red);
+  color: white;
+}
+
+/* FIXED: Line number styling */
+.line-number {
+  background-color: var(--bg-tertiary);
+  color: var(--text-muted);
+  padding: 0 0.75rem;
+  min-width: 60px;
+  text-align: right;
+  user-select: none;
+  cursor: pointer;
+  border-right: 1px solid var(--border-color);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+.line-number:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* FIXED: Line content styling */
+.line-content {
+  flex: 1;
+  padding: 0 1rem;
+  color: var(--text-primary);
+  white-space: pre;
+  overflow-x: auto;
+  min-height: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+/* Syntax Highlighting */
+.keyword {
+  color: var(--accent-blue);
+  font-weight: 600;
+}
+
+.string {
+  color: var(--accent-green);
+}
+
+.number {
+  color: var(--accent-yellow);
+}
+
+.comment {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.function {
+  color: var(--accent-teal);
+  font-weight: 500;
+}
+
+.variable {
+  color: var(--text-primary);
+}
+
+.operator {
+  color: var(--text-secondary);
+}
+
+.type {
+  color: #4fc1ff;
+  font-weight: 500;
+}
+
 /* Breakpoints */
 .breakpoints-list {
   font-family: var(--font-mono);
@@ -187,7 +334,7 @@
   transform: rotate(90deg);
 }
 
-.variable-list {
+.variable-group-content {
   margin-left: 1rem;
   border-left: 1px solid var(--border-color);
   padding-left: 0.5rem;
@@ -223,150 +370,6 @@
   color: var(--text-muted);
   font-size: 0.7rem;
   margin-left: 0.5rem;
-}
-
-/* Code Editor */
-.debugger-main {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.code-editor {
-  flex: 1;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.code-editor-header {
-  background-color: var(--bg-tertiary);
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.code-file-name {
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.code-editor-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.code-content {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
-
-.line-numbers {
-  background-color: var(--bg-tertiary);
-  border-right: 1px solid var(--border-color);
-  padding: 1rem 0.5rem;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  text-align: right;
-  min-width: 50px;
-  user-select: none;
-}
-
-.line-number {
-  display: block;
-  line-height: 1.5;
-  padding: 0 0.5rem;
-  cursor: pointer;
-  position: relative;
-}
-
-.line-number:hover {
-  background-color: var(--bg-hover);
-}
-
-.line-number.breakpoint {
-  background-color: var(--accent-red);
-  color: white;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-}
-
-.line-number.current-line {
-  background-color: var(--accent-blue);
-  color: white;
-}
-
-.code-lines {
-  flex: 1;
-  padding: 1rem;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  line-height: 1.5;
-  overflow: auto;
-  white-space: pre;
-  color: var(--text-primary);
-}
-
-.code-line {
-  display: block;
-  padding: 0 0.5rem;
-  min-height: 1.5em;
-  position: relative;
-}
-
-.code-line.current-line {
-  background-color: rgba(0, 122, 204, 0.2);
-  border-left: 3px solid var(--accent-blue);
-}
-
-.code-line.breakpoint-line {
-  background-color: rgba(244, 71, 71, 0.1);
-}
-
-/* Syntax Highlighting */
-.keyword {
-  color: var(--accent-blue);
-  font-weight: 600;
-}
-
-.string {
-  color: var(--accent-green);
-}
-
-.number {
-  color: var(--accent-yellow);
-}
-
-.comment {
-  color: var(--text-muted);
-  font-style: italic;
-}
-
-.function {
-  color: var(--accent-teal);
-  font-weight: 500;
-}
-
-.variable {
-  color: var(--text-primary);
-}
-
-.operator {
-  color: var(--text-secondary);
 }
 
 /* Debug Controls */
@@ -441,6 +444,21 @@
   50% { opacity: 0.5; }
 }
 
+/* Empty states */
+.empty-state {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
+}
+
+.no-breakpoints {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
+}
+
 /* Responsive Debugger */
 @media (max-width: 1024px) {
   .debugger-layout {
@@ -477,5 +495,65 @@
   .debugger-controls {
     justify-content: center;
   }
+  
+  .code-editor {
+    font-size: 0.75rem;
+  }
+  
+  .line-number {
+    min-width: 45px;
+    padding: 0 0.5rem;
+  }
+  
+  .line-content {
+    padding: 0 0.75rem;
+  }
+}
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
+/* Enhanced focus states for accessibility */
+button:focus,
+input:focus,
+select:focus {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* Fix breakpoint checkbox styling */
+.breakpoint-checkbox {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  background-color: var(--bg-primary);
+  cursor: pointer;
+  margin: 0;
+}
+
+.breakpoint-checkbox:checked {
+  background-color: var(--accent-red);
+  border-color: var(--accent-red);
+}
+
+/* Label styling for breakpoints */
+.breakpoint-location {
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.breakpoint-location:hover {
+  color: var(--accent-blue);
+}

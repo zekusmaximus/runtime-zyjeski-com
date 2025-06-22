@@ -22,6 +22,28 @@ class DebuggerInterface {
     this.generateConsciousnessCode();
   }
 
+  // PUBLIC INITIALIZE METHOD - Called by app.js when navigating to debugger section
+  initialize() {
+    console.log('Debugger interface initializing...');
+    
+    // Refresh UI elements in case they were dynamically loaded
+    this.setupElements();
+    
+    // Update debugger with current character if available
+    if (window.app && window.app.currentCharacter) {
+      this.currentCharacter = window.app.currentCharacter;
+      this.updateDebuggerForCharacter(this.currentCharacter);
+    }
+    
+    // Refresh code editor display
+    this.renderCodeEditor();
+    
+    // Update execution state display
+    this.updateExecutionState();
+    
+    console.log('Debugger interface initialized');
+  }
+
   setupElements() {
     // Debug control buttons
     this.stepIntoBtn = document.getElementById('stepInto');
@@ -53,12 +75,21 @@ class DebuggerInterface {
     }
   }
 
-  setupEventListeners() {
+   setupEventListeners() {
     // Breakpoint list interactions
     if (this.breakpointsList) {
       this.breakpointsList.addEventListener('click', (e) => {
-        if (e.target.classList.contains('breakpoint-checkbox')) {
-          const breakpointId = e.target.closest('.breakpoint-item').dataset.breakpointId;
+        if (e.target.classList.contains('breakpoint-checkbox') || e.target.classList.contains('breakpoint-location')) {
+          const breakpointItem = e.target.closest('.breakpoint-item');
+          const breakpointId = breakpointItem.dataset.breakpointId;
+          const checkbox = breakpointItem.querySelector('.breakpoint-checkbox');
+          
+          // Toggle checkbox if label was clicked
+          if (e.target.classList.contains('breakpoint-location')) {
+            checkbox.checked = !checkbox.checked;
+            checkbox.classList.toggle('checked');
+          }
+          
           this.toggleBreakpoint(breakpointId);
         }
       });
@@ -113,6 +144,110 @@ class DebuggerInterface {
         }
       });
     }
+  }
+
+  // Update debugger interface for character
+  updateDebuggerForCharacter(character) {
+    if (!character) return;
+    
+    this.currentCharacter = character;
+    
+    // Update call stack and variables
+    this.updateCallStackFromCharacter(character);
+    this.updateVariablesFromCharacter(character);
+    
+    // Refresh displays
+    this.updateCallStack();
+    this.updateVariablesView();
+    this.renderCodeEditor();
+    
+    console.log('Debugger updated for character:', character.name);
+  }
+
+  // Generate consciousness code representation
+  generateConsciousnessCode() {
+    this.codeLines = [
+      '// Consciousness Runtime - Alexander Kane',
+      '#include <consciousness.h>',
+      '#include <memory_manager.h>',
+      '#include <process_scheduler.h>',
+      '',
+      'int main() {',
+      '    ConsciousnessRuntime runtime;',
+      '    runtime.initialize();',
+      '    ',
+      '    // Memory allocation',
+      '    MemoryAllocator* memory = runtime.getMemoryAllocator();',
+      '    ProcessManager* processes = runtime.getProcessManager();',
+      '    ',
+      '    // Core processes',
+      '    Process* grief_mgr = processes->spawn("Grief_Manager.exe");',
+      '    Process* search_proto = processes->spawn("Search_Protocol.exe");',
+      '    Process* temporal_sync = processes->spawn("Temporal_Sync.dll");',
+      '    Process* rel_handler = processes->spawn("Relationship_Handler.exe");',
+      '    ',
+      '    // Main execution loop',
+      '    while (runtime.isRunning()) {',
+      '        try {',
+      '            grief_mgr->execute();',
+      '            search_proto->execute();',
+      '            temporal_sync->execute();',
+      '            rel_handler->execute();',
+      '            ',
+      '            runtime.processEvents();',
+      '            runtime.garbageCollect();',
+      '            ',
+      '        } catch (MemoryLeakException& e) {',
+      '            runtime.handleError(e);',
+      '        } catch (InfiniteLoopException& e) {',
+      '            runtime.handleError(e);',
+      '        } catch (ThreadStarvationException& e) {',
+      '            runtime.handleError(e);',
+      '        }',
+      '    }',
+      '    ',
+      '    return runtime.shutdown();',
+      '}'
+    ];
+  }
+
+  // Render code editor with syntax highlighting
+  renderCodeEditor() {
+    if (!this.codeEditor || !this.codeLines) return;
+    
+    const codeContent = this.codeLines.map((line, index) => {
+      const lineNumber = index + 1;
+      const hasBreakpoint = this.breakpoints.has(`line_${lineNumber}`);
+      const isCurrentLine = lineNumber === this.currentLine;
+      
+      const lineClass = [
+        'code-line',
+        hasBreakpoint ? 'has-breakpoint' : '',
+        isCurrentLine ? 'current-line' : ''
+      ].filter(Boolean).join(' ');
+      
+      const highlightedLine = this.syntaxHighlight(line);
+      
+      return `
+        <div class="${lineClass}">
+          <span class="line-number" data-line="${lineNumber}">${lineNumber}</span>
+          <span class="line-content">${highlightedLine}</span>
+        </div>
+      `;
+    }).join('');
+    
+    this.codeEditor.innerHTML = codeContent;
+  }
+
+  // Basic syntax highlighting
+  syntaxHighlight(code) {
+    return code
+      .replace(/\b(include|int|try|catch|while|return|Process|MemoryAllocator|ProcessManager)\b/g, '<span class="keyword">$1</span>')
+      .replace(/\b(main|initialize|spawn|execute|processEvents|garbageCollect|shutdown)\b/g, '<span class="function">$1</span>')
+      .replace(/\b(grief_mgr|search_proto|temporal_sync|rel_handler|memory|processes|runtime)\b/g, '<span class="variable">$1</span>')
+      .replace(/(\+\+|==|!=|<=|>=|&&|\|\||->)/g, '<span class="operator">$1</span>')
+      .replace(/(\/\/.*$)/g, '<span class="comment">$1</span>')
+      .replace(/(".*?")/g, '<span class="string">$1</span>');
   }
 
   // Debug Control Methods
@@ -213,126 +348,16 @@ class DebuggerInterface {
     }
   }
 
-  // UI Update Methods
-  updateDebuggerForCharacter(character) {
-    if (!character) return;
-    
-    this.generateConsciousnessCode(character);
-    this.updateVariablesFromCharacter(character);
-    this.updateCallStackFromCharacter(character);
-    this.updateBreakpointsDisplay();
-  }
-
-  generateConsciousnessCode(character = this.currentCharacter) {
-    if (!character) return;
-    
-    // Generate C++-like code representation of consciousness
-    const code = this.generateCodeFromConsciousness(character.consciousness);
-    this.codeLines = code.split('\n');
-    this.renderCodeEditor();
-  }
-
-  generateCodeFromConsciousness(consciousness) {
-    if (!consciousness) return '// No consciousness data available';
-    
-    let code = `// Consciousness Runtime - ${this.currentCharacter?.name || 'Unknown'}\n`;
-    code += `#include <consciousness.h>\n`;
-    code += `#include <memory_manager.h>\n`;
-    code += `#include <process_manager.h>\n\n`;
-    
-    code += `class ConsciousnessCore {\nprivate:\n`;
-    
-    // Memory section
-    if (consciousness.memory) {
-      code += `    // Memory Management\n`;
-      Object.entries(consciousness.memory).forEach(([key, value]) => {
-        const type = typeof value === 'number' ? 'float' : 'std::string';
-        code += `    ${type} ${key} = ${JSON.stringify(value)};\n`;
-      });
-      code += `\n`;
-    }
-    
-    // Processes section
-    if (consciousness.processes) {
-      code += `    // Active Processes\n`;
-      consciousness.processes.forEach((process, index) => {
-        code += `    Process ${process.name.replace(/[^a-zA-Z0-9]/g, '_')};\n`;
-      });
-      code += `\n`;
-    }
-    
-    code += `public:\n`;
-    code += `    void update() {\n`;
-    
-    // Process execution simulation
-    if (consciousness.processes) {
-      consciousness.processes.forEach((process) => {
-        const status = process.status === 'running' ? 'execute' : 'suspend';
-        code += `        ${process.name.replace(/[^a-zA-Z0-9]/g, '_')}.${status}();\n`;
-      });
-    }
-    
-    code += `        \n        // Resource management\n`;
-    code += `        this->manageResources();\n`;
-    code += `        this->processEmotions();\n`;
-    code += `        this->updateMemory();\n`;
-    code += `    }\n\n`;
-    
-    // Error handling
-    if (consciousness.system_errors && consciousness.system_errors.length > 0) {
-      code += `    void handleErrors() {\n`;
-      consciousness.system_errors.forEach((error) => {
-        code += `        // ERROR: ${error.type} - ${error.message}\n`;
-        code += `        this->logError("${error.type}", "${error.message}");\n`;
-      });
-      code += `    }\n\n`;
-    }
-    
-    code += `};`;
-    
-    return code;
-  }
-
-  renderCodeEditor() {
-    if (!this.codeEditor) return;
-    
-    let html = '<div class="code-content">';
-    
-    this.codeLines.forEach((line, index) => {
-      const lineNumber = index + 1;
-      const hasBreakpoint = Array.from(this.breakpoints.values()).some(bp => bp.line === lineNumber);
-      const isCurrentLine = this.currentLine === lineNumber;
-      
-      html += `<div class="code-line ${isCurrentLine ? 'current-line' : ''}">`;
-      html += `<span class="line-number ${hasBreakpoint ? 'has-breakpoint' : ''}" data-line="${lineNumber}">${lineNumber}</span>`;
-      html += `<span class="line-content">${this.highlightSyntax(line)}</span>`;
-      html += `</div>`;
-    });
-    
-    html += '</div>';
-    this.codeEditor.innerHTML = html;
-  }
-
-  highlightSyntax(line) {
-    // Basic C++ syntax highlighting
-    return line
-      .replace(/\b(class|public|private|void|int|float|std::string|#include)\b/g, '<span class="keyword">$1</span>')
-      .replace(/\b(this|new|delete|return)\b/g, '<span class="keyword">$1</span>')
-      .replace(/"([^"]*)"/g, '<span class="string">"$1"</span>')
-      .replace(/\/\/(.*)$/g, '<span class="comment">//$1</span>')
-      .replace(/\b([A-Z][a-zA-Z0-9_]*)\b/g, '<span class="type">$1</span>');
-  }
-
   updateBreakpointsDisplay() {
     if (!this.breakpointsList) return;
     
     let html = '';
     this.breakpoints.forEach((breakpoint, id) => {
+      const checkboxId = `breakpoint-checkbox-${id}`;
       html += `
         <div class="breakpoint-item ${breakpoint.enabled ? 'active' : ''}" data-breakpoint-id="${id}">
-          <div class="breakpoint-checkbox ${breakpoint.enabled ? 'checked' : ''}"></div>
-          <div class="breakpoint-location">${breakpoint.location}</div>
-          <div class="breakpoint-line">:${breakpoint.line}</div>
+          <input type="checkbox" id="${checkboxId}" class="breakpoint-checkbox" ${breakpoint.enabled ? 'checked' : ''}>
+          <label for="${checkboxId}" class="breakpoint-location">${breakpoint.location}:${breakpoint.line}</label>
         </div>
       `;
     });
@@ -344,129 +369,102 @@ class DebuggerInterface {
     this.breakpointsList.innerHTML = html;
   }
 
+  updateCodeEditorBreakpoints() {
+    this.renderCodeEditor();
+  }
+
+  // Call Stack Management
   updateCallStack() {
     if (!this.callStackElement) return;
     
-    let html = '';
-    
-    if (this.callStack.length > 0) {
-      this.callStack.forEach((frame, index) => {
-        html += `
-          <div class="stack-frame ${index === 0 ? 'current' : ''}">
-            <div class="frame-function">${frame.function}</div>
-            <div class="frame-location">${frame.location}</div>
-          </div>
-        `;
-      });
-    } else {
-      // Generate call stack from current character state
-      if (this.currentCharacter?.consciousness?.processes) {
-        const runningProcesses = this.currentCharacter.consciousness.processes
-          .filter(p => p.status === 'running')
-          .slice(0, 5);
-        
-        runningProcesses.forEach((process, index) => {
-          html += `
-            <div class="stack-frame ${index === 0 ? 'current' : ''}">
-              <div class="frame-function">${process.name}::execute()</div>
-              <div class="frame-location">consciousness.cpp:${45 + index * 10}</div>
-            </div>
-          `;
-        });
-      }
+    if (this.callStack.length === 0) {
+      this.callStackElement.innerHTML = '<div class="empty-state">No call stack available</div>';
+      return;
     }
     
-    if (html === '') {
-      html = '<div class="no-stack">No active stack frames</div>';
-    }
-    
-    this.callStackElement.innerHTML = html;
+    this.callStackElement.innerHTML = this.callStack.map(frame => `
+      <div class="call-stack-frame">
+        <div class="frame-function">${frame.function}</div>
+        <div class="frame-location">${frame.location}</div>
+      </div>
+    `).join('');
   }
 
+  // Variables View Management
   updateVariablesView() {
-    if (!this.variablesView || !this.currentCharacter) return;
+    if (!this.variablesView) return;
     
-    const consciousness = this.currentCharacter.consciousness;
-    let html = '';
+    const variableGroups = [
+      { name: 'Memory', data: this.variables.memory, icon: '🧠' },
+      { name: 'Resources', data: this.variables.resources, icon: '⚡' },
+      { name: 'Processes', data: this.variables.processes, icon: '⚙️' }
+    ];
     
-    // Memory variables
-    if (consciousness.memory) {
-      html += `
-        <div class="variable-group">
-          <div class="variable-group-header expanded">Memory</div>
-          <div class="variable-list">
-      `;
-      
-      Object.entries(consciousness.memory).forEach(([key, value]) => {
-        const type = typeof value;
-        html += `
-          <div class="variable-item">
-            <span class="variable-name">${key}</span>
-            <span class="variable-value">${JSON.stringify(value)}</span>
-            <span class="variable-type">${type}</span>
+    this.variablesView.innerHTML = variableGroups.map(group => {
+      if (!group.data || (Array.isArray(group.data) && group.data.length === 0) ||
+          (typeof group.data === 'object' && Object.keys(group.data).length === 0)) {
+        return `
+          <div class="variable-group">
+            <div class="variable-group-header">${group.icon} ${group.name}</div>
+            <div class="variable-group-content">
+              <div class="empty-state">No ${group.name.toLowerCase()} data</div>
+            </div>
           </div>
         `;
-      });
+      }
       
-      html += `</div></div>`;
-    }
-    
-    // Resources variables
-    if (consciousness.resources) {
-      html += `
+      return `
         <div class="variable-group">
-          <div class="variable-group-header expanded">Resources</div>
-          <div class="variable-list">
-      `;
-      
-      Object.entries(consciousness.resources).forEach(([key, value]) => {
-        const displayValue = typeof value === 'object' ? `${value.current}/${value.max}` : value;
-        html += `
-          <div class="variable-item">
-            <span class="variable-name">${key}</span>
-            <span class="variable-value">${displayValue}</span>
-            <span class="variable-type">resource</span>
+          <div class="variable-group-header expanded">${group.icon} ${group.name}</div>
+          <div class="variable-group-content">
+            ${this.renderVariableData(group.data)}
           </div>
-        `;
-      });
-      
-      html += `</div></div>`;
-    }
-    
-    // Process variables
-    if (consciousness.processes) {
-      html += `
-        <div class="variable-group">
-          <div class="variable-group-header">Processes</div>
-          <div class="variable-list" style="display: none;">
+        </div>
       `;
-      
-      consciousness.processes.forEach((process) => {
-        html += `
-          <div class="variable-item">
-            <span class="variable-name">${process.name}</span>
-            <span class="variable-value">${process.status}</span>
-            <span class="variable-type">process</span>
-          </div>
-        `;
-      });
-      
-      html += `</div></div>`;
-    }
-    
-    this.variablesView.innerHTML = html || '<div class="no-variables">No variables available</div>';
+    }).join('');
   }
 
-  updateExecutionState(newState = null) {
+  renderVariableData(data) {
+    if (Array.isArray(data)) {
+      return data.map((item, index) => `
+        <div class="variable-item">
+          <span class="variable-name">[${index}]</span>
+          <span class="variable-value">${this.formatVariableValue(item)}</span>
+        </div>
+      `).join('');
+    } else if (typeof data === 'object') {
+      return Object.entries(data).map(([key, value]) => `
+        <div class="variable-item">
+          <span class="variable-name">${key}</span>
+          <span class="variable-value">${this.formatVariableValue(value)}</span>
+        </div>
+      `).join('');
+    } else {
+      return `<div class="variable-item">
+        <span class="variable-value">${this.formatVariableValue(data)}</span>
+      </div>`;
+    }
+  }
+
+  formatVariableValue(value) {
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+    if (typeof value === 'string') return `"${value}"`;
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+  }
+
+  // Execution State Management
+  updateExecutionState(newState) {
     if (newState) {
       this.executionState = newState;
     }
     
-    // Update button states
     const isRunning = this.executionState === 'running';
     const isPaused = this.executionState === 'paused';
     const isStopped = this.executionState === 'stopped';
     
+    // Update button states
     if (this.stepIntoBtn) this.stepIntoBtn.disabled = isRunning;
     if (this.stepOverBtn) this.stepOverBtn.disabled = isRunning;
     if (this.continueBtn) this.continueBtn.disabled = !isPaused;

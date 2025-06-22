@@ -33,7 +33,7 @@ class ConsciousnessControls {
       
       <div class="controls-content" id="controls-content">
         <div class="control-group">
-          <label class="control-label">Character Status</label>
+          <div class="control-label">Character Status</div>
           <div class="status-info">
             <span id="current-character">No character selected</span>
             <span id="update-count" class="update-counter">Updates: 0</span>
@@ -41,7 +41,7 @@ class ConsciousnessControls {
         </div>
 
         <div class="control-group">
-          <label class="control-label">Update Controls</label>
+          <div class="control-label">Update Controls</div>
           <div class="button-group">
             <button id="manual-update-btn" class="control-btn primary" disabled>
               🔄 Manual Update
@@ -53,7 +53,7 @@ class ConsciousnessControls {
         </div>
 
         <div class="control-group">
-          <label class="control-label">
+          <label class="control-label" for="auto-updates-toggle">
             <input type="checkbox" id="auto-updates-toggle" disabled>
             Enable Auto-Updates (3s interval)
           </label>
@@ -64,7 +64,7 @@ class ConsciousnessControls {
         </div>
 
         <div class="control-group debug-section">
-          <label class="control-label">Debug Commands</label>
+          <div class="control-label">Debug Commands</div>
           <div class="button-group">
             <button id="debug-ps-btn" class="control-btn debug" disabled>ps</button>
             <button id="debug-top-btn" class="control-btn debug" disabled>top</button>
@@ -73,7 +73,7 @@ class ConsciousnessControls {
         </div>
 
         <div class="control-group intervention-section">
-          <label class="control-label">Quick Interventions</label>
+          <div class="control-label">Quick Interventions</div>
           <div class="button-group">
             <button id="optimize-grief-btn" class="control-btn intervention" disabled>
               Optimize Grief Manager
@@ -85,7 +85,7 @@ class ConsciousnessControls {
         </div>
 
         <div class="control-group status-section">
-          <label class="control-label">Connection Status</label>
+          <div class="control-label">Connection Status</div>
           <div class="status-indicators">
             <span id="socket-status" class="status-indicator">⚫ Disconnected</span>
             <span id="monitoring-status" class="status-indicator">⚫ Not monitoring</span>
