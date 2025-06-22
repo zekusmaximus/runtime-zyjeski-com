@@ -1,9 +1,10 @@
-// Main Application Controller
+// Fixed Main Application Controller - Prevent duplicate character loading
 class App {
   constructor() {
     this.currentSection = 'home';
     this.isConnected = false;
     this.currentCharacter = null;
+    this.isLoadingCharacter = false; // ADDED: Prevent concurrent loads
     
     this.init();
   }
@@ -34,13 +35,21 @@ class App {
     document.querySelectorAll('.nav-link').forEach(link => {
       link.classList.remove('active');
     });
-    document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+    
+    const targetLink = document.querySelector(`[data-section="${sectionId}"]`);
+    if (targetLink) {
+      targetLink.classList.add('active');
+    }
 
     // Update sections
     document.querySelectorAll('.section').forEach(section => {
       section.classList.remove('active');
     });
-    document.getElementById(sectionId).classList.add('active');
+    
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+      targetSection.classList.add('active');
+    }
 
     this.currentSection = sectionId;
 
@@ -56,7 +65,7 @@ class App {
         }
         break;
       case 'monitor':
-        if (window.monitor) {
+        if (window.monitor && this.currentCharacter) {
           window.monitor.startMonitoring();
         }
         break;
@@ -70,7 +79,14 @@ class App {
 
   setupSocketConnection() {
     if (window.socketClient) {
-      window.socketClient.connect();
+      // Subscribe to connection events
+      window.socketClient.on('connected', (data) => {
+        this.updateConnectionStatus(true);
+      });
+
+      window.socketClient.on('disconnected', (data) => {
+        this.updateConnectionStatus(false);
+      });
     }
   }
 
@@ -91,11 +107,18 @@ class App {
       });
     }
 
-    // Character selection
+    // FIXED: Character selection with duplicate prevention
     document.addEventListener('click', (e) => {
       if (e.target.closest('.character-card')) {
         const characterCard = e.target.closest('.character-card');
         const characterId = characterCard.dataset.characterId;
+        
+        // Prevent double-clicks and concurrent loads
+        if (this.isLoadingCharacter) {
+          console.log('Character loading in progress, ignoring duplicate request');
+          return;
+        }
+        
         this.selectCharacter(characterId);
       }
     });
@@ -125,27 +148,49 @@ class App {
     `).join('');
   }
 
+  // FIXED: Prevent duplicate character loading
   async selectCharacter(characterId) {
+    // Prevent concurrent character loads
+    if (this.isLoadingCharacter) {
+      console.log(`Character loading already in progress, skipping ${characterId}`);
+      return;
+    }
+
+    // If the same character is already loaded, don't reload
+    if (this.currentCharacter && this.currentCharacter.id === characterId) {
+      console.log(`Character ${characterId} already loaded`);
+      this.updateCharacterSelection(characterId);
+      return;
+    }
+
     try {
+      this.isLoadingCharacter = true;
       this.showLoading('Loading character consciousness...');
       
       const response = await fetch(`/api/character/${characterId}`);
+      if (!response.ok) {
+        throw new Error(`Failed to load character: ${response.statusText}`);
+      }
+      
       const character = await response.json();
       
       this.currentCharacter = character;
       this.updateCharacterSelection(characterId);
       
-      // Initialize consciousness monitoring
+      // FIXED: Only initialize consciousness if not already done
       if (window.consciousness) {
         window.consciousness.loadCharacter(character);
       }
       
       this.hideLoading();
       this.showSuccess(`Loaded ${character.name}'s consciousness profile`);
+      
     } catch (error) {
       console.error('Failed to load character:', error);
       this.hideLoading();
       this.showError('Failed to load character consciousness');
+    } finally {
+      this.isLoadingCharacter = false;
     }
   }
 
@@ -174,40 +219,61 @@ class App {
     }
   }
 
+  // FIXED: Prevent duplicate loading in demo
   viewDemo() {
-    // Load Alexander Kane as demo character
-    this.selectCharacter('alexander-kane');
-    
-    setTimeout(() => {
+    // Check if Alexander Kane is already loaded
+    if (this.currentCharacter && this.currentCharacter.id === 'alexander-kane') {
+      console.log('Alexander Kane already loaded, navigating to monitor');
       this.navigateToSection('monitor');
-    }, 1000);
+      return;
+    }
+
+    // Load Alexander Kane as demo character
+    this.selectCharacter('alexander-kane').then(() => {
+      setTimeout(() => {
+        this.navigateToSection('monitor');
+      }, 1000);
+    }).catch((error) => {
+      console.error('Failed to load demo character:', error);
+      this.showError('Failed to load demo character');
+    });
   }
 
   updateConnectionStatus(connected) {
     this.isConnected = connected;
     const statusElement = document.getElementById('connectionStatus');
+    if (!statusElement) return;
+    
     const statusDot = statusElement.querySelector('.status-dot');
     const statusText = statusElement.querySelector('.status-text');
     
-    if (connected) {
-      statusDot.classList.add('connected');
-      statusText.textContent = 'Connected';
-    } else {
-      statusDot.classList.remove('connected');
-      statusText.textContent = 'Disconnected';
+    if (statusDot && statusText) {
+      if (connected) {
+        statusDot.classList.add('connected');
+        statusText.textContent = 'Connected';
+      } else {
+        statusDot.classList.remove('connected');
+        statusText.textContent = 'Disconnected';
+      }
     }
   }
 
   showLoading(message = 'Loading...') {
     const overlay = document.getElementById('loadingOverlay');
+    if (!overlay) return;
+    
     const text = overlay.querySelector('.loading-text');
-    text.textContent = message;
+    if (text) {
+      text.textContent = message;
+    }
     overlay.classList.add('active');
   }
 
   hideLoading() {
     const overlay = document.getElementById('loadingOverlay');
-    overlay.classList.remove('active');
+    if (overlay) {
+      overlay.classList.remove('active');
+    }
   }
 
   showError(message) {
@@ -229,71 +295,50 @@ class App {
       </div>
     `;
 
-    // Add to page
+    // Add to DOM
     document.body.appendChild(notification);
 
-    // Add styles if not already present
+    // Add animation styles if not already present
     if (!document.querySelector('#notification-styles')) {
       const styles = document.createElement('style');
       styles.id = 'notification-styles';
       styles.textContent = `
         .notification {
           position: fixed;
-          top: 80px;
+          top: 20px;
           right: 20px;
-          background-color: var(--bg-secondary);
-          border: 1px solid var(--border-color);
+          min-width: 300px;
+          max-width: 500px;
+          padding: 16px;
           border-radius: 8px;
-          padding: 1rem;
-          max-width: 400px;
+          color: white;
           z-index: 10000;
-          animation: slideInRight 0.3s ease;
-          box-shadow: 0 4px 12px var(--shadow);
+          animation: slideIn 0.3s ease-out;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
         
-        .notification-error {
-          border-left: 4px solid var(--accent-red);
-        }
-        
-        .notification-success {
-          border-left: 4px solid var(--accent-green);
-        }
-        
-        .notification-info {
-          border-left: 4px solid var(--accent-blue);
-        }
+        .notification-info { background-color: #3498db; }
+        .notification-success { background-color: #27ae60; }
+        .notification-error { background-color: #e74c3c; }
+        .notification-warning { background-color: #f39c12; }
         
         .notification-content {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 1rem;
-        }
-        
-        .notification-message {
-          color: var(--text-primary);
-          font-size: 0.9rem;
         }
         
         .notification-close {
           background: none;
           border: none;
-          color: var(--text-muted);
-          font-size: 1.2rem;
+          color: white;
+          font-size: 18px;
           cursor: pointer;
           padding: 0;
-          width: 20px;
-          height: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          margin-left: 12px;
         }
         
-        .notification-close:hover {
-          color: var(--text-primary);
-        }
-        
-        @keyframes slideInRight {
+        @keyframes slideIn {
           from {
             transform: translateX(100%);
             opacity: 0;
@@ -316,9 +361,11 @@ class App {
 
     // Close button functionality
     const closeBtn = notification.querySelector('.notification-close');
-    closeBtn.addEventListener('click', () => {
-      notification.remove();
-    });
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        notification.remove();
+      });
+    }
   }
 
   // API helper methods
@@ -359,6 +406,16 @@ class App {
   formatTimestamp(timestamp) {
     return new Date(timestamp).toLocaleTimeString();
   }
+
+  // Debug helper
+  getCurrentState() {
+    return {
+      currentSection: this.currentSection,
+      isConnected: this.isConnected,
+      currentCharacter: this.currentCharacter,
+      isLoadingCharacter: this.isLoadingCharacter
+    };
+  }
 }
 
 // Initialize application when DOM is loaded
@@ -381,4 +438,3 @@ window.addEventListener('unhandledrejection', (event) => {
     window.app.showError('An unexpected error occurred');
   }
 });
-

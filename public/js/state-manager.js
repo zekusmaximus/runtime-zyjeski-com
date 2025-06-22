@@ -1,305 +1,257 @@
-// Global State Manager
+// Fixed State Manager - Add missing methods and null checks
 class StateManager {
   constructor() {
     this.state = {
       currentCharacter: null,
       consciousnessState: null,
+      processes: [],
+      resources: {},
+      errors: [],
+      memory: null,
+      threads: [],
       debuggingSession: null,
       monitoringActive: false,
-      connectionStatus: 'disconnected',
       terminalHistory: [],
-      breakpoints: [],
-      callStack: [],
-      variables: {},
-      errors: [],
-      processes: [],
-      resources: {}
+      currentTerminalPath: '/',
+      interventions: []
     };
     
-    this.listeners = new Map();
-    this.init();
+    this.subscribers = {};
   }
 
-  init() {
-    // Initialize state from localStorage if available
-    this.loadPersistedState();
-    
-    // Set up periodic state persistence
-    setInterval(() => {
-      this.persistState();
-    }, 5000);
+  // Core state methods
+  updateState(key, value) {
+    const oldValue = this.state[key];
+    this.state[key] = value;
+    this.notifySubscribers(key, value, oldValue);
   }
 
-  // State getters
+  subscribe(key, callback) {
+    if (!this.subscribers[key]) {
+      this.subscribers[key] = [];
+    }
+    this.subscribers[key].push(callback);
+  }
+
+  notifySubscribers(key, newValue, oldValue) {
+    if (this.subscribers[key]) {
+      this.subscribers[key].forEach(callback => {
+        try {
+          callback(newValue, oldValue);
+        } catch (error) {
+          console.error(`Error in state subscriber for ${key}:`, error);
+        }
+      });
+    }
+  }
+
+  // Character management
   getCurrentCharacter() {
     return this.state.currentCharacter;
   }
 
-  getConsciousnessState() {
-    return this.state.consciousnessState;
-  }
-
-  getDebuggingSession() {
-    return this.state.debuggingSession;
-  }
-
-  isMonitoringActive() {
-    return this.state.monitoringActive;
-  }
-
-  getConnectionStatus() {
-    return this.state.connectionStatus;
-  }
-
-  getTerminalHistory() {
-    return this.state.terminalHistory;
-  }
-
-  getBreakpoints() {
-    return this.state.breakpoints;
-  }
-
-  getCallStack() {
-    return this.state.callStack;
-  }
-
-  getVariables() {
-    return this.state.variables;
-  }
-
-  getErrors() {
-    return this.state.errors;
-  }
-
-  getProcesses() {
-    return this.state.processes;
-  }
-
-  getResources() {
-    return this.state.resources;
-  }
-
-  // State setters
   setCurrentCharacter(character) {
     this.updateState('currentCharacter', character);
+  }
+
+  // Consciousness state management
+  getConsciousnessState() {
+    return this.state.consciousnessState;
   }
 
   setConsciousnessState(state) {
     this.updateState('consciousnessState', state);
   }
 
+  // Process management
+  getProcesses() {
+    return this.state.processes;
+  }
+
+  setProcesses(processes) {
+    this.updateState('processes', Array.isArray(processes) ? processes : []);
+  }
+
+  // Resource management
+  getResources() {
+    return this.state.resources;
+  }
+
+  setResources(resources) {
+    this.updateState('resources', resources || {});
+  }
+
+  // ERROR MANAGEMENT - MISSING METHODS
+  getErrors() {
+    return this.state.errors;
+  }
+
+  setErrors(errors) {
+    this.updateState('errors', Array.isArray(errors) ? errors : []);
+  }
+
+  addError(error) {
+    const currentErrors = this.getErrors();
+    const newErrors = [...currentErrors, {
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      ...error
+    }];
+    this.setErrors(newErrors);
+  }
+
+  clearErrors() {
+    this.setErrors([]);
+  }
+
+  // Memory management
+  getMemory() {
+    return this.state.memory;
+  }
+
+  setMemory(memory) {
+    this.updateState('memory', memory);
+  }
+
+  // Thread management
+  getThreads() {
+    return this.state.threads;
+  }
+
+  setThreads(threads) {
+    this.updateState('threads', Array.isArray(threads) ? threads : []);
+  }
+
+  // Session management
+  getDebuggingSession() {
+    return this.state.debuggingSession;
+  }
+
   setDebuggingSession(session) {
     this.updateState('debuggingSession', session);
   }
 
-  setMonitoringActive(active) {
-    this.updateState('monitoringActive', active);
+  // Monitoring management
+  getMonitoringActive() {
+    return this.state.monitoringActive;
   }
 
-  setConnectionStatus(status) {
-    this.updateState('connectionStatus', status);
+  setMonitoringActive(active) {
+    this.updateState('monitoringActive', Boolean(active));
+  }
+
+  // Terminal management
+  getTerminalHistory() {
+    return this.state.terminalHistory;
+  }
+
+  setTerminalHistory(history) {
+    this.updateState('terminalHistory', Array.isArray(history) ? history : []);
   }
 
   addTerminalEntry(entry) {
-    const history = [...this.state.terminalHistory, entry];
-    // Keep only last 1000 entries
-    if (history.length > 1000) {
-      history.splice(0, history.length - 1000);
-    }
-    this.updateState('terminalHistory', history);
+    const currentHistory = this.getTerminalHistory();
+    this.setTerminalHistory([...currentHistory, entry]);
   }
 
-  clearTerminalHistory() {
-    this.updateState('terminalHistory', []);
+  getCurrentTerminalPath() {
+    return this.state.currentTerminalPath;
   }
 
-  addBreakpoint(breakpoint) {
-    const breakpoints = [...this.state.breakpoints, breakpoint];
-    this.updateState('breakpoints', breakpoints);
+  setCurrentTerminalPath(path) {
+    this.updateState('currentTerminalPath', path || '/');
   }
 
-  removeBreakpoint(id) {
-    const breakpoints = this.state.breakpoints.filter(bp => bp.id !== id);
-    this.updateState('breakpoints', breakpoints);
+  // Intervention management
+  getInterventions() {
+    return this.state.interventions;
   }
 
-  toggleBreakpoint(id) {
-    const breakpoints = this.state.breakpoints.map(bp => 
-      bp.id === id ? { ...bp, enabled: !bp.enabled } : bp
-    );
-    this.updateState('breakpoints', breakpoints);
+  setInterventions(interventions) {
+    this.updateState('interventions', Array.isArray(interventions) ? interventions : []);
   }
 
-  setCallStack(callStack) {
-    this.updateState('callStack', callStack);
-  }
-
-  setVariables(variables) {
-    this.updateState('variables', variables);
-  }
-
-  addError(error) {
-    const errors = [error, ...this.state.errors];
-    // Keep only last 100 errors
-    if (errors.length > 100) {
-      errors.splice(100);
-    }
-    this.updateState('errors', errors);
-  }
-
-  clearErrors() {
-    this.updateState('errors', []);
-  }
-
-  setProcesses(processes) {
-    this.updateState('processes', processes);
-  }
-
-  setResources(resources) {
-    this.updateState('resources', resources);
-  }
-
-  // Generic state update method
-  updateState(key, value) {
-    const oldValue = this.state[key];
-    this.state[key] = value;
-    
-    // Notify listeners
-    this.notifyListeners(key, value, oldValue);
-  }
-
-  // Event system
-  subscribe(key, callback) {
-    if (!this.listeners.has(key)) {
-      this.listeners.set(key, new Set());
-    }
-    this.listeners.get(key).add(callback);
-    
-    // Return unsubscribe function
-    return () => {
-      const keyListeners = this.listeners.get(key);
-      if (keyListeners) {
-        keyListeners.delete(callback);
-      }
-    };
-  }
-
-  notifyListeners(key, newValue, oldValue) {
-    const keyListeners = this.listeners.get(key);
-    if (keyListeners) {
-      keyListeners.forEach(callback => {
-        try {
-          callback(newValue, oldValue);
-        } catch (error) {
-          console.error('Error in state listener:', error);
-        }
-      });
-    }
-  }
-
-  // Persistence
-  persistState() {
-    try {
-      const persistableState = {
-        currentCharacter: this.state.currentCharacter,
-        terminalHistory: this.state.terminalHistory.slice(-100), // Only persist last 100 entries
-        breakpoints: this.state.breakpoints,
-        errors: this.state.errors.slice(-50) // Only persist last 50 errors
-      };
-      
-      localStorage.setItem('runtime-zyjeski-state', JSON.stringify(persistableState));
-    } catch (error) {
-      console.warn('Failed to persist state:', error);
-    }
-  }
-
-  loadPersistedState() {
-    try {
-      const persistedState = localStorage.getItem('runtime-zyjeski-state');
-      if (persistedState) {
-        const parsed = JSON.parse(persistedState);
-        
-        // Restore persisted state
-        Object.keys(parsed).forEach(key => {
-          if (this.state.hasOwnProperty(key)) {
-            this.state[key] = parsed[key];
-          }
-        });
-      }
-    } catch (error) {
-      console.warn('Failed to load persisted state:', error);
-    }
-  }
-
-  // Utility methods
-  reset() {
-    this.state = {
-      currentCharacter: null,
-      consciousnessState: null,
-      debuggingSession: null,
-      monitoringActive: false,
-      connectionStatus: 'disconnected',
-      terminalHistory: [],
-      breakpoints: [],
-      callStack: [],
-      variables: {},
-      errors: [],
-      processes: [],
-      resources: {}
-    };
-    
-    // Clear persisted state
-    localStorage.removeItem('runtime-zyjeski-state');
-    
-    // Notify all listeners of reset
-    this.listeners.forEach((callbacks, key) => {
-      callbacks.forEach(callback => {
-        try {
-          callback(this.state[key], null);
-        } catch (error) {
-          console.error('Error in reset listener:', error);
-        }
-      });
-    });
-  }
-
-  // Debug methods
-  getFullState() {
-    return { ...this.state };
-  }
-
-  logState() {
-    console.log('Current State:', this.getFullState());
+  addIntervention(intervention) {
+    const currentInterventions = this.getInterventions();
+    this.setInterventions([...currentInterventions, intervention]);
   }
 
   // Character-specific state management
   loadCharacterState(character) {
-    this.setCurrentCharacter(character);
-    this.setConsciousnessState(character.consciousness);
-    this.setProcesses(character.consciousness.processes || []);
-    this.setResources(character.consciousness.resources || {});
-    this.setErrors(character.consciousness.system_errors || []);
+    if (!character) {
+      console.error('Cannot load character state: character is null or undefined');
+      return;
+    }
+
+    try {
+      this.setCurrentCharacter(character);
+      
+      // FIXED: Add null checks and default values
+      const consciousness = character.consciousness || {};
+      
+      this.setConsciousnessState(consciousness);
+      this.setProcesses(consciousness.processes || []);
+      this.setResources(consciousness.resources || {});
+      this.setErrors(consciousness.system_errors || []);
+      this.setMemory(consciousness.memory || null);
+      this.setThreads(consciousness.threads || []);
+      
+      console.log('Character state loaded successfully:', character.name);
+    } catch (error) {
+      console.error('Failed to load character state:', error);
+      this.addError({
+        type: 'character_load_error',
+        message: `Failed to load character: ${error.message}`,
+        character_id: character?.id
+      });
+    }
   }
 
+  // FIXED: Add comprehensive null checks to updateConsciousnessData
   updateConsciousnessData(data) {
-    if (data.processes) {
-      this.setProcesses(data.processes);
+    if (!data) {
+      console.warn('Received null/undefined consciousness data');
+      return;
     }
-    if (data.resources) {
-      this.setResources(data.resources);
-    }
-    if (data.system_errors) {
-      this.setErrors(data.system_errors);
-    }
-    if (data.memory) {
-      // Update consciousness state with new memory data
-      const currentState = this.getConsciousnessState();
-      if (currentState) {
-        this.setConsciousnessState({
-          ...currentState,
-          memory: data.memory
-        });
+
+    try {
+      // Check data structure and provide defaults
+      if (data.processes !== undefined) {
+        this.setProcesses(data.processes);
       }
+      
+      if (data.resources !== undefined) {
+        this.setResources(data.resources);
+      }
+      
+      if (data.system_errors !== undefined) {
+        this.setErrors(data.system_errors);
+      }
+      
+      if (data.memory !== undefined) {
+        this.setMemory(data.memory);
+        
+        // Update consciousness state with new memory data
+        const currentState = this.getConsciousnessState();
+        if (currentState) {
+          this.setConsciousnessState({
+            ...currentState,
+            memory: data.memory
+          });
+        }
+      }
+      
+      if (data.threads !== undefined) {
+        this.setThreads(data.threads);
+      }
+
+    } catch (error) {
+      console.error('Error updating consciousness data:', error);
+      this.addError({
+        type: 'consciousness_update_error',
+        message: `Failed to update consciousness data: ${error.message}`,
+        data_received: data
+      });
     }
   }
 
@@ -334,6 +286,34 @@ class StateManager {
   stopMonitoring() {
     this.setMonitoringActive(false);
   }
+
+  // Debug helpers
+  getFullState() {
+    return { ...this.state };
+  }
+
+  logState() {
+    console.log('Current State:', this.getFullState());
+  }
+
+  // State validation
+  validateState() {
+    const issues = [];
+    
+    if (this.state.currentCharacter && !this.state.consciousnessState) {
+      issues.push('Character loaded but consciousness state missing');
+    }
+    
+    if (!Array.isArray(this.state.processes)) {
+      issues.push('Processes state is not an array');
+    }
+    
+    if (typeof this.state.resources !== 'object') {
+      issues.push('Resources state is not an object');
+    }
+    
+    return issues;
+  }
 }
 
 // Create global state manager instance
@@ -343,4 +323,3 @@ window.stateManager = new StateManager();
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = StateManager;
 }
-
