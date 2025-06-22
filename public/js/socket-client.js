@@ -100,6 +100,22 @@ class SocketClient {
       this.notifyHandlers('auto-updates-toggled', data);
     });
 
+    // ADDED: Additional events that existing components expect
+    this.socket.on('debug-session-started', (data) => {
+      console.log('Debug session started:', data);
+      this.notifyHandlers('debug-session-started', data);
+    });
+
+    this.socket.on('breakpoint-triggered', (data) => {
+      console.log('Breakpoint triggered:', data);
+      this.notifyHandlers('breakpoint-triggered', data);
+    });
+
+    this.socket.on('system-message', (data) => {
+      console.log('System message:', data);
+      this.notifyHandlers('system-message', data);
+    });
+
     this.socket.on('error', (error) => {
       console.error('Socket error:', error);
       this.notifyHandlers('error', error);
@@ -142,14 +158,16 @@ class SocketClient {
         return;
       }
 
-      // Notify other components
-      this.notifyHandlers('consciousness-update', {
-        characterId: data.characterId,
-        state: stateData,
-        timestamp: data.timestamp,
-        type: data.type,
-        reason: data.reason
-      });
+     // Notify other components with compatibility wrapper
+this.notifyHandlers('consciousness-update', {
+  characterId: data.characterId,
+  state: {
+    consciousness: stateData  // Wrap for backward compatibility
+  },
+  timestamp: data.timestamp,
+  type: data.type,
+  reason: data.reason
+});
 
       console.log(`✅ Consciousness update processed: ${data.type} (${data.reason || 'unknown'})`);
 
@@ -198,7 +216,7 @@ class SocketClient {
     console.log(`User interaction recorded: ${action}`);
   }
 
-  // Character monitoring
+  // Character monitoring - UPDATED: Compatibility with existing components
   startMonitoring(characterId) {
     if (!this.isConnected) {
       console.error('Socket not connected');
@@ -223,6 +241,28 @@ class SocketClient {
     
     this.socket.emit('stop-monitoring', { characterId });
     return true;
+  }
+
+  // ADDED: Compatibility method for existing components
+  emit(event, data) {
+    if (!this.isConnected) {
+      console.error('Socket not connected');
+      return false;
+    }
+
+    this.recordUserInteraction(`emit-${event}`);
+    this.socket.emit(event, data);
+    return true;
+  }
+
+  // ADDED: Send debug command (compatibility method)
+  sendDebugCommand(characterId, command, args = {}) {
+    return this.executeDebugCommand(characterId, command, args);
+  }
+
+  // ADDED: Send player intervention (compatibility method)  
+  sendPlayerIntervention(characterId, intervention) {
+    return this.applyPlayerIntervention(characterId, intervention);
   }
 
   // UPDATED: Debug commands trigger consciousness updates
@@ -326,6 +366,16 @@ class SocketClient {
     if (this.eventHandlers.has(event)) {
       this.eventHandlers.get(event).delete(callback);
     }
+  }
+
+  // ADDED: Compatibility layer for existing components using .on()
+  on(event, callback) {
+    return this.addHandler(event, callback);
+  }
+
+  // ADDED: Compatibility layer for existing components using .off()
+  off(event, callback) {
+    return this.removeHandler(event, callback);
   }
 
   notifyHandlers(event, data) {
