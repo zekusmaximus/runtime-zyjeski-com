@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="/css/debug.css">
     <link rel="stylesheet" href="/css/enhanced.css">
     <link rel="stylesheet" href="/css/context-menu.css">
+    <link rel="stylesheet" href="css/help.css">
+    <link rel="stylesheet" href="css/help.css">
+    <link rel="stylesheet" href="css/intervention.css">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -58,7 +61,9 @@
                     </p>
                     <div class="hero-actions">
                         <button class="btn btn-primary" id="startDebugging">Start Debugging</button>
-                        <button class="btn btn-secondary" id="viewDemo">View Demo</button>
+                        <button class="btn btn-primary" onclick="window.onboardingSystem?.restart()">
+                            🧠 Start Tutorial
+                        </button>
                     </div>
                 </div>
                 <div class="hero-visual">
@@ -257,6 +262,7 @@
     <script src="/socket.io/socket.io.js"></script>
     
     <!-- JavaScript Modules -->
+    <script src="js/onboarding.js"></script>
     <script src="/js/consciousness-controls.js"></script>
     <script src="/js/state-manager.js"></script>
     <script src="/js/socket-client.js"></script>
@@ -265,6 +271,7 @@
     <script src="/js/monitor.js"></script>
     <script src="/js/debugger.js"></script>
     <script src="/js/app.js"></script>
+    <script src="js/intervention-system.js"></script>
 </body>
 </html>
 

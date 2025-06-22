@@ -1,10 +1,11 @@
-// Consciousness Control Panel - User controls for consciousness updates
+// Enhanced Consciousness Control Panel - Fixed responsive design and minimized start state
 class ConsciousnessControls {
   constructor() {
     this.currentCharacter = null;
     this.autoUpdatesEnabled = false;
     this.lastUpdateTime = null;
     this.updateCount = 0;
+    this.isMinimized = true; // Start minimized
     
     this.init();
   }
@@ -23,12 +24,12 @@ class ConsciousnessControls {
 
     const controlPanel = document.createElement('div');
     controlPanel.id = 'consciousness-controls';
-    controlPanel.className = 'consciousness-controls-panel';
+    controlPanel.className = 'consciousness-controls-panel minimized';
     
     controlPanel.innerHTML = `
       <div class="controls-header">
         <h3>Consciousness Controls</h3>
-        <button id="controls-toggle" class="toggle-btn" title="Toggle controls panel">−</button>
+        <button id="controls-toggle" class="toggle-btn" title="Toggle controls panel">+</button>
       </div>
       
       <div class="controls-content" id="controls-content">
@@ -113,7 +114,7 @@ class ConsciousnessControls {
         position: fixed;
         top: 20px;
         right: 20px;
-        width: 320px;
+        width: 280px;
         background: #1e1e1e;
         border: 1px solid #3c3c3c;
         border-radius: 8px;
@@ -124,21 +125,32 @@ class ConsciousnessControls {
         z-index: 10000;
         max-height: 90vh;
         overflow-y: auto;
+        transition: all 0.3s ease;
+      }
+
+      /* Minimized state */
+      .consciousness-controls-panel.minimized {
+        width: 180px;
+      }
+
+      .consciousness-controls-panel.minimized .controls-content {
+        display: none;
       }
 
       .controls-header {
         background: #2d2d30;
-        padding: 12px 16px;
+        padding: 8px 12px;
         border-bottom: 1px solid #3c3c3c;
         display: flex;
         justify-content: space-between;
         align-items: center;
         border-radius: 8px 8px 0 0;
+        cursor: pointer;
       }
 
       .controls-header h3 {
         margin: 0;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
         color: #ffffff;
       }
@@ -147,28 +159,28 @@ class ConsciousnessControls {
         background: none;
         border: none;
         color: #cccccc;
-        font-size: 16px;
+        font-size: 14px;
         cursor: pointer;
-        padding: 4px;
+        padding: 2px 6px;
         border-radius: 4px;
-        transition: background-color 0.2s;
+        transition: all 0.2s;
+        min-width: 20px;
+        text-align: center;
       }
 
       .toggle-btn:hover {
         background: #3c3c3c;
+        color: #ffffff;
       }
 
       .controls-content {
-        padding: 16px;
-      }
-
-      .controls-content.collapsed {
-        display: none;
+        padding: 12px;
+        transition: all 0.3s ease;
       }
 
       .control-group {
-        margin-bottom: 16px;
-        padding-bottom: 12px;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
         border-bottom: 1px solid #2d2d30;
       }
 
@@ -180,15 +192,15 @@ class ConsciousnessControls {
       .control-label {
         display: block;
         font-weight: 600;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         color: #ffffff;
-        font-size: 11px;
+        font-size: 10px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
       }
 
       .control-label input[type="checkbox"] {
-        margin-right: 8px;
+        margin-right: 6px;
       }
 
       .status-info {
@@ -196,9 +208,10 @@ class ConsciousnessControls {
         justify-content: space-between;
         align-items: center;
         background: #252526;
-        padding: 8px 12px;
+        padding: 6px 8px;
         border-radius: 4px;
         font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 10px;
       }
 
       .update-counter {
@@ -209,20 +222,21 @@ class ConsciousnessControls {
       .button-group {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
       }
 
       .control-btn {
-        padding: 8px 12px;
+        padding: 6px 8px;
         border: 1px solid #3c3c3c;
         border-radius: 4px;
         background: #37373d;
         color: #cccccc;
         cursor: pointer;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 500;
         transition: all 0.2s;
-        min-width: 80px;
+        min-width: 60px;
+        text-align: center;
       }
 
       .control-btn:hover:not(:disabled) {
@@ -254,13 +268,14 @@ class ConsciousnessControls {
         background: #4a4a4a;
         border-color: #6a6a6a;
         font-family: 'Consolas', 'Monaco', monospace;
-        min-width: 60px;
+        min-width: 40px;
       }
 
       .control-btn.intervention {
         background: #2d4a2d;
         border-color: #4a7c59;
         color: #a8e6a3;
+        font-size: 9px;
       }
 
       .control-btn.intervention:hover:not(:disabled) {
@@ -270,7 +285,7 @@ class ConsciousnessControls {
       .auto-update-info {
         display: flex;
         justify-content: space-between;
-        font-size: 10px;
+        font-size: 9px;
         color: #999999;
         margin-top: 4px;
       }
@@ -278,11 +293,11 @@ class ConsciousnessControls {
       .status-indicators {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 2px;
       }
 
       .status-indicator {
-        font-size: 11px;
+        font-size: 10px;
         font-family: 'Consolas', 'Monaco', monospace;
       }
 
@@ -305,14 +320,99 @@ class ConsciousnessControls {
       .status-section .control-label {
         color: #ff9800;
       }
+
+      /* Mobile responsive design */
+      @media (max-width: 768px) {
+        .consciousness-controls-panel {
+          top: 10px;
+          right: 10px;
+          width: 160px;
+          font-size: 11px;
+        }
+        
+        .consciousness-controls-panel.minimized {
+          width: 140px;
+        }
+        
+        .controls-header {
+          padding: 6px 8px;
+        }
+        
+        .controls-header h3 {
+          font-size: 11px;
+        }
+        
+        .controls-content {
+          padding: 8px;
+        }
+        
+        .control-btn {
+          padding: 4px 6px;
+          font-size: 9px;
+          min-width: 45px;
+        }
+        
+        .control-btn.intervention {
+          font-size: 8px;
+        }
+        
+        .button-group {
+          gap: 4px;
+        }
+        
+        .status-info {
+          padding: 4px 6px;
+          font-size: 9px;
+        }
+      }
+
+      /* Extra small screens */
+      @media (max-width: 480px) {
+        .consciousness-controls-panel {
+          width: 140px;
+          top: 60px; /* Move below typical mobile nav */
+        }
+        
+        .consciousness-controls-panel.minimized {
+          width: 120px;
+        }
+        
+        .controls-header h3 {
+          font-size: 10px;
+        }
+        
+        .control-btn {
+          min-width: 35px;
+          font-size: 8px;
+          padding: 3px 4px;
+        }
+      }
     `;
 
     document.head.appendChild(styles);
   }
 
+  togglePanel() {
+    const panel = document.getElementById('consciousness-controls');
+    const toggleBtn = document.getElementById('controls-toggle');
+    
+    this.isMinimized = !this.isMinimized;
+    
+    if (this.isMinimized) {
+      panel.classList.add('minimized');
+      toggleBtn.textContent = '+';
+      toggleBtn.title = 'Expand controls panel';
+    } else {
+      panel.classList.remove('minimized');
+      toggleBtn.textContent = '−';
+      toggleBtn.title = 'Minimize controls panel';
+    }
+  }
+
   bindEvents() {
-    // Toggle panel
-    document.getElementById('controls-toggle').addEventListener('click', () => {
+    // Toggle panel - click header or button
+    const header = document.querySelector('.controls-header');
+    header.addEventListener('click', () => {
       this.togglePanel();
     });
 
@@ -346,126 +446,100 @@ class ConsciousnessControls {
 
     // Interventions
     document.getElementById('optimize-grief-btn').addEventListener('click', () => {
-      this.applyIntervention({
-        type: 'process_optimization',
-        target: 'Grief_Manager.exe',
-        parameters: { memory_limit: 500, cpu_limit: 50 }
-      });
+      this.executeIntervention('optimize_grief');
     });
 
     document.getElementById('cleanup-memory-btn').addEventListener('click', () => {
-      this.applyIntervention({
-        type: 'memory_cleanup',
-        parameters: { threshold: 0.8 }
-      });
+      this.executeIntervention('cleanup_memory');
     });
-
-    // Listen for socket events
-    if (window.socketClient) {
-      window.socketClient.addHandler('connected', () => this.updateConnectionStatus());
-      window.socketClient.addHandler('disconnected', () => this.updateConnectionStatus());
-      window.socketClient.addHandler('monitoring-started', (data) => this.onMonitoringStarted(data));
-      window.socketClient.addHandler('monitoring-stopped', (data) => this.onMonitoringStopped(data));
-      window.socketClient.addHandler('consciousness-update', () => this.onConsciousnessUpdate());
-      window.socketClient.addHandler('auto-updates-toggled', (data) => this.onAutoUpdatesToggled(data));
-    }
-
-    // Listen for state manager events
-    if (window.stateManager) {
-      window.stateManager.subscribe('currentCharacter', (character) => {
-        this.onCharacterChanged(character);
-      });
-    }
-  }
-
-  togglePanel() {
-    const content = document.getElementById('controls-content');
-    const toggle = document.getElementById('controls-toggle');
-    
-    if (content.classList.contains('collapsed')) {
-      content.classList.remove('collapsed');
-      toggle.textContent = '−';
-    } else {
-      content.classList.add('collapsed');
-      toggle.textContent = '+';
-    }
   }
 
   triggerManualUpdate() {
-    if (!this.currentCharacter || !window.socketClient) return;
+    if (!this.currentCharacter) return;
     
-    window.socketClient.requestUpdate(this.currentCharacter.id, 'manual-trigger');
-    
-    // Provide user feedback
-    const btn = document.getElementById('manual-update-btn');
-    const originalText = btn.textContent;
-    btn.textContent = '⟳ Updating...';
-    btn.disabled = true;
-    
-    setTimeout(() => {
-      btn.textContent = originalText;
-      btn.disabled = false;
-    }, 1000);
+    try {
+      if (window.socketClient) {
+        window.socketClient.requestConsciousnessUpdate(this.currentCharacter.id);
+        this.updateCount++;
+        this.lastUpdateTime = new Date();
+        this.updateDisplay();
+      }
+    } catch (error) {
+      console.error('Failed to trigger manual update:', error);
+    }
   }
 
   refreshState() {
-    if (!this.currentCharacter || !window.socketClient) return;
+    if (!this.currentCharacter) return;
     
-    window.socketClient.requestUpdate(this.currentCharacter.id, 'state-refresh');
-    
-    // Provide user feedback
-    const btn = document.getElementById('refresh-state-btn');
-    const originalText = btn.textContent;
-    btn.textContent = '⟳ Refreshing...';
-    btn.disabled = true;
-    
-    setTimeout(() => {
-      btn.textContent = originalText;
-      btn.disabled = false;
-    }, 1000);
+    try {
+      if (window.socketClient) {
+        window.socketClient.requestFullStateRefresh(this.currentCharacter.id);
+        this.updateDisplay();
+      }
+    } catch (error) {
+      console.error('Failed to refresh state:', error);
+    }
   }
 
   toggleAutoUpdates(enabled) {
-    if (!this.currentCharacter || !window.socketClient) return;
+    this.autoUpdatesEnabled = enabled;
     
-    window.socketClient.toggleAutoUpdates(this.currentCharacter.id, enabled);
+    if (enabled && this.currentCharacter) {
+      this.startAutoUpdates();
+    } else {
+      this.stopAutoUpdates();
+    }
+    
+    this.updateDisplay();
   }
 
   executeDebugCommand(command) {
-    if (!this.currentCharacter || !window.socketClient) return;
+    if (!this.currentCharacter) return;
     
-    window.socketClient.executeDebugCommand(this.currentCharacter.id, command);
+    try {
+      if (window.terminal) {
+        window.terminal.executeCommand(command);
+      }
+    } catch (error) {
+      console.error('Failed to execute debug command:', error);
+    }
   }
 
-  applyIntervention(intervention) {
-    if (!this.currentCharacter || !window.socketClient) return;
+  executeIntervention(type) {
+    if (!this.currentCharacter) return;
     
-    window.socketClient.applyPlayerIntervention(this.currentCharacter.id, intervention);
+    try {
+      if (window.socketClient) {
+        window.socketClient.sendPlayerIntervention(this.currentCharacter.id, {
+          type: type,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      console.error('Failed to execute intervention:', error);
+    }
   }
 
-  // Event handlers
-  onCharacterChanged(character) {
+  startAutoUpdates() {
+    if (this.autoUpdateInterval) {
+      clearInterval(this.autoUpdateInterval);
+    }
+    
+    this.autoUpdateInterval = setInterval(() => {
+      this.triggerManualUpdate();
+    }, 3000);
+  }
+
+  stopAutoUpdates() {
+    if (this.autoUpdateInterval) {
+      clearInterval(this.autoUpdateInterval);
+      this.autoUpdateInterval = null;
+    }
+  }
+
+  setCurrentCharacter(character) {
     this.currentCharacter = character;
-    this.updateDisplay();
-  }
-
-  onMonitoringStarted(data) {
-    this.updateDisplay();
-  }
-
-  onMonitoringStopped(data) {
-    this.updateDisplay();
-  }
-
-  onConsciousnessUpdate() {
-    this.updateCount++;
-    this.lastUpdateTime = new Date();
-    this.updateDisplay();
-  }
-
-  onAutoUpdatesToggled(data) {
-    this.autoUpdatesEnabled = data.enabled;
-    document.getElementById('auto-updates-toggle').checked = data.enabled;
     this.updateDisplay();
   }
 
@@ -473,57 +547,48 @@ class ConsciousnessControls {
     const socketStatus = document.getElementById('socket-status');
     const monitoringStatus = document.getElementById('monitoring-status');
     
-    if (window.socketClient?.isSocketConnected()) {
-      socketStatus.textContent = '🟢 Connected';
-      socketStatus.className = 'status-indicator connected';
-    } else {
-      socketStatus.textContent = '🔴 Disconnected';
-      socketStatus.className = 'status-indicator';
+    if (socketStatus && window.socketClient) {
+      const isConnected = window.socketClient.isSocketConnected();
+      socketStatus.textContent = isConnected ? '🟢 Connected' : '⚫ Disconnected';
+      socketStatus.classList.toggle('connected', isConnected);
     }
     
-    const monitoringInfo = window.socketClient?.getMonitoringStatus();
-    if (monitoringInfo?.monitoring.length > 0) {
-      monitoringStatus.textContent = `🟦 Monitoring ${monitoringInfo.monitoring[0]}`;
-      monitoringStatus.className = 'status-indicator monitoring';
-    } else {
-      monitoringStatus.textContent = '⚫ Not monitoring';
-      monitoringStatus.className = 'status-indicator';
+    if (monitoringStatus && window.monitor) {
+      const isMonitoring = window.monitor.isMonitoring;
+      monitoringStatus.textContent = isMonitoring ? '🔵 Monitoring' : '⚫ Not monitoring';
+      monitoringStatus.classList.toggle('monitoring', isMonitoring);
     }
   }
 
   updateDisplay() {
-    // Update character info
-    const characterSpan = document.getElementById('current-character');
-    const updateCountSpan = document.getElementById('update-count');
-    const autoUpdateStatus = document.getElementById('auto-update-status');
-    const lastUpdateTime = document.getElementById('last-update-time');
-    
-    if (this.currentCharacter) {
-      characterSpan.textContent = this.currentCharacter.name || this.currentCharacter.id;
-    } else {
-      characterSpan.textContent = 'No character selected';
+    // Update character name
+    const characterElement = document.getElementById('current-character');
+    if (characterElement) {
+      characterElement.textContent = this.currentCharacter ? 
+        this.currentCharacter.name || this.currentCharacter.id : 
+        'No character selected';
     }
     
-    updateCountSpan.textContent = `Updates: ${this.updateCount}`;
+    // Update count
+    const countElement = document.getElementById('update-count');
+    if (countElement) {
+      countElement.textContent = `Updates: ${this.updateCount}`;
+    }
     
     // Update auto-update status
-    if (this.autoUpdatesEnabled) {
-      autoUpdateStatus.textContent = 'Enabled (3s)';
-      autoUpdateStatus.style.color = '#4caf50';
-    } else {
-      autoUpdateStatus.textContent = 'Disabled';
-      autoUpdateStatus.style.color = '#999999';
+    const statusElement = document.getElementById('auto-update-status');
+    const timeElement = document.getElementById('last-update-time');
+    
+    if (statusElement) {
+      statusElement.textContent = this.autoUpdatesEnabled ? 'Enabled' : 'Disabled';
     }
     
-    // Update last update time
-    if (this.lastUpdateTime) {
-      lastUpdateTime.textContent = this.lastUpdateTime.toLocaleTimeString();
-    } else {
-      lastUpdateTime.textContent = 'Never';
+    if (timeElement && this.lastUpdateTime) {
+      timeElement.textContent = this.lastUpdateTime.toLocaleTimeString();
     }
     
-    // Enable/disable controls based on connection and character
-    const hasCharacter = !!this.currentCharacter;
+    // Update button states
+    const hasCharacter = !this.currentCharacter;
     const isConnected = window.socketClient?.isSocketConnected();
     const controlsEnabled = hasCharacter && isConnected;
     

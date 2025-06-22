@@ -99,13 +99,6 @@ class App {
       });
     }
 
-    // View demo button
-    const viewDemoBtn = document.getElementById('viewDemo');
-    if (viewDemoBtn) {
-      viewDemoBtn.addEventListener('click', () => {
-        this.viewDemo();
-      });
-    }
 
     // FIXED: Character selection with duplicate prevention
     document.addEventListener('click', (e) => {
@@ -217,26 +210,6 @@ class App {
     if (window.terminal) {
       window.terminal.startDebuggingSession(this.currentCharacter.id);
     }
-  }
-
-  // FIXED: Prevent duplicate loading in demo
-  viewDemo() {
-    // Check if Alexander Kane is already loaded
-    if (this.currentCharacter && this.currentCharacter.id === 'alexander-kane') {
-      console.log('Alexander Kane already loaded, navigating to monitor');
-      this.navigateToSection('monitor');
-      return;
-    }
-
-    // Load Alexander Kane as demo character
-    this.selectCharacter('alexander-kane').then(() => {
-      setTimeout(() => {
-        this.navigateToSection('monitor');
-      }, 1000);
-    }).catch((error) => {
-      console.error('Failed to load demo character:', error);
-      this.showError('Failed to load demo character');
-    });
   }
 
   updateConnectionStatus(connected) {
