@@ -1,4 +1,4 @@
-// Rate Limited Socket Client - Handles excessive server updates gracefully
+// Event-Driven Socket Client - Only updates on meaningful user interactions
 class SocketClient {
   constructor() {
     this.socket = null;
@@ -8,13 +8,10 @@ class SocketClient {
     this.maxReconnectAttempts = 5;
     this.eventHandlers = new Map();
     
-    // ADDED: Rate limiting for consciousness updates
-    this.updateRateLimit = {
-      lastUpdate: 0,
-      minInterval: 500, // Minimum 500ms between updates
-      pendingUpdate: null,
-      updateQueue: new Map() // Track updates per character
-    };
+    // REMOVED: Rate limiting (no longer needed)
+    // ADDED: Auto-update control
+    this.autoUpdatesEnabled = false;
+    this.lastUserInteraction = Date.now();
     
     this.init();
   }
@@ -58,23 +55,49 @@ class SocketClient {
       this.handleConnectionError(error);
     });
 
-    // UPDATED: Add rate limiting to consciousness updates
+    // UPDATED: Simplified consciousness update handling
     this.socket.on('consciousness-update', (data) => {
       console.log('Consciousness update received:', data);
-      
-      try {
-        this.handleConsciousnessUpdateWithRateLimit(data);
-      } catch (error) {
-        console.error('Error handling consciousness update:', error);
-      }
+      this.handleConsciousnessUpdate(data);
+    });
+
+    this.socket.on('debug-result', (data) => {
+      console.log('Debug command result:', data);
+      this.notifyHandlers('debug-result', data);
+    });
+
+    this.socket.on('debug-command-broadcast', (data) => {
+      console.log('Debug command broadcast:', data);
+      this.notifyHandlers('debug-command-broadcast', data);
     });
 
     this.socket.on('intervention-applied', (data) => {
+      console.log('Intervention applied:', data);
       this.notifyHandlers('intervention-applied', data);
     });
 
     this.socket.on('debug-hook-triggered', (data) => {
+      console.log('Debug hook triggered:', data);
       this.notifyHandlers('debug-hook-triggered', data);
+    });
+
+    this.socket.on('monitoring-started', (data) => {
+      console.log('Monitoring started:', data);
+      this.monitoringCharacters.add(data.characterId);
+      this.notifyHandlers('monitoring-started', data);
+    });
+
+    this.socket.on('monitoring-stopped', (data) => {
+      console.log('Monitoring stopped:', data);
+      this.monitoringCharacters.delete(data.characterId);
+      this.notifyHandlers('monitoring-stopped', data);
+    });
+
+    // ADDED: Auto-update toggle response
+    this.socket.on('auto-updates-toggled', (data) => {
+      console.log('Auto-updates toggled:', data);
+      this.autoUpdatesEnabled = data.enabled;
+      this.notifyHandlers('auto-updates-toggled', data);
     });
 
     this.socket.on('error', (error) => {
@@ -83,64 +106,7 @@ class SocketClient {
     });
   }
 
-  // ADDED: Rate limited consciousness update handler
-  handleConsciousnessUpdateWithRateLimit(data) {
-    if (!data || !data.characterId) {
-      console.warn('Invalid consciousness update data');
-      return;
-    }
-
-    const now = Date.now();
-    const characterId = data.characterId;
-    
-    // Store the latest update for this character
-    this.updateRateLimit.updateQueue.set(characterId, data);
-    
-    // Check if we should process immediately or defer
-    const timeSinceLastUpdate = now - this.updateRateLimit.lastUpdate;
-    
-    if (timeSinceLastUpdate >= this.updateRateLimit.minInterval) {
-      // Process immediately
-      this.processQueuedUpdates();
-    } else {
-      // Schedule processing if not already scheduled
-      if (!this.updateRateLimit.pendingUpdate) {
-        const remainingTime = this.updateRateLimit.minInterval - timeSinceLastUpdate;
-        
-        this.updateRateLimit.pendingUpdate = setTimeout(() => {
-          this.processQueuedUpdates();
-        }, remainingTime);
-      }
-    }
-  }
-
-  // ADDED: Process queued updates (only the latest for each character)
-  processQueuedUpdates() {
-    const now = Date.now();
-    
-    // Clear pending update
-    if (this.updateRateLimit.pendingUpdate) {
-      clearTimeout(this.updateRateLimit.pendingUpdate);
-      this.updateRateLimit.pendingUpdate = null;
-    }
-    
-    // Process the latest update for each character
-    for (const [characterId, data] of this.updateRateLimit.updateQueue) {
-      try {
-        this.handleConsciousnessUpdate(data);
-      } catch (error) {
-        console.error(`Error processing update for ${characterId}:`, error);
-      }
-    }
-    
-    // Clear the queue and update timestamp
-    this.updateRateLimit.updateQueue.clear();
-    this.updateRateLimit.lastUpdate = now;
-    
-    console.log(`🔄 Processed consciousness updates (rate limited)`);
-  }
-
-  // FIXED: Add robust data validation and error handling
+  // SIMPLIFIED: Direct consciousness update handling
   handleConsciousnessUpdate(data) {
     if (!data) {
       console.warn('Received empty consciousness update');
@@ -160,7 +126,7 @@ class SocketClient {
         return;
       }
 
-      // FIXED: Ensure state object exists and has expected structure
+      // Normalize state data
       const stateData = this.normalizeConsciousnessState(data.state);
       
       if (!stateData) {
@@ -168,7 +134,7 @@ class SocketClient {
         return;
       }
 
-      // Update state manager safely
+      // Update state manager
       if (window.stateManager && typeof window.stateManager.updateConsciousnessData === 'function') {
         window.stateManager.updateConsciousnessData(stateData);
       } else {
@@ -181,8 +147,11 @@ class SocketClient {
         characterId: data.characterId,
         state: stateData,
         timestamp: data.timestamp,
-        type: data.type
+        type: data.type,
+        reason: data.reason
       });
+
+      console.log(`✅ Consciousness update processed: ${data.type} (${data.reason || 'unknown'})`);
 
     } catch (error) {
       console.error('Error processing consciousness update:', error);
@@ -190,109 +159,180 @@ class SocketClient {
       // Add error to state manager if available
       if (window.stateManager && typeof window.stateManager.addError === 'function') {
         window.stateManager.addError({
-          type: 'consciousness_update_error',
+          type: 'SOCKET_UPDATE_ERROR',
           message: `Failed to process consciousness update: ${error.message}`,
-          character_id: data.characterId,
-          raw_data: data
+          timestamp: new Date().toISOString()
         });
       }
     }
   }
 
-  // FIXED: Add data validation method
+  // Validate consciousness data structure
   validateConsciousnessData(data) {
-    if (!data || typeof data !== 'object') {
-      return false;
-    }
-
-    // Check required fields
-    if (!data.characterId || typeof data.characterId !== 'string') {
-      console.error('Missing or invalid characterId in consciousness data');
-      return false;
-    }
-
-    if (!data.timestamp) {
-      console.error('Missing timestamp in consciousness data');
-      return false;
-    }
-
-    // State is optional for some update types, but if present should be an object
-    if (data.state && typeof data.state !== 'object') {
-      console.error('Invalid state object in consciousness data');
-      return false;
-    }
-
+    if (!data || typeof data !== 'object') return false;
+    if (!data.characterId || typeof data.characterId !== 'string') return false;
+    if (!data.state || typeof data.state !== 'object') return false;
+    if (!data.timestamp) return false;
+    
     return true;
   }
 
-  // CORRECTED: Based on actual server data structure
+  // Normalize consciousness state to ensure consistent structure
   normalizeConsciousnessState(state) {
-    if (!state || typeof state !== 'object') {
-      return null;
-    }
-
-    // The server sends state directly as consciousness data (no wrapper)
-    // Based on debug output: state has processes, memory, resources directly
-    let consciousnessData = state;
+    if (!state || typeof state !== 'object') return null;
     
-    if (!consciousnessData || typeof consciousnessData !== 'object') {
-      console.warn('No consciousness data found in state');
-      return null;
-    }
-
-    // Validate that this looks like consciousness data
-    if (!consciousnessData.processes && !consciousnessData.memory && !consciousnessData.resources) {
-      console.warn('State does not contain expected consciousness properties');
-      return null;
-    }
-
-    // Ensure all expected properties exist with defaults
     return {
-      processes: Array.isArray(consciousnessData.processes) ? consciousnessData.processes : [],
-      resources: consciousnessData.resources && typeof consciousnessData.resources === 'object' ? consciousnessData.resources : {},
-      system_errors: Array.isArray(consciousnessData.system_errors) ? consciousnessData.system_errors : [],
-      memory: consciousnessData.memory || null,
-      threads: Array.isArray(consciousnessData.threads) ? consciousnessData.threads : []
+      processes: Array.isArray(state.processes) ? state.processes : [],
+      memory: state.memory && typeof state.memory === 'object' ? state.memory : {},
+      threads: Array.isArray(state.threads) ? state.threads : [],
+      system_errors: Array.isArray(state.system_errors) ? state.system_errors : [],
+      resources: state.resources && typeof state.resources === 'object' ? state.resources : {},
+      debug_hooks: Array.isArray(state.debug_hooks) ? state.debug_hooks : [],
+      timestamp: state.timestamp || new Date().toISOString()
     };
   }
 
+  // UPDATED: User interaction tracking
+  recordUserInteraction(action) {
+    this.lastUserInteraction = Date.now();
+    console.log(`User interaction recorded: ${action}`);
+  }
+
+  // Character monitoring
+  startMonitoring(characterId) {
+    if (!this.isConnected) {
+      console.error('Socket not connected');
+      return false;
+    }
+
+    console.log(`Starting monitoring for character: ${characterId}`);
+    this.recordUserInteraction('start-monitoring');
+    
+    this.socket.emit('start-monitoring', { characterId });
+    return true;
+  }
+
+  stopMonitoring(characterId) {
+    if (!this.isConnected) {
+      console.error('Socket not connected');
+      return false;
+    }
+
+    console.log(`Stopping monitoring for character: ${characterId}`);
+    this.recordUserInteraction('stop-monitoring');
+    
+    this.socket.emit('stop-monitoring', { characterId });
+    return true;
+  }
+
+  // UPDATED: Debug commands trigger consciousness updates
+  executeDebugCommand(characterId, command, args = {}) {
+    if (!this.isConnected) {
+      console.error('Socket not connected');
+      return false;
+    }
+
+    console.log(`Executing debug command: ${command} for ${characterId}`);
+    this.recordUserInteraction(`debug-command-${command}`);
+    
+    this.socket.emit('debug-command', {
+      characterId,
+      command,
+      args
+    });
+    
+    return true;
+  }
+
+  // UPDATED: Player interventions trigger consciousness updates
+  applyPlayerIntervention(characterId, intervention) {
+    if (!this.isConnected) {
+      console.error('Socket not connected');
+      return false;
+    }
+
+    console.log(`Applying player intervention for ${characterId}:`, intervention.type);
+    this.recordUserInteraction(`intervention-${intervention.type}`);
+    
+    this.socket.emit('player-intervention', {
+      characterId,
+      intervention
+    });
+    
+    return true;
+  }
+
+  // ADDED: Manual update request
+  requestUpdate(characterId, reason = 'user-request') {
+    if (!this.isConnected) {
+      console.error('Socket not connected');
+      return false;
+    }
+
+    console.log(`Requesting manual update for ${characterId}: ${reason}`);
+    this.recordUserInteraction('manual-update-request');
+    
+    this.socket.emit('request-update', {
+      characterId,
+      reason
+    });
+    
+    return true;
+  }
+
+  // ADDED: Toggle auto-updates
+  toggleAutoUpdates(characterId, enabled) {
+    if (!this.isConnected) {
+      console.error('Socket not connected');
+      return false;
+    }
+
+    console.log(`${enabled ? 'Enabling' : 'Disabling'} auto-updates for ${characterId}`);
+    this.recordUserInteraction('toggle-auto-updates');
+    
+    this.socket.emit('toggle-auto-updates', {
+      characterId,
+      enabled
+    });
+    
+    return true;
+  }
+
+  // Connection management
   handleConnectionError(error) {
     this.reconnectAttempts++;
     
     if (this.reconnectAttempts <= this.maxReconnectAttempts) {
       console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+      
       setTimeout(() => {
         this.connect();
       }, 1000 * this.reconnectAttempts);
     } else {
       console.error('Max reconnection attempts reached');
-      this.notifyHandlers('max-reconnects-reached', { error });
+      this.notifyHandlers('max-reconnect-attempts-reached', { error });
     }
   }
 
   // Event handler management
-  on(event, handler) {
+  addHandler(event, callback) {
     if (!this.eventHandlers.has(event)) {
-      this.eventHandlers.set(event, []);
+      this.eventHandlers.set(event, new Set());
     }
-    this.eventHandlers.get(event).push(handler);
+    this.eventHandlers.get(event).add(callback);
   }
 
-  off(event, handler) {
+  removeHandler(event, callback) {
     if (this.eventHandlers.has(event)) {
-      const handlers = this.eventHandlers.get(event);
-      const index = handlers.indexOf(handler);
-      if (index > -1) {
-        handlers.splice(index, 1);
-      }
+      this.eventHandlers.get(event).delete(callback);
     }
   }
 
   notifyHandlers(event, data) {
     if (this.eventHandlers.has(event)) {
-      this.eventHandlers.get(event).forEach(handler => {
+      this.eventHandlers.get(event).forEach(callback => {
         try {
-          handler(data);
+          callback(data);
         } catch (error) {
           console.error(`Error in event handler for ${event}:`, error);
         }
@@ -300,160 +340,32 @@ class SocketClient {
     }
   }
 
-  // Monitoring methods
-  startMonitoring(characterId) {
-    if (!this.isConnected) {
-      console.warn('Cannot start monitoring: not connected to server');
-      return false;
-    }
-
-    if (!characterId) {
-      console.error('Cannot start monitoring: characterId is required');
-      return false;
-    }
-
-    try {
-      this.socket.emit('start-monitoring', { characterId });
-      this.monitoringCharacters.add(characterId);
-      console.log('Monitoring started for character:', characterId);
-      return true;
-    } catch (error) {
-      console.error('Failed to start monitoring:', error);
-      return false;
-    }
-  }
-
-  stopMonitoring(characterId) {
-    if (!this.isConnected || !characterId) {
-      return false;
-    }
-
-    try {
-      this.socket.emit('stop-monitoring', { characterId });
-      this.monitoringCharacters.delete(characterId);
-      console.log('Monitoring stopped for character:', characterId);
-      return true;
-    } catch (error) {
-      console.error('Failed to stop monitoring:', error);
-      return false;
-    }
-  }
-
-  // Intervention methods
-  applyIntervention(characterId, intervention) {
-    if (!this.isConnected) {
-      throw new Error('Not connected to server');
-    }
-
-    return new Promise((resolve, reject) => {
-      try {
-        this.socket.emit('apply-intervention', {
-          characterId,
-          intervention
-        }, (response) => {
-          if (response.success) {
-            resolve(response);
-          } else {
-            reject(new Error(response.error || 'Intervention failed'));
-          }
-        });
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  // Process management
-  killProcess(characterId, processId) {
-    if (!this.isConnected) {
-      throw new Error('Not connected to server');
-    }
-
-    return new Promise((resolve, reject) => {
-      try {
-        this.socket.emit('kill-process', {
-          characterId,
-          processId
-        }, (response) => {
-          if (response.success) {
-            resolve(response);
-          } else {
-            reject(new Error(response.error || 'Failed to kill process'));
-          }
-        });
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  restartProcess(characterId, processId) {
-    if (!this.isConnected) {
-      throw new Error('Not connected to server');
-    }
-
-    return new Promise((resolve, reject) => {
-      try {
-        this.socket.emit('restart-process', {
-          characterId,
-          processId
-        }, (response) => {
-          if (response.success) {
-            resolve(response);
-          } else {
-            reject(new Error(response.error || 'Failed to restart process'));
-          }
-        });
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  // Utility methods
+  // Connection status
   isSocketConnected() {
-    return this.isConnected && this.socket && this.socket.connected;
+    return this.isConnected && this.socket?.connected;
   }
 
-  getConnectionInfo() {
+  getMonitoringStatus() {
     return {
       connected: this.isConnected,
-      monitoringCharacters: Array.from(this.monitoringCharacters),
-      reconnectAttempts: this.reconnectAttempts,
-      updateRateLimit: {
-        lastUpdate: this.updateRateLimit.lastUpdate,
-        queueSize: this.updateRateLimit.updateQueue.size,
-        hasPendingUpdate: !!this.updateRateLimit.pendingUpdate
-      }
+      monitoring: Array.from(this.monitoringCharacters),
+      autoUpdatesEnabled: this.autoUpdatesEnabled,
+      lastUserInteraction: this.lastUserInteraction
     };
   }
 
-  // ADDED: Manual rate limit control
-  setUpdateRateLimit(intervalMs) {
-    this.updateRateLimit.minInterval = Math.max(100, intervalMs); // Minimum 100ms
-    console.log(`Update rate limit set to ${this.updateRateLimit.minInterval}ms`);
-  }
-
-  disconnect() {
-    // Clear any pending updates
-    if (this.updateRateLimit.pendingUpdate) {
-      clearTimeout(this.updateRateLimit.pendingUpdate);
-      this.updateRateLimit.pendingUpdate = null;
-    }
-    
+  // Cleanup
+  destroy() {
     if (this.socket) {
       this.socket.disconnect();
+      this.socket = null;
     }
-    this.isConnected = false;
+    
+    this.eventHandlers.clear();
     this.monitoringCharacters.clear();
-    this.updateRateLimit.updateQueue.clear();
+    this.isConnected = false;
   }
 }
 
-// Create global socket client instance
+// Initialize global socket client
 window.socketClient = new SocketClient();
-
-// Export for module systems
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = SocketClient;
-}
