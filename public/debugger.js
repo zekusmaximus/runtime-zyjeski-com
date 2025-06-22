@@ -1,4 +1,4 @@
-// Debugger Interface Module (separate file for better organization)
+// Complete Debugger Interface Module
 class DebuggerInterface {
   constructor() {
     this.isActive = false;
@@ -8,6 +8,7 @@ class DebuggerInterface {
     this.variables = {};
     this.currentLine = null;
     this.executionState = 'stopped'; // stopped, running, paused
+    this.debugSession = null;
     
     this.init();
   }
@@ -16,6 +17,7 @@ class DebuggerInterface {
     this.setupElements();
     this.setupEventListeners();
     this.subscribeToStateChanges();
+    this.setupSocketListeners();
   }
 
   setupElements() {
@@ -48,16 +50,49 @@ class DebuggerInterface {
   }
 
   setupEventListeners() {
-    // Subscribe to socket events for debugging
-    if (window.socketClient) {
-      window.socketClient.on('debug-result', (data) => {
-        this.handleDebugResult(data);
-      });
-      
-      window.socketClient.on('intervention-applied', (data) => {
-        this.handleInterventionApplied(data);
+    // Add event delegation for dynamic breakpoint controls
+    if (this.breakpointsList) {
+      this.breakpointsList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('breakpoint-checkbox')) {
+          const breakpointId = e.target.closest('.breakpoint-item').dataset.breakpointId;
+          this.toggleBreakpoint(breakpointId);
+        }
       });
     }
+
+    // Add event delegation for line number clicks
+    if (this.codeEditor) {
+      this.codeEditor.addEventListener('click', (e) => {
+        if (e.target.classList.contains('line-number')) {
+          const line = parseInt(e.target.dataset.line);
+          this.toggleBreakpointAtLine(line);
+        }
+      });
+    }
+  }
+
+  setupSocketListeners() {
+    if (!window.socketClient) return;
+
+    // Listen for debug results
+    window.socketClient.on('debug-result', (data) => {
+      this.handleDebugResult(data);
+    });
+    
+    // Listen for intervention results
+    window.socketClient.on('intervention-applied', (data) => {
+      this.handleInterventionApplied(data);
+    });
+
+    // Listen for debug session events
+    window.socketClient.on('debug-session-started', (data) => {
+      this.handleDebugSessionStarted(data);
+    });
+
+    // Listen for breakpoint triggers
+    window.socketClient.on('debug-hook-triggered', (data) => {
+      this.handleBreakpointTriggered(data);
+    });
   }
 
   subscribeToStateChanges() {
@@ -74,6 +109,7 @@ class DebuggerInterface {
     });
 
     window.stateManager.subscribe('debuggingSession', (session) => {
+      this.debugSession = session;
       if (session && session.status === 'active') {
         this.startDebugging();
       }
@@ -98,6 +134,10 @@ class DebuggerInterface {
     this.executionState = 'paused';
     this.updateExecutionState();
     this.highlightCurrentLine(15); // Start at grief processing line
+    
+    if (window.app) {
+      window.app.showNotification('Debug session started', 'success');
+    }
   }
 
   loadCharacterDebugInfo(character) {
@@ -134,9 +174,12 @@ class DebuggerInterface {
     // Map debug hook targets to line numbers
     const lineMap = {
       'Grief_Manager.exe': 15,
-      'Search_Protocol.exe': 23,
-      'Relationship_Handler.exe': 33,
-      'Reality_Parser.exe': 43
+      'Search_Protocol.exe': 25,
+      'Relationship_Handler.exe': 35,
+      'Reality_Parser.exe': 45,
+      'Temporal_Sync.dll': 20,
+      'Physics_Engine.dll': 30,
+      'Memory_Defrag.sys': 40
     };
     
     return lineMap[target] || 1;
@@ -169,14 +212,6 @@ class DebuggerInterface {
       </div>
     `;
     
-    // Add click handlers for line numbers (breakpoints)
-    this.codeEditor.querySelectorAll('.line-number').forEach(lineNum => {
-      lineNum.addEventListener('click', (e) => {
-        const line = parseInt(e.target.dataset.line);
-        this.toggleBreakpointAtLine(line);
-      });
-    });
-    
     // Update breakpoint indicators
     this.updateBreakpointIndicators();
   }
@@ -207,6 +242,14 @@ public:
         }
     }
     
+    void sync_temporal_field() {
+        // Temporal synchronization with reality
+        if (!temporal_sync.is_synchronized()) {
+            temporal_sync.recalibrate();
+            // May cause reality parsing errors
+        }
+    }
+    
     SearchResult search_for_leo() {
         // INFINITE LOOP: Search never terminates
         while (true) {
@@ -221,6 +264,13 @@ public:
         }
     }
     
+    void run_physics_calculations() {
+        // Theoretical physics processing
+        quantum_field_solver.compute_temporal_equations();
+        dimensional_analyzer.process_quantum_states();
+        // Stable process, minimal resource usage
+    }
+    
     void maintain_relationship(Person person) {
         // THREAD STARVATION: Insufficient resources allocated
         Thread* relationship_thread = scheduler.get_thread(person.thread_id);
@@ -231,6 +281,13 @@ public:
             return; // Relationship degrading
         }
         relationship_thread->allocate_time(resources.attention.available * 0.05);
+    }
+    
+    void defragment_memory() {
+        // Memory optimization system
+        memory.consolidate_fragments();
+        memory.optimize_allocation();
+        // Helps reduce memory pressure
     }
     
     RealityFrame parse_current_reality(SensoryInput input) {
@@ -275,7 +332,11 @@ int main() {
     
     while (consciousness.is_active()) {
         consciousness.process_grief(current_leo_memory);
+        consciousness.sync_temporal_field();
         consciousness.search_for_leo();
+        consciousness.run_physics_calculations();
+        consciousness.maintain_relationship(emily);
+        consciousness.defragment_memory();
         consciousness.parse_current_reality(sensory_input);
         consciousness.allocate_attention();
         
@@ -308,9 +369,8 @@ int main() {
     const breakpoints = window.stateManager.getBreakpoints();
     
     this.breakpointsList.innerHTML = breakpoints.map(bp => `
-      <div class="breakpoint-item ${bp.enabled ? 'active' : ''}">
-        <div class="breakpoint-checkbox ${bp.enabled ? 'checked' : ''}" 
-             onclick="window.debugger.toggleBreakpoint('${bp.id}')"></div>
+      <div class="breakpoint-item ${bp.enabled ? 'active' : ''}" data-breakpoint-id="${bp.id}">
+        <div class="breakpoint-checkbox ${bp.enabled ? 'checked' : ''}"></div>
         <div class="breakpoint-location">
           <div class="breakpoint-name">${bp.name}</div>
           <div class="breakpoint-line">${bp.target} ${bp.line ? `(Line ${bp.line})` : ''}</div>
@@ -359,7 +419,7 @@ int main() {
       },
       { 
         function: 'main_consciousness_loop()', 
-        location: 'consciousness_core.cpp:67', 
+        location: 'consciousness_core.cpp:75', 
         current: false,
         variables: { loop_count: '15847', uptime: '98 days' }
       }
@@ -480,6 +540,8 @@ int main() {
     // Simulate stepping into grief processing
     if (this.currentLine === 15) {
       this.highlightCurrentLine(18); // Move to memory allocation line
+    } else {
+      this.highlightCurrentLine((this.currentLine || 15) + 1);
     }
     
     this.updateExecutionState();
@@ -493,6 +555,8 @@ int main() {
     // Simulate stepping over current line
     if (this.currentLine) {
       this.highlightCurrentLine(this.currentLine + 1);
+    } else {
+      this.highlightCurrentLine(15);
     }
     
     this.updateExecutionState();
@@ -507,7 +571,7 @@ int main() {
     // Simulate hitting breakpoint
     setTimeout(() => {
       this.executionState = 'paused';
-      this.highlightCurrentLine(23); // Hit search protocol breakpoint
+      this.highlightCurrentLine(25); // Hit search protocol breakpoint
       this.updateExecutionState();
       
       if (window.app) {
@@ -558,15 +622,20 @@ int main() {
     }
   }
 
+  // WebSocket event handlers
   handleDebugResult(data) {
     console.log('Debug result received:', data);
+    
+    if (data.command === 'debug' && data.success) {
+      this.startDebugging();
+    }
     
     // Update variables view with debug result
     if (data.result && data.result.variables) {
       this.updateVariablesView();
     }
     
-    // Show debug output
+    // Show debug output in terminal if available
     if (window.terminal) {
       window.terminal.addDebugResult(data);
     }
@@ -584,13 +653,32 @@ int main() {
     }
   }
 
-  onConsciousnessUpdate(event, data) {
-    if (event === 'consciousness-updated' && this.isActive) {
-      this.updateVariablesFromConsciousness(data);
-      this.updateVariablesView();
+  handleDebugSessionStarted(data) {
+    console.log('Debug session started:', data);
+    this.debugSession = {
+      id: data.sessionId,
+      characterId: data.characterId,
+      status: 'active'
+    };
+    this.startDebugging();
+  }
+
+  handleBreakpointTriggered(data) {
+    console.log('Breakpoint triggered:', data);
+    this.executionState = 'paused';
+    
+    // Highlight the line where breakpoint was hit
+    const line = this.getLineFromTarget(data.hook.target);
+    this.highlightCurrentLine(line);
+    
+    this.updateExecutionState();
+    
+    if (window.app) {
+      window.app.showNotification(`Breakpoint hit: ${data.hook.name}`, 'warning');
     }
   }
 
+  // Update methods for consciousness changes
   updateCallStackFromProcesses(processes) {
     if (!processes) return;
     
@@ -604,13 +692,19 @@ int main() {
     // Update variables view with current consciousness state
     this.updateVariablesView();
   }
+
+  onConsciousnessUpdate(event, data) {
+    if (event === 'consciousness-updated' && this.isActive) {
+      this.updateVariablesFromConsciousness(data);
+      this.updateVariablesView();
+    }
+  }
 }
 
-// Replace the debugger in monitor.js with this more complete version
+// Create global debugger instance
 window.debugger = new DebuggerInterface();
 
 // Export for module systems
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = DebuggerInterface;
 }
-

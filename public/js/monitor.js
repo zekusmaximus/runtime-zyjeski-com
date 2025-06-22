@@ -1,10 +1,17 @@
-// Monitor Interface Module
+// Enhanced Real-time Monitor Interface
 class Monitor {
   constructor() {
     this.isActive = false;
     this.updateInterval = null;
     this.currentCharacter = null;
     this.charts = {};
+    this.lastUpdateTime = null;
+    this.dataHistory = {
+      resources: [],
+      processes: [],
+      errors: []
+    };
+    this.maxHistoryPoints = 60; // 1 minute of data at 1 second intervals
     
     this.init();
   }
@@ -13,6 +20,7 @@ class Monitor {
     this.setupElements();
     this.setupEventListeners();
     this.subscribeToStateChanges();
+    this.setupSocketListeners();
   }
 
   setupElements() {
@@ -33,14 +41,47 @@ class Monitor {
   }
 
   setupEventListeners() {
-    // Subscribe to socket events
-    if (window.socketClient) {
-      window.socketClient.on('consciousness-update', (data) => {
-        if (this.isActive) {
-          this.updateDisplays(data);
+    // Make process table interactive
+    if (this.processTable) {
+      this.processTable.addEventListener('click', (e) => {
+        const row = e.target.closest('tr');
+        if (row && row.dataset.pid) {
+          this.showProcessContextMenu(e, parseInt(row.dataset.pid));
         }
       });
     }
+
+    // Make memory blocks interactive
+    if (this.memoryVisualization) {
+      this.memoryVisualization.addEventListener('click', (e) => {
+        const block = e.target.closest('.memory-block');
+        if (block && block.dataset.address) {
+          this.showMemoryBlockDetails(block.dataset.address);
+        }
+      });
+    }
+  }
+
+  setupSocketListeners() {
+    if (!window.socketClient) return;
+
+    // Listen for real-time consciousness updates
+    window.socketClient.on('consciousness-update', (data) => {
+      if (this.isActive && this.currentCharacter && data.characterId === this.currentCharacter.id) {
+        this.updateDisplays(data);
+        this.updateDataHistory(data);
+      }
+    });
+
+    // Listen for intervention results
+    window.socketClient.on('intervention-applied', (data) => {
+      this.showInterventionFeedback(data);
+    });
+
+    // Listen for debug hooks
+    window.socketClient.on('debug-hook-triggered', (data) => {
+      this.showDebugAlert(data);
+    });
   }
 
   subscribeToStateChanges() {
@@ -75,88 +116,146 @@ class Monitor {
     
     if (this.currentCharacter) {
       this.loadCharacterData(this.currentCharacter);
-    }
-    
-    // Start real-time updates
-    if (!this.updateInterval) {
-      this.updateInterval = setInterval(() => {
-        this.refreshData();
-      }, 2000);
-    }
-    
-    // Start socket monitoring
-    if (window.socketClient && this.currentCharacter) {
+      
+      // Start real-time monitoring via WebSocket
       window.socketClient.startMonitoring(this.currentCharacter.id);
     }
+    
+    // Update button states
+    if (this.pauseBtn) {
+      this.pauseBtn.textContent = 'Pause';
+      this.pauseBtn.classList.remove('paused');
+    }
+    
+    this.showStatus('Monitoring started', 'success');
   }
 
   stopMonitoring() {
     this.isActive = false;
     
-    if (this.updateInterval) {
-      clearInterval(this.updateInterval);
-      this.updateInterval = null;
-    }
-    
-    // Stop socket monitoring
-    if (window.socketClient && this.currentCharacter) {
+    if (this.currentCharacter) {
       window.socketClient.stopMonitoring(this.currentCharacter.id);
     }
+    
+    // Update button states
+    if (this.pauseBtn) {
+      this.pauseBtn.textContent = 'Resume';
+      this.pauseBtn.classList.add('paused');
+    }
+    
+    this.showStatus('Monitoring paused', 'warning');
   }
 
   togglePause() {
-    if (this.updateInterval) {
+    if (this.isActive) {
       this.stopMonitoring();
-      if (this.pauseBtn) {
-        this.pauseBtn.textContent = 'Resume';
-      }
     } else {
       this.startMonitoring();
-      if (this.pauseBtn) {
-        this.pauseBtn.textContent = 'Pause';
-      }
     }
   }
 
   loadCharacterData(character) {
     if (!character.consciousness) return;
     
+    // Clear data history for new character
+    this.dataHistory = {
+      resources: [],
+      processes: [],
+      errors: []
+    };
+    
+    // Initial data load
     this.updateResourceMeters(character.consciousness.resources);
     this.updateProcessTable(character.consciousness.processes);
     this.updateMemoryVisualization(character.consciousness.memory);
     this.updateErrorLog(character.consciousness.system_errors);
+    
+    this.showStatus(`Loaded ${character.name}'s consciousness`, 'info');
   }
 
   async refreshData() {
     if (!this.currentCharacter) return;
     
+    this.showStatus('Refreshing data...', 'info');
+    
     try {
       const response = await fetch(`/api/consciousness/${this.currentCharacter.id}/state`);
       const state = await response.json();
       
-      window.stateManager.updateConsciousnessData(state);
+      this.updateDisplays({ state: state, type: 'manual-refresh' });
+      this.showStatus('Data refreshed', 'success');
     } catch (error) {
       console.error('Failed to refresh monitor data:', error);
+      this.showStatus('Failed to refresh data', 'error');
     }
   }
 
   updateDisplays(data) {
-    if (data.state && data.state.consciousness) {
-      const consciousness = data.state.consciousness;
-      
-      if (consciousness.resources) {
-        this.updateResourceMeters(consciousness.resources);
-      }
-      if (consciousness.processes) {
-        this.updateProcessTable(consciousness.processes);
-      }
-      if (consciousness.memory) {
-        this.updateMemoryVisualization(consciousness.memory);
-      }
-      if (consciousness.system_errors) {
-        this.updateErrorLog(consciousness.system_errors);
-      }
+    if (!data.state || !data.state.consciousness) return;
+    
+    const consciousness = data.state.consciousness;
+    
+    // Update all components
+    if (consciousness.resources) {
+      this.updateResourceMeters(consciousness.resources);
     }
+    if (consciousness.processes) {
+      this.updateProcessTable(consciousness.processes);
+    }
+    if (consciousness.memory) {
+      this.updateMemoryVisualization(consciousness.memory);
+    }
+    if (consciousness.system_errors) {
+      this.updateErrorLog(consciousness.system_errors);
+    }
+    
+    // Update last update time
+    this.lastUpdateTime = new Date();
+    this.updateStatusTime();
+    
+    // Add visual feedback for updates
+    this.flashUpdate();
+  }
+
+  updateDataHistory(data) {
+    const timestamp = new Date();
+    
+    // Add resource history
+    if (data.state.consciousness.resources) {
+      this.dataHistory.resources.push({
+        timestamp,
+        data: { ...data.state.consciousness.resources }
+      });
+    }
+    
+    // Add process history
+    if (data.state.consciousness.processes) {
+      const totalCpu = data.state.consciousness.processes.reduce((sum, p) => sum + (p.cpu_usage || 0), 0);
+      const totalMemory = data.state.consciousness.processes.reduce((sum, p) => sum + (p.memory_mb || 0), 0);
+      
+      this.dataHistory.processes.push({
+        timestamp,
+        totalCpu,
+        totalMemory,
+        processCount: data.state.consciousness.processes.length
+      });
+    }
+    
+    // Add error history
+    if (data.state.consciousness.system_errors) {
+      this.dataHistory.errors.push({
+        timestamp,
+        errorCount: data.state.consciousness.system_errors.length,
+        criticalCount: data.state.consciousness.system_errors.filter(e => e.severity === 'critical').length
+      });
+    }
+    
+    // Trim history to max points
+    Object.keys(this.dataHistory).forEach(key => {
+      if (this.dataHistory[key].length > this.maxHistoryPoints) {
+        this.dataHistory[key] = this.dataHistory[key].slice(-this.maxHistoryPoints);
+      }
+    });
   }
 
   updateResourceMeters(resources) {
@@ -168,16 +267,24 @@ class Monitor {
       if (resource.current !== undefined && resource.max !== undefined) {
         const percentage = (resource.current / resource.max) * 100;
         const statusClass = this.getResourceStatusClass(percentage);
+        const trend = this.calculateResourceTrend(resourceName);
         
         const meterHtml = `
-          <div class="resource-meter">
+          <div class="resource-meter" data-resource="${resourceName}">
             <div class="meter-label">
-              <span class="meter-name">${this.formatResourceName(resourceName)}</span>
+              <span class="meter-name">
+                ${this.formatResourceName(resourceName)}
+                ${trend ? `<span class="trend ${trend.direction}">${trend.icon}</span>` : ''}
+              </span>
               <span class="meter-value">${resource.current.toFixed(1)}/${resource.max.toFixed(1)}</span>
             </div>
-            <div class="meter-bar">
-              <div class="meter-fill ${statusClass}" style="width: ${percentage}%"></div>
+            <div class="meter-bar" onclick="window.monitor.showResourceDetails('${resourceName}')">
+              <div class="meter-fill ${statusClass}" style="width: ${percentage}%">
+                <div class="meter-animation"></div>
+              </div>
             </div>
+            <div class="meter-percentage">${percentage.toFixed(1)}%</div>
+            ${resource.allocation ? this.createAllocationBreakdown(resource.allocation) : ''}
           </div>
         `;
         
@@ -186,8 +293,33 @@ class Monitor {
     });
   }
 
+  createAllocationBreakdown(allocation) {
+    const total = Object.values(allocation).reduce((sum, val) => sum + val, 0);
+    if (total === 0) return '';
+    
+    const breakdownHtml = Object.entries(allocation)
+      .sort(([,a], [,b]) => b - a)
+      .map(([name, value]) => {
+        const percentage = (value / total) * 100;
+        return `
+          <div class="allocation-item">
+            <span class="allocation-name">${name.replace(/_/g, ' ')}</span>
+            <span class="allocation-value">${value.toFixed(1)}%</span>
+            <div class="allocation-bar">
+              <div class="allocation-fill" style="width: ${percentage}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    
+    return `<div class="allocation-breakdown">${breakdownHtml}</div>`;
+  }
+
   updateProcessTable(processes) {
     if (!this.processTable || !processes) return;
+    
+    // Sort processes by CPU usage
+    const sortedProcesses = [...processes].sort((a, b) => (b.cpu_usage || 0) - (a.cpu_usage || 0));
     
     const tableHtml = `
       <table>
@@ -199,19 +331,36 @@ class Monitor {
             <th>CPU%</th>
             <th>Memory</th>
             <th>Last Activity</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          ${processes.map(process => `
-            <tr>
-              <td class="pid">${process.pid}</td>
-              <td class="process-name">${process.name}</td>
-              <td><span class="status ${process.status}">${process.status}</span></td>
-              <td class="cpu-usage ${this.getCpuStatusClass(process.cpu_usage)}">${process.cpu_usage?.toFixed(1) || 0}%</td>
-              <td class="memory-usage">${Math.round(process.memory_mb || 0)}MB</td>
-              <td>${process.last_activity ? new Date(process.last_activity).toLocaleTimeString() : 'N/A'}</td>
-            </tr>
-          `).join('')}
+          ${sortedProcesses.map(process => {
+            const trend = this.calculateProcessTrend(process.pid);
+            return `
+              <tr data-pid="${process.pid}" class="process-row ${process.status}">
+                <td class="pid">${process.pid}</td>
+                <td class="process-name">
+                  ${process.name}
+                  ${process.error_message ? '<span class="error-indicator">⚠</span>' : ''}
+                </td>
+                <td><span class="status ${process.status}">${process.status}</span></td>
+                <td class="cpu-usage ${this.getCpuStatusClass(process.cpu_usage)}">
+                  ${(process.cpu_usage || 0).toFixed(1)}%
+                  ${trend ? `<span class="trend ${trend.direction}">${trend.icon}</span>` : ''}
+                </td>
+                <td class="memory-usage">${Math.round(process.memory_mb || 0)}MB</td>
+                <td class="last-activity">${process.last_activity ? new Date(process.last_activity).toLocaleTimeString() : 'N/A'}</td>
+                <td class="actions">
+                  <button class="action-btn kill-btn" onclick="window.monitor.killProcess(${process.pid})" 
+                          ${process.status === 'terminated' ? 'disabled' : ''}>Kill</button>
+                  <button class="action-btn restart-btn" onclick="window.monitor.restartProcess(${process.pid})"
+                          ${process.status === 'running' ? 'disabled' : ''}>Restart</button>
+                  <button class="action-btn optimize-btn" onclick="window.monitor.optimizeProcess(${process.pid})">Optimize</button>
+                </td>
+              </tr>
+            `;
+          }).join('')}
         </tbody>
       </table>
     `;
@@ -225,68 +374,309 @@ class Monitor {
     // Clear existing visualization
     this.memoryVisualization.innerHTML = '';
     
-    // Create memory blocks
+    // Calculate total memory usage
     const memoryEntries = Object.entries(memory);
     const totalSize = memoryEntries.reduce((sum, [_, block]) => sum + block.size, 0);
     
+    if (totalSize === 0) {
+      this.memoryVisualization.innerHTML = '<div class="no-memory">No memory allocated</div>';
+      return;
+    }
+    
+    // Create memory blocks with improved layout
+    const memoryContainer = document.createElement('div');
+    memoryContainer.className = 'memory-blocks-container';
+    
     let currentOffset = 0;
-    memoryEntries.forEach(([address, block]) => {
-      const percentage = (block.size / totalSize) * 100;
-      const height = Math.max(20, (block.size / totalSize) * 280);
-      
-      const blockElement = document.createElement('div');
-      blockElement.className = `memory-block ${block.type}`;
-      blockElement.style.cssText = `
-        left: ${(currentOffset % 4) * 25}%;
-        top: ${Math.floor(currentOffset / 4) * 35}px;
-        width: 23%;
-        height: ${Math.min(height, 30)}px;
-      `;
-      blockElement.textContent = block.description.substring(0, 20) + (block.description.length > 20 ? '...' : '');
-      blockElement.title = `${address}: ${block.description} (${this.formatBytes(block.size)})`;
-      
-      this.memoryVisualization.appendChild(blockElement);
-      currentOffset++;
+    const maxBlocksPerRow = 8;
+    
+    memoryEntries
+      .sort(([,a], [,b]) => b.size - a.size) // Sort by size, largest first
+      .forEach(([address, block], index) => {
+        const percentage = (block.size / totalSize) * 100;
+        const minSize = 30;
+        const maxSize = 120;
+        const blockSize = Math.max(minSize, Math.min(maxSize, percentage * 3));
+        
+        const row = Math.floor(index / maxBlocksPerRow);
+        const col = index % maxBlocksPerRow;
+        
+        const blockElement = document.createElement('div');
+        blockElement.className = `memory-block ${block.type} ${block.protected ? 'protected' : ''} ${block.fragmented ? 'fragmented' : ''}`;
+        blockElement.dataset.address = address;
+        blockElement.style.cssText = `
+          left: ${col * 15}%;
+          top: ${row * 40}px;
+          width: ${blockSize}px;
+          height: ${blockSize}px;
+          z-index: ${100 - index};
+        `;
+        
+        // Add content to block
+        const blockContent = document.createElement('div');
+        blockContent.className = 'memory-block-content';
+        blockContent.innerHTML = `
+          <div class="memory-address">${address.slice(-4)}</div>
+          <div class="memory-type">${block.type.charAt(0).toUpperCase()}</div>
+          <div class="memory-size">${this.formatBytes(block.size)}</div>
+        `;
+        blockElement.appendChild(blockContent);
+        
+        // Add hover tooltip
+        blockElement.title = `${address}\n${block.description}\nType: ${block.type}\nSize: ${this.formatBytes(block.size)}\nAccess Count: ${block.access_count}`;
+        
+        memoryContainer.appendChild(blockElement);
+      });
+    
+    this.memoryVisualization.appendChild(memoryContainer);
+    
+    // Add memory statistics
+    const statsElement = document.createElement('div');
+    statsElement.className = 'memory-stats';
+    
+    const byType = {};
+    memoryEntries.forEach(([_, block]) => {
+      byType[block.type] = (byType[block.type] || 0) + block.size;
     });
     
-    // Add legend if not exists
-    if (!this.memoryVisualization.querySelector('.memory-legend')) {
-      const legend = document.createElement('div');
-      legend.className = 'memory-legend';
-      legend.innerHTML = `
-        <div class="legend-item">
-          <div class="legend-color emotion"></div>
-          <span>Emotion</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color relationship"></div>
-          <span>Relationship</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color trauma"></div>
-          <span>Trauma</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color system"></div>
-          <span>System</span>
-        </div>
-      `;
-      this.memoryVisualization.appendChild(legend);
-    }
+    statsElement.innerHTML = `
+      <div class="memory-total">Total: ${this.formatBytes(totalSize)}</div>
+      <div class="memory-breakdown">
+        ${Object.entries(byType).map(([type, size]) => `
+          <div class="breakdown-item ${type}">
+            <span class="type-name">${type}</span>
+            <span class="type-size">${this.formatBytes(size)}</span>
+            <span class="type-percentage">${((size / totalSize) * 100).toFixed(1)}%</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    
+    this.memoryVisualization.appendChild(statsElement);
   }
 
   updateErrorLog(errors) {
     if (!this.errorLog || !errors) return;
     
-    this.errorLog.innerHTML = errors.slice(0, 10).map(error => `
-      <div class="error-item ${error.severity}">
-        <div class="error-header">
-          <span class="error-type">${error.type}</span>
-          <span class="error-timestamp">${new Date(error.timestamp).toLocaleTimeString()}</span>
+    // Sort errors by timestamp (newest first)
+    const sortedErrors = [...errors].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    this.errorLog.innerHTML = sortedErrors.slice(0, 15).map((error, index) => {
+      const timeAgo = this.getTimeAgo(error.timestamp);
+      const isNew = new Date() - new Date(error.timestamp) < 5000; // Less than 5 seconds old
+      
+      return `
+        <div class="error-item ${error.severity} ${isNew ? 'new-error' : ''}" data-error-id="${index}">
+          <div class="error-header">
+            <span class="error-type">${error.type}</span>
+            <span class="error-timestamp" title="${new Date(error.timestamp).toLocaleString()}">${timeAgo}</span>
+          </div>
+          <div class="error-message">${error.message}</div>
+          ${error.related_process ? `<div class="error-process">Process: ${error.related_process}</div>` : ''}
+          ${error.recovery_suggestion ? `
+            <div class="error-suggestion">
+              <strong>Suggestion:</strong> ${error.recovery_suggestion}
+            </div>
+          ` : ''}
+          <div class="error-actions">
+            <button class="error-action-btn" onclick="window.monitor.dismissError(${index})">Dismiss</button>
+            ${error.related_process ? `<button class="error-action-btn" onclick="window.monitor.inspectProcess(${error.related_process})">Inspect Process</button>` : ''}
+          </div>
         </div>
-        <div class="error-message">${error.message}</div>
+      `;
+    }).join('');
+    
+    // Auto-scroll to newest errors
+    if (this.errorLog.children.length > 0) {
+      this.errorLog.scrollTop = 0;
+    }
+  }
+
+  // Interactive methods
+  async killProcess(pid) {
+    if (!this.currentCharacter) return;
+    
+    const confirmed = confirm(`Are you sure you want to terminate process ${pid}?`);
+    if (!confirmed) return;
+    
+    try {
+      this.showStatus(`Terminating process ${pid}...`, 'warning');
+      
+      window.socketClient.sendPlayerIntervention(this.currentCharacter.id, {
+        type: 'kill_process',
+        pid: pid
+      });
+      
+    } catch (error) {
+      console.error('Failed to kill process:', error);
+      this.showStatus('Failed to terminate process', 'error');
+    }
+  }
+
+  async restartProcess(pid) {
+    if (!this.currentCharacter) return;
+    
+    try {
+      this.showStatus(`Restarting process ${pid}...`, 'info');
+      
+      window.socketClient.sendPlayerIntervention(this.currentCharacter.id, {
+        type: 'restart_process',
+        pid: pid
+      });
+      
+    } catch (error) {
+      console.error('Failed to restart process:', error);
+      this.showStatus('Failed to restart process', 'error');
+    }
+  }
+
+  async optimizeProcess(pid) {
+    if (!this.currentCharacter) return;
+    
+    // Show optimization dialog
+    const result = this.showOptimizationDialog(pid);
+    if (!result) return;
+    
+    try {
+      this.showStatus(`Optimizing process ${pid}...`, 'info');
+      
+      window.socketClient.sendPlayerIntervention(this.currentCharacter.id, {
+        type: 'optimize_process',
+        pid: pid,
+        parameters: result
+      });
+      
+    } catch (error) {
+      console.error('Failed to optimize process:', error);
+      this.showStatus('Failed to optimize process', 'error');
+    }
+  }
+
+  showOptimizationDialog(pid) {
+    const memoryLimit = prompt('Enter memory limit (MB):', '500');
+    const cpuLimit = prompt('Enter CPU limit (%):', '50');
+    
+    if (memoryLimit === null || cpuLimit === null) return null;
+    
+    return {
+      memory_limit: parseInt(memoryLimit) || undefined,
+      cpu_limit: parseInt(cpuLimit) || undefined
+    };
+  }
+
+  showResourceDetails(resourceName) {
+    if (!this.currentCharacter) return;
+    
+    const resource = this.currentCharacter.consciousness.resources[resourceName];
+    if (!resource) return;
+    
+    const history = this.dataHistory.resources.slice(-20); // Last 20 data points
+    
+    alert(`${this.formatResourceName(resourceName)} Details:\n\nCurrent: ${resource.current.toFixed(1)}\nMaximum: ${resource.max.toFixed(1)}\nUtilization: ${((resource.current / resource.max) * 100).toFixed(1)}%\n\n${resource.allocation ? 'Allocation:\n' + Object.entries(resource.allocation).map(([k, v]) => `${k}: ${v.toFixed(1)}%`).join('\n') : ''}`);
+  }
+
+  showMemoryBlockDetails(address) {
+    if (!this.currentCharacter) return;
+    
+    const block = this.currentCharacter.consciousness.memory[address];
+    if (!block) return;
+    
+    alert(`Memory Block Details:\n\nAddress: ${address}\nType: ${block.type}\nSize: ${this.formatBytes(block.size)}\nDescription: ${block.description}\nAccess Count: ${block.access_count}\nLast Accessed: ${new Date(block.last_accessed).toLocaleString()}\nProtected: ${block.protected ? 'Yes' : 'No'}\nFragmented: ${block.fragmented ? 'Yes' : 'No'}`);
+  }
+
+  inspectProcess(pid) {
+    // Navigate to debugger with this process focused
+    if (window.app) {
+      window.app.navigateToSection('debugger');
+      // Could add specific process focusing here
+    }
+  }
+
+  dismissError(errorIndex) {
+    const errorElement = this.errorLog.querySelector(`[data-error-id="${errorIndex}"]`);
+    if (errorElement) {
+      errorElement.style.opacity = '0.5';
+      errorElement.style.pointerEvents = 'none';
+    }
+  }
+
+  // UI feedback methods
+  showInterventionFeedback(data) {
+    const message = `Intervention applied: ${data.intervention.type}`;
+    this.showStatus(message, 'success');
+    
+    // Add visual feedback
+    this.flashUpdate('intervention');
+  }
+
+  showDebugAlert(data) {
+    const alertElement = document.createElement('div');
+    alertElement.className = 'debug-alert';
+    alertElement.innerHTML = `
+      <div class="alert-content">
+        <strong>Debug Hook Triggered:</strong> ${data.hook.name}
+        <button onclick="this.parentElement.parentElement.remove()">×</button>
       </div>
-    `).join('');
+    `;
+    
+    document.body.appendChild(alertElement);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      if (alertElement.parentElement) {
+        alertElement.remove();
+      }
+    }, 5000);
+  }
+
+  showStatus(message, type = 'info') {
+    // Create or update status indicator
+    let statusElement = document.querySelector('.monitor-status');
+    if (!statusElement) {
+      statusElement = document.createElement('div');
+      statusElement.className = 'monitor-status';
+      const header = document.querySelector('.monitor-header');
+      if (header) {
+        header.appendChild(statusElement);
+      }
+    }
+    
+    statusElement.className = `monitor-status ${type}`;
+    statusElement.textContent = message;
+    
+    // Auto-clear after 3 seconds
+    setTimeout(() => {
+      if (statusElement.textContent === message) {
+        statusElement.textContent = '';
+        statusElement.className = 'monitor-status';
+      }
+    }, 3000);
+  }
+
+  flashUpdate(type = 'general') {
+    const element = document.querySelector('.monitor-container');
+    if (element) {
+      element.classList.add(`flash-${type}`);
+      setTimeout(() => {
+        element.classList.remove(`flash-${type}`);
+      }, 200);
+    }
+  }
+
+  updateStatusTime() {
+    let timeElement = document.querySelector('.monitor-last-update');
+    if (!timeElement) {
+      timeElement = document.createElement('div');
+      timeElement.className = 'monitor-last-update';
+      const header = document.querySelector('.monitor-header');
+      if (header) {
+        header.appendChild(timeElement);
+      }
+    }
+    
+    if (this.lastUpdateTime) {
+      timeElement.textContent = `Last update: ${this.lastUpdateTime.toLocaleTimeString()}`;
+    }
   }
 
   // Utility methods
@@ -295,14 +685,16 @@ class Monitor {
   }
 
   getResourceStatusClass(percentage) {
-    if (percentage > 80) return 'high';
-    if (percentage > 50) return 'medium';
+    if (percentage > 85) return 'critical';
+    if (percentage > 70) return 'high';
+    if (percentage > 40) return 'medium';
     return 'low';
   }
 
   getCpuStatusClass(usage) {
-    if (usage > 70) return 'cpu-high';
-    if (usage > 40) return 'cpu-medium';
+    if (usage > 80) return 'cpu-critical';
+    if (usage > 60) return 'cpu-high';
+    if (usage > 30) return 'cpu-medium';
     return 'cpu-low';
   }
 
@@ -311,385 +703,67 @@ class Monitor {
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 
-  onConsciousnessUpdate(event, data) {
-    if (event === 'consciousness-updated' && this.isActive) {
-      // Real-time updates are handled through state subscriptions
-    }
-  }
-}
-
-// Debugger Interface Module
-class Debugger {
-  constructor() {
-    this.isActive = false;
-    this.currentCharacter = null;
-    this.breakpoints = [];
-    this.callStack = [];
-    this.variables = {};
-    this.currentLine = null;
+  getTimeAgo(timestamp) {
+    const now = new Date();
+    const past = new Date(timestamp);
+    const diffMs = now - past;
     
-    this.init();
+    const seconds = Math.floor(diffMs / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    if (seconds < 60) return `${seconds}s ago`;
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return past.toLocaleDateString();
   }
 
-  init() {
-    this.setupElements();
-    this.setupEventListeners();
-    this.subscribeToStateChanges();
-  }
-
-  setupElements() {
-    this.stepIntoBtn = document.getElementById('stepInto');
-    this.stepOverBtn = document.getElementById('stepOver');
-    this.continueBtn = document.getElementById('continue');
-    this.breakAllBtn = document.getElementById('breakAll');
+  calculateResourceTrend(resourceName) {
+    const history = this.dataHistory.resources.slice(-5); // Last 5 data points
+    if (history.length < 2) return null;
     
-    this.breakpointsList = document.getElementById('breakpointsList');
-    this.callStack = document.getElementById('callStack');
-    this.variablesView = document.getElementById('variablesView');
-    this.codeEditor = document.getElementById('codeEditor');
+    const values = history.map(h => h.data[resourceName]?.current || 0);
+    const trend = values[values.length - 1] - values[0];
     
-    this.setupDebugControls();
-  }
-
-  setupDebugControls() {
-    if (this.stepIntoBtn) {
-      this.stepIntoBtn.addEventListener('click', () => this.stepInto());
-    }
-    if (this.stepOverBtn) {
-      this.stepOverBtn.addEventListener('click', () => this.stepOver());
-    }
-    if (this.continueBtn) {
-      this.continueBtn.addEventListener('click', () => this.continue());
-    }
-    if (this.breakAllBtn) {
-      this.breakAllBtn.addEventListener('click', () => this.breakAll());
-    }
-  }
-
-  setupEventListeners() {
-    // Subscribe to socket events for debugging
-    if (window.socketClient) {
-      window.socketClient.on('debug-result', (data) => {
-        this.handleDebugResult(data);
-      });
-    }
-  }
-
-  subscribeToStateChanges() {
-    window.stateManager.subscribe('currentCharacter', (character) => {
-      this.currentCharacter = character;
-      if (character && this.isActive) {
-        this.loadCharacterDebugInfo(character);
-      }
-    });
-
-    window.stateManager.subscribe('breakpoints', (breakpoints) => {
-      this.breakpoints = breakpoints;
-      this.updateBreakpointsList();
-    });
-  }
-
-  initialize() {
-    this.isActive = true;
+    if (Math.abs(trend) < 0.1) return null;
     
-    if (this.currentCharacter) {
-      this.loadCharacterDebugInfo(this.currentCharacter);
-    }
-    
-    this.renderCodeEditor();
-    this.updateBreakpointsList();
-    this.updateCallStack();
-    this.updateVariablesView();
-  }
-
-  loadCharacterDebugInfo(character) {
-    if (!character.consciousness) return;
-    
-    // Load debug hooks as breakpoints
-    if (character.consciousness.debug_hooks) {
-      character.consciousness.debug_hooks.forEach(hook => {
-        if (hook.enabled) {
-          this.addBreakpoint({
-            id: hook.id,
-            name: hook.name,
-            type: hook.type,
-            target: hook.target,
-            condition: hook.condition,
-            enabled: hook.enabled
-          });
-        }
-      });
-    }
-    
-    // Simulate call stack from processes
-    this.updateCallStackFromProcesses(character.consciousness.processes);
-    
-    // Load variables from memory and resources
-    this.updateVariablesFromConsciousness(character.consciousness);
-  }
-
-  renderCodeEditor() {
-    if (!this.codeEditor) return;
-    
-    // Simulate consciousness code representation
-    const consciousnessCode = this.generateConsciousnessCode();
-    
-    this.codeEditor.innerHTML = `
-      <div class="code-editor-header">
-        <span class="code-file-name">consciousness_core.cpp</span>
-        <div class="code-editor-actions">
-          <button class="btn btn-small">Save</button>
-          <button class="btn btn-small">Reload</button>
-        </div>
-      </div>
-      <div class="code-content">
-        <div class="line-numbers">
-          ${consciousnessCode.split('\n').map((_, i) => 
-            `<span class="line-number" data-line="${i + 1}">${i + 1}</span>`
-          ).join('')}
-        </div>
-        <div class="code-lines">
-          ${this.highlightSyntax(consciousnessCode)}
-        </div>
-      </div>
-    `;
-    
-    // Add click handlers for line numbers (breakpoints)
-    this.codeEditor.querySelectorAll('.line-number').forEach(lineNum => {
-      lineNum.addEventListener('click', (e) => {
-        const line = parseInt(e.target.dataset.line);
-        this.toggleBreakpointAtLine(line);
-      });
-    });
-  }
-
-  generateConsciousnessCode() {
-    return `// Consciousness Core System
-#include "consciousness.h"
-#include "memory_manager.h"
-#include "process_scheduler.h"
-
-class ConsciousnessCore {
-private:
-    MemoryManager memory;
-    ProcessScheduler scheduler;
-    ResourceAllocator resources;
-    
-public:
-    void initialize() {
-        // Initialize core consciousness systems
-        memory.initialize();
-        scheduler.start();
-        resources.allocate_base_resources();
-    }
-    
-    void process_grief(EmotionalEvent event) {
-        // Line 15: Grief processing - BREAKPOINT ACTIVE
-        Process* grief_manager = scheduler.get_process("Grief_Manager.exe");
-        if (grief_manager) {
-            grief_manager->process_event(event);
-            // Memory leak detected here
-            memory.allocate_emotional_memory(event.intensity * 1024);
-        }
-    }
-    
-    void search_for_leo() {
-        // Line 23: Search protocol - INFINITE LOOP WARNING
-        while (true) {
-            for (Timeline timeline : all_timelines) {
-                if (timeline.contains("Leo")) {
-                    // This condition is never satisfied
-                    return timeline.extract("Leo");
-                }
-            }
-            // Loop continues indefinitely
-        }
-    }
-    
-    void maintain_relationships() {
-        // Line 33: Relationship maintenance - THREAD STARVATION
-        Thread* emily_thread = scheduler.get_thread("Emily_Relationship");
-        if (emily_thread && resources.attention.available > 10) {
-            emily_thread->allocate_time(resources.attention.available * 0.1);
-        } else {
-            // Insufficient resources - relationship degrading
-            emily_thread->set_status(STARVED);
-        }
-    }
-    
-    void parse_reality(SensoryInput input) {
-        // Line 43: Reality parsing - TEMPORAL DESYNC ERROR
-        if (temporal_sync.is_synchronized()) {
-            return reality_parser.process(input);
-        } else {
-            // Temporal desynchronization causes parsing errors
-            throw TemporalDesyncException("Cannot parse reality");
-        }
-    }
-};`;
-  }
-
-  highlightSyntax(code) {
-    return code
-      .replace(/\b(class|void|if|else|while|for|return|throw|private|public)\b/g, '<span class="keyword">$1</span>')
-      .replace(/"([^"]*)"/g, '<span class="string">"$1"</span>')
-      .replace(/\b(\d+)\b/g, '<span class="number">$1</span>')
-      .replace(/\/\/.*$/gm, '<span class="comment">$&</span>')
-      .replace(/\b([A-Z][a-zA-Z_]*)\s*\(/g, '<span class="function">$1</span>(')
-      .split('\n')
-      .map((line, i) => `<span class="code-line" data-line="${i + 1}">${line}</span>`)
-      .join('\n');
-  }
-
-  updateBreakpointsList() {
-    if (!this.breakpointsList) return;
-    
-    this.breakpointsList.innerHTML = this.breakpoints.map(bp => `
-      <div class="breakpoint-item ${bp.enabled ? 'active' : ''}">
-        <div class="breakpoint-checkbox ${bp.enabled ? 'checked' : ''}" 
-             onclick="window.debugger.toggleBreakpoint('${bp.id}')"></div>
-        <div class="breakpoint-location">
-          <div class="breakpoint-name">${bp.name}</div>
-          <div class="breakpoint-line">${bp.target}</div>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  updateCallStack() {
-    if (!this.callStack) return;
-    
-    const stackFrames = [
-      { function: 'process_grief()', location: 'consciousness_core.cpp:15', current: true },
-      { function: 'handle_emotional_event()', location: 'emotion_processor.cpp:89', current: false },
-      { function: 'main_consciousness_loop()', location: 'consciousness_core.cpp:5', current: false }
-    ];
-    
-    this.callStack.innerHTML = stackFrames.map(frame => `
-      <div class="stack-frame ${frame.current ? 'current' : ''}">
-        <div class="frame-function">${frame.function}</div>
-        <div class="frame-location">${frame.location}</div>
-      </div>
-    `).join('');
-  }
-
-  updateVariablesView() {
-    if (!this.variablesView) return;
-    
-    const variables = {
-      'Local Variables': {
-        'grief_intensity': { value: '89.7', type: 'float' },
-        'leo_search_active': { value: 'true', type: 'bool' },
-        'memory_usage': { value: '847MB', type: 'size_t' }
-      },
-      'Emotional State': {
-        'guilt_level': { value: '94.2', type: 'float' },
-        'hope_remaining': { value: '23.4', type: 'float' },
-        'attachment_strength': { value: '100.0', type: 'float' }
-      },
-      'System Resources': {
-        'attention_available': { value: '23.4', type: 'float' },
-        'emotional_energy': { value: '15.7', type: 'float' },
-        'processing_capacity': { value: '94.8', type: 'float' }
-      }
+    return {
+      direction: trend > 0 ? 'up' : 'down',
+      icon: trend > 0 ? '↗' : '↘'
     };
+  }
+
+  calculateProcessTrend(pid) {
+    const history = this.dataHistory.processes.slice(-5);
+    if (history.length < 2) return null;
     
-    this.variablesView.innerHTML = Object.entries(variables).map(([groupName, vars]) => `
-      <div class="variable-group">
-        <div class="variable-group-header expanded">${groupName}</div>
-        <div class="variable-list">
-          ${Object.entries(vars).map(([name, data]) => `
-            <div class="variable-item">
-              <span class="variable-name">${name}</span>
-              <span class="variable-value">${data.value}</span>
-              <span class="variable-type">${data.type}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `).join('');
-  }
-
-  // Debug control methods
-  stepInto() {
-    console.log('Step Into - Entering function call');
-    this.sendDebugCommand('step_into');
-  }
-
-  stepOver() {
-    console.log('Step Over - Executing current line');
-    this.sendDebugCommand('step_over');
-  }
-
-  continue() {
-    console.log('Continue - Resuming execution');
-    this.sendDebugCommand('continue');
-  }
-
-  breakAll() {
-    console.log('Break All - Pausing all processes');
-    this.sendDebugCommand('break_all');
-  }
-
-  sendDebugCommand(command) {
-    if (window.socketClient && this.currentCharacter) {
-      window.socketClient.sendDebugCommand(this.currentCharacter.id, command);
-    }
-  }
-
-  addBreakpoint(breakpoint) {
-    window.stateManager.addBreakpoint(breakpoint);
-  }
-
-  toggleBreakpoint(id) {
-    window.stateManager.toggleBreakpoint(id);
-  }
-
-  toggleBreakpointAtLine(line) {
-    const existingBp = this.breakpoints.find(bp => bp.line === line);
-    if (existingBp) {
-      this.toggleBreakpoint(existingBp.id);
-    } else {
-      this.addBreakpoint({
-        id: `line_${line}_${Date.now()}`,
-        name: `Line ${line}`,
-        type: 'breakpoint',
-        target: `consciousness_core.cpp:${line}`,
-        line: line,
-        enabled: true
-      });
-    }
-  }
-
-  handleDebugResult(data) {
-    console.log('Debug result received:', data);
-    // Update UI based on debug result
+    // This is simplified - in a real implementation, we'd track individual processes
+    const avgCpu = history.reduce((sum, h) => sum + h.totalCpu, 0) / history.length;
+    const currentCpu = history[history.length - 1].totalCpu;
+    const trend = currentCpu - avgCpu;
+    
+    if (Math.abs(trend) < 5) return null;
+    
+    return {
+      direction: trend > 0 ? 'up' : 'down',
+      icon: trend > 0 ? '↗' : '↘'
+    };
   }
 
   onConsciousnessUpdate(event, data) {
     if (event === 'consciousness-updated' && this.isActive) {
-      this.updateVariablesFromConsciousness(data);
+      this.updateDisplays({ state: { consciousness: data } });
     }
-  }
-
-  updateCallStackFromProcesses(processes) {
-    // Simulate call stack from running processes
-  }
-
-  updateVariablesFromConsciousness(consciousness) {
-    // Update variables view with current consciousness state
   }
 }
 
-// Create global instances
+// Create global monitor instance
 window.monitor = new Monitor();
-window.debugger = new Debugger();
 
 // Export for module systems
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { Monitor, Debugger };
+  module.exports = Monitor;
 }
-
