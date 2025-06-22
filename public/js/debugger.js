@@ -556,15 +556,29 @@ class DebuggerInterface {
   }
 
   handleInterventionApplied(data) {
-    if (this.isActive && data.characterId === this.currentCharacter?.id) {
-      console.log('Intervention applied during debugging:', data);
-      this.updateDebuggerForCharacter({ consciousness: data.state.consciousness });
-      
+  if (this.isActive && data.characterId === this.currentCharacter?.id) {
+    console.log('Intervention applied during debugging:', data);
+    
+    // Check if intervention was successful
+    if (data.error) {
+      console.error('Intervention error:', data.error);
+      if (window.app) {
+        window.app.showNotification(`Intervention failed: ${data.error}`, 'error');
+      }
+      return;
+    }
+    
+    // Show success message
+    if (data.result && data.result.success) {
       if (window.app) {
         window.app.showNotification(`Intervention applied: ${data.intervention.type}`, 'success');
       }
     }
+    
+    // Don't try to access data.state.consciousness - it doesn't exist in intervention responses
+    // Consciousness updates will come through the normal consciousness-update channel
   }
+}
 
   handleDebugSessionStarted(data) {
     console.log('Debug session started:', data);

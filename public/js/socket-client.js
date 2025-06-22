@@ -72,9 +72,18 @@ class SocketClient {
     });
 
     this.socket.on('intervention-applied', (data) => {
-      console.log('Intervention applied:', data);
-      this.notifyHandlers('intervention-applied', data);
-    });
+  console.log('Intervention applied:', data);
+  
+  this.notifyHandlers('intervention-applied', data);
+  
+  // Show user feedback
+  if (data.success) {
+    this.lastSuccessfulIntervention = Date.now();
+    console.log(`✅ Intervention successful: ${data.intervention.type}`);
+  } else {
+    console.error(`❌ Intervention failed: ${data.error}`);
+  }
+});
 
     this.socket.on('debug-hook-triggered', (data) => {
       console.log('Debug hook triggered:', data);

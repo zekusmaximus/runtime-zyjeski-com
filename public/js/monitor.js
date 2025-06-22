@@ -1,20 +1,43 @@
 // Enhanced Real-time Monitor Interface
 class Monitor {
   constructor() {
-    this.isActive = false;
-    this.updateInterval = null;
-    this.currentCharacter = null;
-    this.charts = {};
-    this.lastUpdateTime = null;
-    this.dataHistory = {
-      resources: [],
-      processes: [],
-      errors: []
-    };
-    this.maxHistoryPoints = 60; // 1 minute of data at 1 second intervals
-    
-    this.init();
+  this.isActive = false;
+  this.updateInterval = null;
+  this.currentCharacter = null;
+  this.charts = {};
+  this.lastUpdateTime = null;
+  this.dataHistory = {
+    resources: [],
+    processes: [],
+    errors: []
+  };
+  this.maxHistoryPoints = 60; // 1 minute of data at 1 second intervals
+  
+  this.init();
+  
+  // ADDED: Listen for intervention results
+  if (window.socketClient) {
+    window.socketClient.on('intervention-applied', (data) => {
+      this.handleInterventionResult(data);
+    });
   }
+}
+
+// ADD this new method AFTER the constructor:
+handleInterventionResult(data) {
+  if (data.characterId !== this.currentCharacter?.id) return;
+  
+  if (data.success) {
+    this.showStatus(`${data.intervention.type} completed successfully`, 'success');
+    
+    // Show specific result message if available
+    if (data.result && data.result.message) {
+      this.showStatus(data.result.message, 'info');
+    }
+  } else {
+    this.showStatus(`Failed: ${data.error}`, 'error');
+  }
+}
 
   init() {
     this.setupElements();
