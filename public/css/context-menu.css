@@ -1,0 +1,304 @@
+/* Process Context Menu Styles */
+.process-context-menu {
+  position: fixed;
+  background: var(--bg-secondary, #1a1a1a);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+  z-index: 10000;
+  min-width: 180px;
+  font-family: var(--font-mono, 'Courier New');
+  font-size: 0.9rem;
+  overflow: hidden;
+  animation: contextMenuAppear 0.15s ease-out;
+}
+
+@keyframes contextMenuAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.context-menu-item {
+  padding: 0.75rem 1rem;
+  color: var(--text-primary, #ffffff);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.context-menu-item:last-child {
+  border-bottom: none;
+}
+
+.context-menu-item:hover {
+  background: var(--bg-tertiary, #2a2a2a);
+  color: var(--accent-blue, #00aaff);
+}
+
+.context-menu-item.danger:hover {
+  background: var(--accent-red, #ff0066);
+  color: var(--bg-primary, #0a0a0a);
+}
+
+.context-menu-divider {
+  height: 1px;
+  background: var(--border-color, #333);
+  margin: 0.25rem 0;
+}
+
+.menu-icon {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* Priority Modal Styles */
+.priority-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 20000;
+  animation: modalAppear 0.2s ease-out;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-overlay {
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: var(--bg-secondary, #1a1a1a);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  font-family: var(--font-mono, 'Courier New');
+  animation: modalContentAppear 0.2s ease-out;
+}
+
+@keyframes modalContentAppear {
+  from {
+    transform: scale(0.9) translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color, #333);
+  background: var(--bg-tertiary, #2a2a2a);
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-header h3 {
+  color: var(--accent-green, #00ff00);
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted, #666);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  color: var(--accent-red, #ff0066);
+  background: rgba(255, 0, 102, 0.1);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-body p {
+  color: var(--text-secondary, #cccccc);
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+}
+
+.priority-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.priority-option {
+  padding: 1rem;
+  border: 1px solid var(--border-color, #333);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.priority-option:hover {
+  background: var(--bg-tertiary, #2a2a2a);
+  border-color: var(--accent-blue, #00aaff);
+  transform: translateX(4px);
+}
+
+.priority-indicator {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* Process table row highlighting for context menu */
+.process-row {
+  transition: background-color 0.2s ease;
+}
+
+.process-row:hover {
+  background: var(--bg-tertiary, #2a2a2a);
+  cursor: context-menu;
+}
+
+.process-row.context-active {
+  background: var(--bg-tertiary, #2a2a2a);
+  border-left: 3px solid var(--accent-blue, #00aaff);
+}
+
+/* Status message styles for feedback */
+.monitor-status {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem 1.5rem;
+  border-radius: 6px;
+  font-family: var(--font-mono, 'Courier New');
+  font-size: 0.9rem;
+  font-weight: 500;
+  z-index: 15000;
+  animation: statusAppear 0.3s ease-out;
+  max-width: 320px;
+  border-left: 4px solid;
+}
+
+@keyframes statusAppear {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.monitor-status.info {
+  background: var(--bg-secondary, #1a1a1a);
+  color: var(--accent-blue, #00aaff);
+  border-left-color: var(--accent-blue, #00aaff);
+}
+
+.monitor-status.success {
+  background: var(--bg-secondary, #1a1a1a);
+  color: var(--accent-green, #00ff00);
+  border-left-color: var(--accent-green, #00ff00);
+}
+
+.monitor-status.warning {
+  background: var(--bg-secondary, #1a1a1a);
+  color: var(--accent-yellow, #ffaa00);
+  border-left-color: var(--accent-yellow, #ffaa00);
+}
+
+.monitor-status.error {
+  background: var(--bg-secondary, #1a1a1a);
+  color: var(--accent-red, #ff0066);
+  border-left-color: var(--accent-red, #ff0066);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .process-context-menu {
+    min-width: 160px;
+    font-size: 0.8rem;
+  }
+  
+  .context-menu-item {
+    padding: 0.6rem 0.8rem;
+  }
+  
+  .modal-content {
+    width: 95%;
+    max-width: none;
+  }
+  
+  .modal-header,
+  .modal-body {
+    padding: 1rem;
+  }
+  
+  .priority-option {
+    padding: 0.8rem;
+  }
+  
+  .monitor-status {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+    font-size: 0.8rem;
+    padding: 0.8rem 1rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .process-context-menu,
+  .modal-content {
+    border-width: 2px;
+  }
+  
+  .context-menu-item:hover,
+  .priority-option:hover {
+    border: 1px solid currentColor;
+  }
+}

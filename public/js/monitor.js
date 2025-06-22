@@ -592,6 +592,190 @@ class Monitor {
     }
   }
 
+// Add this method to the existing Monitor class in public/js/monitor.js
+
+  showProcessContextMenu(event, pid) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Remove any existing context menu
+    const existingMenu = document.querySelector('.process-context-menu');
+    if (existingMenu) {
+      existingMenu.remove();
+    }
+    
+    // Create context menu
+    const contextMenu = document.createElement('div');
+    contextMenu.className = 'process-context-menu';
+    contextMenu.innerHTML = `
+      <div class="context-menu-item" data-action="inspect" data-pid="${pid}">
+        <span class="menu-icon">🔍</span> Inspect Process
+      </div>
+      <div class="context-menu-item" data-action="debug" data-pid="${pid}">
+        <span class="menu-icon">🐛</span> Debug
+      </div>
+      <div class="context-menu-item" data-action="priority" data-pid="${pid}">
+        <span class="menu-icon">⚡</span> Set Priority
+      </div>
+      <div class="context-menu-item" data-action="optimize" data-pid="${pid}">
+        <span class="menu-icon">⚙️</span> Optimize
+      </div>
+      <div class="context-menu-divider"></div>
+      <div class="context-menu-item danger" data-action="kill" data-pid="${pid}">
+        <span class="menu-icon">💀</span> Kill Process
+      </div>
+      <div class="context-menu-item" data-action="restart" data-pid="${pid}">
+        <span class="menu-icon">🔄</span> Restart
+      </div>
+    `;
+    
+    // Position menu at click location
+    const x = event.clientX;
+    const y = event.clientY;
+    
+    contextMenu.style.position = 'fixed';
+    contextMenu.style.left = `${x}px`;
+    contextMenu.style.top = `${y}px`;
+    contextMenu.style.zIndex = '10000';
+    
+    // Add to page
+    document.body.appendChild(contextMenu);
+    
+    // Adjust position if menu goes off screen
+    const rect = contextMenu.getBoundingClientRect();
+    if (rect.right > window.innerWidth) {
+      contextMenu.style.left = `${x - rect.width}px`;
+    }
+    if (rect.bottom > window.innerHeight) {
+      contextMenu.style.top = `${y - rect.height}px`;
+    }
+    
+    // Add click handlers
+    contextMenu.addEventListener('click', (e) => {
+      const item = e.target.closest('.context-menu-item');
+      if (item) {
+        const action = item.dataset.action;
+        const processId = parseInt(item.dataset.pid);
+        
+        this.handleContextMenuAction(action, processId);
+        contextMenu.remove();
+      }
+    });
+    
+    // Remove menu when clicking outside
+    const removeMenu = (e) => {
+      if (!contextMenu.contains(e.target)) {
+        contextMenu.remove();
+        document.removeEventListener('click', removeMenu);
+      }
+    };
+    
+    setTimeout(() => {
+      document.addEventListener('click', removeMenu);
+    }, 0);
+  }
+
+  handleContextMenuAction(action, pid) {
+    switch (action) {
+      case 'inspect':
+        this.inspectProcess(pid);
+        break;
+      case 'debug':
+        this.debugProcess(pid);
+        break;
+      case 'priority':
+        this.setPriority(pid);
+        break;
+      case 'optimize':
+        this.optimizeProcess(pid);
+        break;
+      case 'kill':
+        this.killProcess(pid);
+        break;
+      case 'restart':
+        this.restartProcess(pid);
+        break;
+    }
+  }
+
+  debugProcess(pid) {
+    // Navigate to debugger with this process focused
+    if (window.app) {
+      window.app.navigateToSection('debugger');
+      // Store the selected process for the debugger
+      window.app.selectedProcessPid = pid;
+    }
+    
+    this.showStatus(`Opening debugger for process ${pid}`, 'info');
+  }
+
+  setPriority(pid) {
+    const priorities = [
+      { value: 'low', label: 'Low Priority', color: '#666' },
+      { value: 'normal', label: 'Normal Priority', color: '#fff' },
+      { value: 'high', label: 'High Priority', color: '#ffaa00' },
+      { value: 'critical', label: 'Critical Priority', color: '#ff0066' }
+    ];
+    
+    // Create priority selection modal
+    const modal = document.createElement('div');
+    modal.className = 'priority-modal';
+    modal.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Set Process Priority</h3>
+            <button class="modal-close">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p>Select priority for process ${pid}:</p>
+            <div class="priority-options">
+              ${priorities.map(p => `
+                <div class="priority-option" data-priority="${p.value}">
+                  <span class="priority-indicator" style="color: ${p.color}">●</span>
+                  ${p.label}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Handle priority selection
+    modal.addEventListener('click', (e) => {
+      if (e.target.closest('.priority-option')) {
+        const priority = e.target.closest('.priority-option').dataset.priority;
+        this.applyPriority(pid, priority);
+        modal.remove();
+      } else if (e.target.closest('.modal-close') || e.target.classList.contains('modal-overlay')) {
+        modal.remove();
+      }
+    });
+  }
+
+  applyPriority(pid, priority) {
+    if (!this.currentCharacter) return;
+    
+    try {
+      this.showStatus(`Setting process ${pid} priority to ${priority}`, 'info');
+      
+      if (window.socketClient) {
+        window.socketClient.sendPlayerIntervention(this.currentCharacter.id, {
+          type: 'set_priority',
+          pid: pid,
+          priority: priority
+        });
+      }
+      
+    } catch (error) {
+      console.error('Failed to set process priority:', error);
+      this.showStatus('Failed to set process priority', 'error');
+    }
+  }
+
   dismissError(errorIndex) {
     const errorElement = this.errorLog.querySelector(`[data-error-id="${errorIndex}"]`);
     if (errorElement) {
