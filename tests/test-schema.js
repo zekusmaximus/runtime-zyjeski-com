@@ -1,4 +1,4 @@
-import { ConsciousnessEngine } from './lib/consciousness-engine.js';
+import { ConsciousnessEngine } from '../lib/consciousness-engine.js';
 
 async function testSchemaLoading() {
   console.log('Testing schema loading...');

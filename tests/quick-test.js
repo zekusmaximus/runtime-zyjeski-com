@@ -1,6 +1,6 @@
 // Minimal test for schema loading
 const test = async () => {
-  const { ConsciousnessEngine } = await import('./lib/consciousness-engine.js');
+const { ConsciousnessEngine } = await import('../lib/consciousness-engine.js');
   const engine = new ConsciousnessEngine();
   
   console.log('Starting initialization...');
