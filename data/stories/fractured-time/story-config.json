@@ -13,22 +13,22 @@
       "start": "2024-03-15T00:00:00Z",
       "end": "2024-06-21T23:59:59Z",
       "keyEvents": [
-        {
+      {
           "date": "2024-03-15T15:47:00Z",
           "event": "Leo disappears at the park",
           "significance": "critical"
         },
-        {
+      {
           "date": "2024-04-22T00:00:00Z",
           "event": "Alexander discovers temporal anomalies",
           "significance": "major"
         },
-        {
+      {
           "date": "2024-05-15T00:00:00Z",
           "event": "First timeline fracture detected",
           "significance": "major"
         },
-        {
+      {
           "date": "2024-06-21T15:47:00Z",
           "event": "Anniversary convergence point",
           "significance": "critical"
@@ -68,7 +68,7 @@
       "acts": 4,
       "choicePoints": 7,
       "endings": [
-        {
+      {
           "id": "acceptance",
           "type": "success",
           "condition": {
@@ -93,7 +93,7 @@
           },
           "achievement": "Quantum Acceptance"
         },
-        {
+      {
           "id": "eternal_search",
           "type": "failure",
           "condition": {
@@ -112,7 +112,7 @@
             ]
           }
         },
-        {
+      {
           "id": "parallel_peace",
           "type": "partial",
           "condition": {
@@ -132,7 +132,7 @@
           },
           "achievement": "Parallel Lives"
         },
-        {
+      {
           "id": "system_collapse",
           "type": "failure",
           "condition": {
@@ -142,7 +142,7 @@
             "value": 1.0
           }
         },
-        {
+      {
           "id": "nexus_revelation",
           "type": "hidden",
           "condition": {
@@ -167,27 +167,27 @@
     "pacing": {
       "style": "exponential",
       "tensionCurve": [
-        {
+      {
           "progress": 0.0,
           "tension": 0.3
         },
-        {
+      {
           "progress": 0.25,
           "tension": 0.5
         },
-        {
+      {
           "progress": 0.5,
           "tension": 0.7
         },
-        {
+      {
           "progress": 0.75,
           "tension": 0.85
         },
-        {
+      {
           "progress": 0.9,
           "tension": 1.0
         },
-        {
+      {
           "progress": 1.0,
           "tension": 0.6
         }
@@ -361,20 +361,296 @@
         "hints": []
       },
       {
-        "id": "anniversary_convergence",
-        "trigger": {
-          "progress": 0.9
+          "id": "anniversary_convergence",
+          "trigger": {
+            "progress": 0.9
+          },
+          "type": "crisis",
+          "objective": "Navigate the temporal convergence without total system collapse",
+          "hints": [
+            {
+              "trigger": "cascade_imminent",
+              "content": "Multiple processes are approaching critical failure simultaneously"
+            }
+          ]
         },
-        "type": "crisis",
-        "objective": "Navigate the temporal convergence without total system collapse",
-        "hints": [
-          {
-            "trigger": "cascade_imminent",
-            "content": "Multiple processes are approaching critical failure simultaneously"
+      {
+          "id": "scenario_1_park_memory",
+          "title": "The Day Everything Changed",
+          "description": "Alexander's consciousness is stuck replaying the moment Leo disappeared at Riverview Park. The memory loop is consuming increasing resources.",
+          "narrative_context": "March 15th, 3:47 PM - The last moment Alexander saw his son before the temporal field collapsed.",
+          "initial_state": {
+            "processes": [
+              {
+                "name": "park_memory_replay.exe",
+                "cpu": 95,
+                "memory": 1247,
+                "status": "infinite_loop",
+                "error_message": "Memory fragment 0x1000000000000000 locked in recursive access pattern"
+              }
+            ],
+            "system_errors": [
+              {
+                "code": "TEMPORAL_LOCK",
+                "message": "Consciousness trapped at timestamp 2024-03-15T15:47:00Z",
+                "severity": "critical"
+              }
+            ]
+          },
+          "debug_objectives": [
+            {
+              "id": "break_memory_loop",
+              "description": "Interrupt the recursive memory access without corrupting Leo's memories",
+              "success_conditions": {
+                "park_memory_replay.cpu": "< 30",
+                "memory_integrity": "> 0.95"
+              }
+            },
+            {
+              "id": "temporal_unlock",
+              "description": "Release consciousness from temporal lock",
+              "success_conditions": {
+                "system_errors": "!contains TEMPORAL_LOCK",
+                "timeline_sync": "restored"
+              }
+            }
+          ],
+          "player_interventions": [
+            {
+              "type": "memory_redirect",
+              "description": "Redirect memory access to adjacent timeline fragments",
+              "effect": "Reduces loop intensity but risks memory fragmentation"
+            },
+            {
+              "type": "process_throttle",
+              "description": "Limit CPU allocation to force process interruption",
+              "effect": "Breaks loop but may cause temporary disorientation"
+            },
+            {
+              "type": "inject_closure",
+              "description": "Insert acceptance subroutine into memory processing",
+              "effect": "Allows memory to complete naturally"
+            }
+          ],
+          "narrative_outcomes": {
+            "success": "Alexander's consciousness releases from the loop, allowing him to process the loss without being trapped in it.",
+            "partial": "The loop is broken but memory corruption makes Leo's face unclear in Alexander's mind.",
+            "failure": "The temporal lock strengthens, fragmenting Alexander's perception of linear time."
           }
-        ]
+        },
+      {
+          "id": "scenario_2_emily_neglect",
+          "title": "Thread Starvation: A Marriage in Crisis",
+          "description": "Emily's relationship thread is critically starved as all resources flow to grief processing and Leo's search.",
+          "narrative_context": "Emily has been trying to reach Alexander for weeks, but his consciousness barely registers her presence.",
+          "initial_state": {
+            "processes": [
+              {
+                "name": "emily_connection.dll",
+                "cpu": 2,
+                "memory": 64,
+                "status": "thread_starved",
+                "priority": -19
+              },
+              {
+                "name": "grief_processing.exe",
+                "cpu": 78,
+                "memory": 892,
+                "status": "monopolizing"
+              }
+            ],
+            "resources": {
+              "emotional_bandwidth": {
+                "total": 100,
+                "allocated": {
+                  "grief": 85,
+                  "search": 13,
+                  "relationships": 2
+                }
+              }
+            }
+          },
+          "debug_objectives": [
+            {
+              "id": "restore_connection",
+              "description": "Reallocate resources to relationship processes",
+              "success_conditions": {
+                "emily_connection.cpu": "> 20",
+                "relationship_stability": "> 0.6"
+              }
+            },
+            {
+              "id": "balance_priorities",
+              "description": "Achieve sustainable resource distribution",
+              "success_conditions": {
+                "no_process_above": 60,
+                "all_critical_processes": "> 10"
+              }
+            }
+          ],
+          "narrative_outcomes": {
+            "success": "Alexander becomes aware of Emily's pain, creating space for shared grief and mutual support.",
+            "partial": "Connection improves but remains fragile, requiring constant conscious effort.",
+            "failure": "Emily gives up trying to reach him, initiating separation protocols."
+          }
+        },
+      {
+          "id": "scenario_3_temporal_convergence",
+          "title": "The Anniversary Cascade",
+          "description": "As the 3-month anniversary approaches, multiple timeline fragments begin converging, threatening total consciousness collapse.",
+          "narrative_context": "June 21st - Exactly 98 days since Leo vanished. The temporal field resonance is at its peak.",
+          "initial_state": {
+            "processes": [
+              {
+                "name": "timeline_analyzer.exe",
+                "cpu": 45,
+                "memory": 768,
+                "status": "desynchronized",
+                "error_message": "Multiple timeline signatures detected"
+              },
+              {
+                "name": "reality_validator.dll",
+                "cpu": 67,
+                "memory": 512,
+                "status": "failing",
+                "error_message": "Cannot resolve conflicting temporal data"
+              }
+            ],
+            "system_errors": [
+              {
+                "code": "TIMELINE_COLLISION",
+                "message": "7 incompatible timelines attempting simultaneous access",
+                "severity": "critical"
+              },
+              {
+                "code": "REALITY_PARSE_ERROR",
+                "message": "Current sensory input doesn't match any known timeline",
+                "severity": "error"
+              }
+            ],
+            "special_conditions": {
+              "temporal_resonance": 0.97,
+              "consciousness_coherence": 0.31,
+              "cascade_risk": "IMMINENT"
+            }
+          },
+          "debug_objectives": [
+            {
+              "id": "prevent_cascade",
+              "description": "Stabilize consciousness before complete fragmentation",
+              "time_limit": "5 minutes real-time",
+              "success_conditions": {
+                "consciousness_coherence": "> 0.7",
+                "cascade_risk": "< 0.3"
+              }
+            },
+            {
+              "id": "choose_timeline",
+              "description": "Commit to a single timeline branch",
+              "success_conditions": {
+                "active_timelines": "== 1",
+                "timeline_lock": "engaged"
+              }
+            }
+          ],
+          "player_interventions": [
+            {
+              "type": "emergency_shutdown",
+              "description": "Force-quit all temporal processes",
+              "effect": "Stops cascade but erases all timeline data"
+            },
+            {
+              "type": "quantum_collapse",
+              "description": "Collapse quantum superposition to single state",
+              "effect": "Chooses one timeline but others are permanently lost"
+            },
+            {
+              "type": "parallel_processing",
+              "description": "Accept multiple timelines simultaneously",
+              "effect": "Requires massive resource reallocation"
+            }
+          ],
+          "narrative_outcomes": {
+            "success": "Alexander achieves quantum acceptance - Leo is both gone and present across infinite possibilities.",
+            "partial": "Consciousness stabilizes but remains fractured, experiencing multiple realities simultaneously.",
+            "failure": "Complete cascade - Alexander's consciousness shatters across all timelines."
+          }
+        },
+      {
+          "id": "scenario_4_acceptance_protocol",
+          "title": "Implementing Closure.exe",
+          "description": "The final challenge - installing a new process to accept Leo's loss without destroying the search for meaning.",
+          "narrative_context": "Dr. Cross has provided a therapeutic acceptance protocol, but Alexander's system violently rejects it.",
+          "initial_state": {
+            "processes": [
+              {
+                "name": "acceptance_installer.tmp",
+                "cpu": 0,
+                "memory": 0,
+                "status": "blocked",
+                "error_message": "Installation blocked by grief_processing.exe"
+              },
+              {
+                "name": "defense_mechanism.sys",
+                "cpu": 89,
+                "memory": 1024,
+                "status": "hostile",
+                "error_message": "Foreign process detected - initiating rejection"
+              }
+            ],
+            "consciousness_state": {
+              "resistance_level": 0.95,
+              "hope_index": 0.15,
+              "integration_readiness": 0.0
+            }
+          },
+          "debug_objectives": [
+            {
+              "id": "disable_defenses",
+              "description": "Lower psychological defenses without causing trauma",
+              "success_conditions": {
+                "defense_mechanism.status": "!= hostile",
+                "resistance_level": "< 0.3"
+              }
+            },
+            {
+              "id": "install_acceptance",
+              "description": "Successfully integrate acceptance process",
+              "success_conditions": {
+                "acceptance_installer.status": "running",
+                "integration_readiness": "> 0.8"
+              }
+            },
+            {
+              "id": "maintain_hope",
+              "description": "Preserve hope while accepting loss",
+              "success_conditions": {
+                "hope_index": "> 0.5",
+                "search_protocol.status": "optimized"
+              }
+            }
+          ],
+          "narrative_outcomes": {
+            "success": "Alexander integrates acceptance while maintaining hope - the search transforms from desperate to purposeful.",
+            "partial": "Acceptance achieved but at the cost of hope - Alexander stops searching entirely.",
+            "failure": "System rejection cascade - Alexander retreats deeper into denial."
+          }
+        }
+    ],
+    "progression_logic": {
+      "linear": false,
+      "unlock_conditions": {
+        "scenario_2": "scenario_1.outcome != 'failure'",
+        "scenario_3": "scenario_1.complete && scenario_2.complete",
+        "scenario_4": "scenario_3.outcome == 'success' || scenario_3.outcome == 'partial'"
+      },
+      "achievement_tracking": {
+        "gentle_debugger": "Complete all scenarios without forcing hard shutdowns",
+        "timeline_master": "Successfully navigate the Anniversary Cascade",
+        "family_preserved": "Maintain Emily connection above 60% throughout",
+        "quantum_acceptance": "Achieve the true ending"
       }
-    ]
+    }
   },
   "themes": {
     "emotional": [
