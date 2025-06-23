@@ -1,8 +1,7 @@
 import express from 'express';
-import { ConsciousnessEngine } from '../lib/consciousness-engine.js';
+import { consciousnessEngine } from '../lib/websocket-handlers.js';
 
 const router = express.Router();
-const consciousnessEngine = new ConsciousnessEngine();
 
 // Get consciousness state for a character
 router.get('/:characterId/state', async (req, res) => {
