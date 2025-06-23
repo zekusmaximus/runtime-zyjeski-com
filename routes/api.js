@@ -1,7 +1,13 @@
-const express = require('express');
+import express from 'express';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const router = express.Router();
-const fs = require('fs').promises;
-const path = require('path');
 
 // Get all available characters
 router.get('/characters', async (req, res) => {
@@ -68,12 +74,15 @@ router.post('/debug/:characterId', async (req, res) => {
 // Kill a mental process
 router.put('/process/:pid/kill', async (req, res) => {
   try {
-    const pid = req.params.pid;
+    const pid = parseInt(req.params.pid);
+    const { characterId } = req.body;
     
-    // In a real implementation, this would terminate the process
+    // In a real implementation, this would update the character's state
     res.json({
+      success: true,
       pid,
-      status: 'terminated',
+      characterId,
+      message: 'Process terminated',
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -82,24 +91,4 @@ router.put('/process/:pid/kill', async (req, res) => {
   }
 });
 
-// Get real-time monitoring data
-router.get('/monitor/:characterId', async (req, res) => {
-  try {
-    const characterId = req.params.characterId;
-    
-    // In a real implementation, this would return live monitoring data
-    res.json({
-      characterId,
-      timestamp: new Date().toISOString(),
-      cpu_usage: Math.random() * 100,
-      memory_usage: Math.random() * 100,
-      active_processes: Math.floor(Math.random() * 10) + 1,
-      errors: Math.floor(Math.random() * 5)
-    });
-  } catch (error) {
-    console.error('Error getting monitor data:', error);
-    res.status(500).json({ error: 'Failed to get monitoring data' });
-  }
-});
-
-module.exports = router;
+export default router;

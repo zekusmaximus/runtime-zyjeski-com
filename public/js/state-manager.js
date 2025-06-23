@@ -318,8 +318,3 @@ class StateManager {
 
 // Create global state manager instance
 window.stateManager = new StateManager();
-
-// Export for module systems
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = StateManager;
-}

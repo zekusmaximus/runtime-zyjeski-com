@@ -649,8 +649,3 @@ class DebuggerInterface {
 
 // Initialize global debugger instance
 window.debugger = new DebuggerInterface();
-
-// Export for module systems
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = DebuggerInterface;
-}

@@ -480,8 +480,3 @@ class ConsciousnessManager {
 
 // Create global consciousness manager instance
 window.consciousness = new ConsciousnessManager();
-
-// Export for module systems
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = ConsciousnessManager;
-}

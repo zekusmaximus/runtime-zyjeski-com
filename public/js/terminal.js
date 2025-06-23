@@ -983,7 +983,3 @@ class Terminal {
 // Create global terminal instance
 window.terminal = new Terminal();
 
-// Export for module systems
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = Terminal;
-}

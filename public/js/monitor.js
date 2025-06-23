@@ -969,8 +969,3 @@ handleInterventionResult(data) {
 
 // Create global monitor instance
 window.monitor = new Monitor();
-
-// Export for module systems
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = Monitor;
-}

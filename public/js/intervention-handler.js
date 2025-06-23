@@ -416,10 +416,7 @@ class InterventionHandler {
     
     if (effects.newStates.length > 0) {
       summary.new_states = effects.newStates.map(s => s.type);
-    }
-    
+    }    
     return summary;
   }
 }
-
-module.exports = InterventionHandler;

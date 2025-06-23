@@ -1,12 +1,14 @@
-const express = require('express');
+import express from 'express';
+import { ConsciousnessEngine } from '../lib/consciousness-engine.js';
+
 const router = express.Router();
-const ConsciousnessEngine = require('../lib/consciousness-engine');
+const consciousnessEngine = new ConsciousnessEngine();
 
 // Get consciousness state for a character
 router.get('/:characterId/state', async (req, res) => {
   try {
     const characterId = req.params.characterId;
-    const state = await ConsciousnessEngine.getState(characterId);
+    const state = await consciousnessEngine.getState(characterId);
     res.json(state);
   } catch (error) {
     console.error('Error getting consciousness state:', error);
@@ -19,7 +21,7 @@ router.post('/:characterId/update', async (req, res) => {
   try {
     const characterId = req.params.characterId;
     const updates = req.body;
-    const newState = await ConsciousnessEngine.updateState(characterId, updates);
+    const newState = await consciousnessEngine.updateState(characterId, updates);
     res.json(newState);
   } catch (error) {
     console.error('Error updating consciousness state:', error);
@@ -31,7 +33,7 @@ router.post('/:characterId/update', async (req, res) => {
 router.get('/:characterId/processes', async (req, res) => {
   try {
     const characterId = req.params.characterId;
-    const processes = await ConsciousnessEngine.getProcesses(characterId);
+    const processes = await consciousnessEngine.getProcesses(characterId);
     res.json(processes);
   } catch (error) {
     console.error('Error getting processes:', error);
@@ -43,7 +45,7 @@ router.get('/:characterId/processes', async (req, res) => {
 router.get('/:characterId/memory', async (req, res) => {
   try {
     const characterId = req.params.characterId;
-    const memory = await ConsciousnessEngine.getMemory(characterId);
+    const memory = await consciousnessEngine.getMemory(characterId);
     res.json(memory);
   } catch (error) {
     console.error('Error getting memory:', error);
@@ -55,7 +57,7 @@ router.get('/:characterId/memory', async (req, res) => {
 router.get('/:characterId/errors', async (req, res) => {
   try {
     const characterId = req.params.characterId;
-    const errors = await ConsciousnessEngine.getErrors(characterId);
+    const errors = await consciousnessEngine.getErrors(characterId);
     res.json(errors);
   } catch (error) {
     console.error('Error getting system errors:', error);
@@ -63,4 +65,4 @@ router.get('/:characterId/errors', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

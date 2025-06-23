@@ -1,20 +1,26 @@
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
-const cors = require('cors');
-const helmet = require('helmet');
-const path = require('path');
+import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
+import cors from 'cors';
+import helmet from 'helmet';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 // Import routes
-const apiRoutes = require('./routes/api');
-const consciousnessRoutes = require('./routes/consciousness');
+import apiRoutes from './routes/api.js';
+import consciousnessRoutes from './routes/consciousness.js';
 
 // Import WebSocket handlers
-const websocketHandlers = require('./lib/websocket-handlers');
+import websocketHandlers from './lib/websocket-handlers.js';
+
+// ES6 module compatibility for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
+const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"]
@@ -82,4 +88,4 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`Access the application at http://localhost:${PORT}`);
 });
 
-module.exports = { app, server, io };
+export { app, server, io };

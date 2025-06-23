@@ -131,13 +131,7 @@ class ManualSystem {
 document.addEventListener('DOMContentLoaded', function() {
     // Only initialize if we're in a context that might have tutorials
     if (document.querySelector('.tutorial-footer') || 
-        document.querySelector('.help-footer') || 
-        document.querySelector('.help-content')) {
+        document.querySelector('.help-footer') ||        document.querySelector('.help-content')) {
         window.manualSystem = new ManualSystem();
     }
 });
-
-// Export for module systems
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ManualSystem;
-}
