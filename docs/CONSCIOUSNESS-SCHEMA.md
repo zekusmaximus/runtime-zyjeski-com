@@ -1,13 +1,16 @@
 # Consciousness Schema Documentation
 
-This document describes the data structure used to represent character consciousness states in the Runtime.zyjeski.com platform. The schema models the mind as a computer operating system with processes, memory, resources, and debug capabilities.
+This document describes the data structure used to represent character consciousness
+states in the Runtime.zyjeski.com platform. The schema models the mind as a computer
+operating system with processes, memory, resources, and debug capabilities.
 
 ## Overview
 
-Each character consciousness is represented as a JSON object following a specific schema that maps psychological states to computational concepts:
+Each character consciousness is represented as a JSON object following a specific
+schema that maps psychological states to computational concepts:
 
 - **Processes** → Mental activities and emotional states
-- **Memory** → Emotional attachments and experiences  
+- **Memory** → Emotional attachments and experiences
 - **Threads** → Parallel thought processes
 - **System Errors** → Psychological issues and traumas
 - **Resources** → Mental capacity and energy
@@ -18,7 +21,7 @@ Each character consciousness is represented as a JSON object following a specifi
 ```javascript
 {
   "id": "character-identifier",
-  "name": "Character Display Name", 
+  "name": "Character Display Name",
   "status": "stable|unstable|critical|offline",
   "description": "Brief character and consciousness description",
   "consciousness": { /* Core consciousness object */ },
@@ -27,6 +30,7 @@ Each character consciousness is represented as a JSON object following a specifi
 ```
 
 ### Required Fields
+
 - `id`: Unique character identifier (kebab-case)
 - `name`: Human-readable character name
 - `status`: Current operational status of consciousness
@@ -41,7 +45,7 @@ The core consciousness object contains six main components:
 {
   "processes": [],      // Running mental processes
   "memory": {},         // Emotional memory allocation
-  "threads": [],        // Parallel thought processes  
+  "threads": [],        // Parallel thought processes
   "system_errors": [],  // Psychological issues as system errors
   "resources": {},      // Mental resource allocation
   "debug_hooks": []     // Player intervention points

@@ -1,6 +1,7 @@
 # API Documentation
 
-This document describes the REST API and WebSocket interface for the Runtime.zyjeski.com consciousness debugging platform.
+This document describes the REST API and WebSocket interface for the
+Runtime.zyjeski.com consciousness debugging platform.
 
 ## Base URL
 
@@ -10,7 +11,8 @@ http://localhost:3000/api
 
 ## Authentication
 
-Currently, no authentication is required. Future versions may implement user sessions and character ownership.
+Currently, no authentication is required. Future versions may implement user
+sessions and character ownership.
 
 ## Response Format
 
@@ -26,6 +28,7 @@ All API responses follow a consistent JSON format:
 ```
 
 Error responses:
+
 ```javascript
 {
   "success": false,
@@ -59,6 +62,7 @@ Returns a list of all available character consciousness profiles.
 ```
 
 #### Get Character Details
+
 ```http
 GET /api/character/:id
 ```
@@ -66,9 +70,11 @@ GET /api/character/:id
 Returns complete consciousness profile for a specific character.
 
 **Parameters:**
+
 - `id` (string): Character identifier (e.g., "alexander-kane")
 
 **Response:**
+
 ```javascript
 {
   "id": "alexander-kane",
