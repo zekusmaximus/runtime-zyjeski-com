@@ -1,0 +1,432 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ConsciousnessProfile",
+  "description": "Defines a character's consciousness as debuggable processes",
+  "type": "object",
+  "required": ["id", "name", "version", "baseProcesses", "memoryMap", "emotionalStates", "systemResources"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z-]+$",
+      "description": "Unique identifier for the consciousness profile"
+    },
+    "name": {
+      "type": "string",
+      "description": "Character display name"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Consciousness version (major.minor.patch)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief character background"
+    },
+    "baseProcesses": {
+      "type": "array",
+      "description": "Core processes that define consciousness functionality",
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "baseLoad", "stability"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Process identifier"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable process name"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["emotional", "cognitive", "memory", "social", "executive", "sensory"],
+            "description": "Process category"
+          },
+          "baseLoad": {
+            "type": "object",
+            "required": ["cpu", "memory", "threads"],
+            "properties": {
+              "cpu": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Base CPU usage percentage"
+              },
+              "memory": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Base memory allocation in MB"
+              },
+              "threads": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 16,
+                "description": "Number of threads used"
+              }
+            }
+          },
+          "stability": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Process stability (0 = unstable, 1 = stable)"
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Other processes this depends on"
+          },
+          "triggers": {
+            "type": "array",
+            "description": "Conditions that modify process behavior",
+            "items": {
+              "type": "object",
+              "required": ["condition", "effect"],
+              "properties": {
+                "condition": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["memory_access", "cpu_threshold", "emotional_state", "time_based", "event"]
+                    },
+                    "target": {
+                      "type": "string"
+                    },
+                    "operator": {
+                      "type": "string",
+                      "enum": [">", "<", ">=", "<=", "==", "!=", "contains", "matches"]
+                    },
+                    "value": {
+                      "oneOf": [
+                        { "type": "string" },
+                        { "type": "number" },
+                        { "type": "boolean" }
+                      ]
+                    }
+                  }
+                },
+                "effect": {
+                  "type": "object",
+                  "properties": {
+                    "action": {
+                      "type": "string",
+                      "enum": ["increase_load", "decrease_load", "spawn_thread", "kill_thread", "trigger_error", "allocate_memory"]
+                    },
+                    "magnitude": {
+                      "type": "number"
+                    },
+                    "target": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "errors": {
+            "type": "array",
+            "description": "Possible errors this process can generate",
+            "items": {
+              "type": "object",
+              "required": ["code", "type", "message"],
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "pattern": "^[A-Z_]+$"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["segfault", "overflow", "deadlock", "race_condition", "memory_leak", "null_reference", "infinite_loop"]
+                },
+                "message": {
+                  "type": "string"
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": ["low", "medium", "high", "critical"],
+                  "default": "medium"
+                },
+                "probability": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Likelihood of error occurring"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "memoryMap": {
+      "type": "object",
+      "description": "Memory architecture of consciousness",
+      "required": ["totalSize", "regions"],
+      "properties": {
+        "totalSize": {
+          "type": "integer",
+          "description": "Total memory in MB"
+        },
+        "pageSize": {
+          "type": "integer",
+          "default": 4096,
+          "description": "Memory page size in bytes"
+        },
+        "regions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["address", "size", "type", "label"],
+            "properties": {
+              "address": {
+                "type": "string",
+                "pattern": "^0x[0-9A-F]{8,16}$",
+                "description": "Memory start address"
+              },
+              "size": {
+                "type": "integer",
+                "description": "Region size in MB"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["episodic", "semantic", "procedural", "working", "emotional", "sensory", "executive"],
+                "description": "Memory type classification"
+              },
+              "label": {
+                "type": "string",
+                "description": "Human-readable region name"
+              },
+              "protected": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether region is write-protected"
+              },
+              "fragmentable": {
+                "type": "boolean",
+                "default": true,
+                "description": "Can be accessed in fragments"
+              },
+              "volatility": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.5,
+                "description": "How quickly memories decay"
+              },
+              "corruptionRisk": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.1,
+                "description": "Likelihood of memory corruption"
+              }
+            }
+          }
+        }
+      }
+    },
+    "emotionalStates": {
+      "type": "object",
+      "description": "Emotional state definitions and their system impacts",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["baseIntensity", "processes", "memoryRegions"],
+        "properties": {
+          "baseIntensity": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Default emotional intensity"
+          },
+          "processes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Processes affected by this emotion"
+          },
+          "memoryRegions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Memory regions accessed by this emotion"
+          },
+          "systemImpact": {
+            "type": "object",
+            "properties": {
+              "cpuModifier": {
+                "type": "number",
+                "default": 1,
+                "description": "Multiplier for CPU usage"
+              },
+              "memoryModifier": {
+                "type": "number",
+                "default": 1,
+                "description": "Multiplier for memory usage"
+              },
+              "stabilityModifier": {
+                "type": "number",
+                "default": 1,
+                "description": "Multiplier for system stability"
+              }
+            }
+          },
+          "triggers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["memory", "time", "process", "external"]
+                },
+                "condition": {
+                  "type": "string"
+                },
+                "intensityModifier": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "systemResources": {
+      "type": "object",
+      "description": "Overall system resource constraints",
+      "required": ["cpu", "memory", "threads"],
+      "properties": {
+        "cpu": {
+          "type": "object",
+          "required": ["cores", "baseFrequency"],
+          "properties": {
+            "cores": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 16
+            },
+            "baseFrequency": {
+              "type": "number",
+              "description": "Base clock speed in GHz"
+            },
+            "turboFrequency": {
+              "type": "number",
+              "description": "Max turbo frequency in GHz"
+            }
+          }
+        },
+        "memory": {
+          "type": "object",
+          "required": ["total", "available"],
+          "properties": {
+            "total": {
+              "type": "integer",
+              "description": "Total system memory in MB"
+            },
+            "available": {
+              "type": "integer",
+              "description": "Available memory at start in MB"
+            },
+            "swapSize": {
+              "type": "integer",
+              "default": 0,
+              "description": "Swap space in MB"
+            }
+          }
+        },
+        "threads": {
+          "type": "object",
+          "required": ["max", "reserved"],
+          "properties": {
+            "max": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 256
+            },
+            "reserved": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Threads reserved for system"
+            }
+          }
+        }
+      }
+    },
+    "debugInterface": {
+      "type": "object",
+      "description": "Debugging interface configuration",
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["command", "description", "category"],
+            "properties": {
+              "command": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string",
+                "enum": ["process", "memory", "diagnostic", "intervention", "system"]
+              },
+              "requiresAuth": {
+                "type": "boolean",
+                "default": false
+              },
+              "riskLevel": {
+                "type": "string",
+                "enum": ["safe", "caution", "dangerous"],
+                "default": "safe"
+              }
+            }
+          }
+        },
+        "monitors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["cpu", "memory", "threads", "errors", "emotional", "stability"]
+          }
+        }
+      }
+    },
+    "defaultState": {
+      "type": "object",
+      "description": "Initial consciousness state",
+      "properties": {
+        "emotionalState": {
+          "type": "string"
+        },
+        "activeProcesses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "memoryFragments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

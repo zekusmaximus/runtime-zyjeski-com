@@ -1,0 +1,499 @@
+{
+  "id": "fractured-time",
+  "title": "Fractured Time",
+  "subtitle": "Debug a father's grief across broken timelines",
+  "series": {
+    "id": "consciousness-crisis",
+    "name": "The Consciousness Crisis Trilogy",
+    "universe": "runtime-zyjeski"
+  },
+  "chronology": {
+    "position": "main",
+    "timeline": {
+      "start": "2024-03-15T00:00:00Z",
+      "end": "2024-06-21T23:59:59Z",
+      "keyEvents": [
+        {
+          "date": "2024-03-15T15:47:00Z",
+          "event": "Leo disappears at the park",
+          "significance": "critical"
+        },
+        {
+          "date": "2024-04-22T00:00:00Z",
+          "event": "Alexander discovers temporal anomalies",
+          "significance": "major"
+        },
+        {
+          "date": "2024-05-15T00:00:00Z",
+          "event": "First timeline fracture detected",
+          "significance": "major"
+        },
+        {
+          "date": "2024-06-21T15:47:00Z",
+          "event": "Anniversary convergence point",
+          "significance": "critical"
+        }
+      ]
+    }
+  },
+  "protagonist": {
+    "characterId": "alexander-kane",
+    "name": "Dr. Alexander Kane",
+    "consciousnessFile": "characters/alexander-kane.json",
+    "startingState": {
+      "emotional": {
+        "primary": "grief",
+        "intensity": 0.8,
+        "secondary": [
+          {
+            "emotion": "hope",
+            "intensity": 0.4
+          },
+          {
+            "emotion": "guilt",
+            "intensity": 0.6
+          },
+          {
+            "emotion": "desperation",
+            "intensity": 0.7
+          }
+        ]
+      },
+      "stability": 0.6,
+      "corruption": 0.2
+    }
+  },
+  "narrative": {
+    "structure": {
+      "acts": 4,
+      "choicePoints": 7,
+      "endings": [
+        {
+          "id": "acceptance",
+          "type": "success",
+          "condition": {
+            "type": "compound",
+            "conditions": [
+              {
+                "target": "stability",
+                "operator": ">",
+                "value": 0.7
+              },
+              {
+                "target": "emily_connection.strength",
+                "operator": ">",
+                "value": 0.6
+              },
+              {
+                "target": "grief.processed",
+                "operator": ">",
+                "value": 0.8
+              }
+            ]
+          },
+          "achievement": "Quantum Acceptance"
+        },
+        {
+          "id": "eternal_search",
+          "type": "failure",
+          "condition": {
+            "type": "compound",
+            "conditions": [
+              {
+                "target": "obsession_loop.active",
+                "operator": "==",
+                "value": true
+              },
+              {
+                "target": "stability",
+                "operator": "<",
+                "value": 0.3
+              }
+            ]
+          }
+        },
+        {
+          "id": "parallel_peace",
+          "type": "partial",
+          "condition": {
+            "type": "compound",
+            "conditions": [
+              {
+                "target": "timeline_acceptance",
+                "operator": ">",
+                "value": 0.5
+              },
+              {
+                "target": "emily_connection.strength",
+                "operator": "<",
+                "value": 0.4
+              }
+            ]
+          },
+          "achievement": "Parallel Lives"
+        },
+        {
+          "id": "system_collapse",
+          "type": "failure",
+          "condition": {
+            "type": "simple",
+            "target": "corruption",
+            "operator": ">=",
+            "value": 1.0
+          }
+        },
+        {
+          "id": "nexus_revelation",
+          "type": "hidden",
+          "condition": {
+            "type": "compound",
+            "conditions": [
+              {
+                "target": "nexus_fragments_found",
+                "operator": ">=",
+                "value": 5
+              },
+              {
+                "target": "temporal_sync.accuracy",
+                "operator": ">",
+                "value": 0.9
+              }
+            ]
+          },
+          "achievement": "The Nexus Truth"
+        }
+      ]
+    },
+    "pacing": {
+      "style": "exponential",
+      "tensionCurve": [
+        {
+          "progress": 0.0,
+          "tension": 0.3
+        },
+        {
+          "progress": 0.25,
+          "tension": 0.5
+        },
+        {
+          "progress": 0.5,
+          "tension": 0.7
+        },
+        {
+          "progress": 0.75,
+          "tension": 0.85
+        },
+        {
+          "progress": 0.9,
+          "tension": 1.0
+        },
+        {
+          "progress": 1.0,
+          "tension": 0.6
+        }
+      ]
+    },
+    "branches": [
+      {
+        "id": "emily_confrontation",
+        "condition": {
+          "type": "emily_connection.failures",
+          "operator": ">=",
+          "value": 3
+        },
+        "impact": {
+          "narrative": "Emily demands attention, forcing choice between search and relationship",
+          "technical": "Spawns high-priority emily_crisis process",
+          "emotional": "Increases guilt, may stabilize or destabilize based on choice"
+        }
+      },
+      {
+        "id": "timeline_convergence",
+        "condition": {
+          "type": "progress",
+          "operator": ">",
+          "value": 0.8
+        },
+        "impact": {
+          "narrative": "Multiple timelines begin overlapping at anniversary moment",
+          "technical": "Memory corruption increases, temporal processes multiply",
+          "emotional": "All emotions intensify as convergence approaches"
+        }
+      },
+      {
+        "id": "nexus_discovery",
+        "condition": {
+          "type": "memory_fragments.nexus",
+          "operator": ">=",
+          "value": 3
+        },
+        "impact": {
+          "narrative": "Discover the Nexus - a point where all timelines intersect",
+          "technical": "Unlocks advanced temporal navigation commands",
+          "emotional": "Hope surges but stability decreases"
+        }
+      }
+    ]
+  },
+  "technical": {
+    "focus": [
+      "memory_management",
+      "process_control",
+      "threading",
+      "error_handling",
+      "system_stability"
+    ],
+    "difficulty": {
+      "initial": "intermediate",
+      "progression": "adaptive",
+      "maxLevel": "expert"
+    },
+    "concepts": [
+      {
+        "name": "Process Management",
+        "introduction": 0.0,
+        "mastery": 0.8,
+        "prerequisites": []
+      },
+      {
+        "name": "Memory Analysis",
+        "introduction": 0.1,
+        "mastery": 0.9,
+        "prerequisites": [
+          "Process Management"
+        ]
+      },
+      {
+        "name": "Error Cascade Prevention",
+        "introduction": 0.3,
+        "mastery": 0.7,
+        "prerequisites": [
+          "Process Management"
+        ]
+      },
+      {
+        "name": "Resource Optimization",
+        "introduction": 0.4,
+        "mastery": 0.8,
+        "prerequisites": [
+          "Memory Analysis",
+          "Process Management"
+        ]
+      },
+      {
+        "name": "System Stabilization",
+        "introduction": 0.5,
+        "mastery": 1.0,
+        "prerequisites": [
+          "Error Cascade Prevention",
+          "Resource Optimization"
+        ]
+      }
+    ],
+    "debuggingScenarios": [
+      {
+        "id": "initial_assessment",
+        "trigger": {
+          "progress": 0.0,
+          "event": "story_start"
+        },
+        "type": "tutorial",
+        "objective": "Assess Alexander's consciousness state and identify primary issues",
+        "hints": [
+          {
+            "trigger": "no_action_30s",
+            "content": "Try using 'ps' to see what processes are running"
+          },
+          {
+            "trigger": "high_cpu_noticed",
+            "content": "That grief_processing is consuming a lot of resources..."
+          }
+        ]
+      },
+      {
+        "id": "memory_corruption_crisis",
+        "trigger": {
+          "progress": 0.3,
+          "condition": {
+            "type": "memory_corruption",
+            "operator": ">",
+            "value": 0.3
+          }
+        },
+        "type": "crisis",
+        "objective": "Prevent memory corruption from spreading to critical Leo memories",
+        "hints": [
+          {
+            "trigger": "corruption_spreading",
+            "content": "Memory fragmentation is accelerating - consider defragmentation"
+          }
+        ]
+      },
+      {
+        "id": "relationship_breakdown",
+        "trigger": {
+          "event": "emily_connection_timeout",
+          "condition": {
+            "type": "choice_count",
+            "value": 3
+          }
+        },
+        "type": "challenge",
+        "objective": "Restore connection with Emily without abandoning the search",
+        "hints": [
+          {
+            "trigger": "process_conflict",
+            "content": "The obsession_loop is starving emily_connection of resources"
+          }
+        ]
+      },
+      {
+        "id": "temporal_optimization",
+        "trigger": {
+          "progress": 0.6,
+          "condition": {
+            "type": "skill_level",
+            "value": "advanced"
+          }
+        },
+        "type": "optimization",
+        "objective": "Optimize temporal analysis for faster timeline processing",
+        "hints": []
+      },
+      {
+        "id": "anniversary_convergence",
+        "trigger": {
+          "progress": 0.9
+        },
+        "type": "crisis",
+        "objective": "Navigate the temporal convergence without total system collapse",
+        "hints": [
+          {
+            "trigger": "cascade_imminent",
+            "content": "Multiple processes are approaching critical failure simultaneously"
+          }
+        ]
+      }
+    ]
+  },
+  "themes": {
+    "emotional": [
+      "grief and loss",
+      "obsession vs acceptance",
+      "love and neglect",
+      "hope in impossible circumstances",
+      "the weight of memory"
+    ],
+    "philosophical": [
+      "Can consciousness survive trauma?",
+      "Is reality subjective to the observer?",
+      "What defines identity across timelines?",
+      "The paradox of changing the past",
+      "Debugging the human condition"
+    ],
+    "technical": [
+      "Memory leaks as inability to let go",
+      "Infinite loops as obsessive behavior",
+      "Thread starvation as neglected relationships",
+      "System crashes as mental breakdowns",
+      "Debugging as therapeutic intervention"
+    ]
+  },
+  "visualTheme": {
+    "colorScheme": "dark",
+    "cssFile": "story-themes/fractured-time.css",
+    "primaryColor": "#00D4FF",
+    "accentColor": "#FF006E",
+    "font": {
+      "terminal": "JetBrains Mono",
+      "narrative": "Inter",
+      "ui": "System UI"
+    }
+  },
+  "achievements": [
+    {
+      "id": "first_stabilization",
+      "name": "Steady State",
+      "description": "Achieve system stability above 80%",
+      "condition": {
+        "type": "stability",
+        "operator": ">",
+        "value": 0.8
+      },
+      "hidden": false,
+      "points": 10
+    },
+    {
+      "id": "memory_master",
+      "name": "Memory Master",
+      "description": "Successfully defragment memory with zero data loss",
+      "condition": {
+        "type": "defrag_perfect",
+        "value": true
+      },
+      "hidden": false,
+      "points": 20
+    },
+    {
+      "id": "emily_saved",
+      "name": "Love Persists",
+      "description": "Maintain strong connection with Emily through the crisis",
+      "condition": {
+        "type": "emily_connection.strength",
+        "operator": ">",
+        "value": 0.8
+      },
+      "hidden": false,
+      "points": 30
+    },
+    {
+      "id": "all_timelines",
+      "name": "Quantum Explorer",
+      "description": "Discover fragments from all possible timelines",
+      "condition": {
+        "type": "timelines_explored",
+        "operator": "==",
+        "value": "all"
+      },
+      "hidden": true,
+      "points": 50
+    },
+    {
+      "id": "zero_errors",
+      "name": "Perfect Debugger",
+      "description": "Complete the story with zero unhandled errors",
+      "condition": {
+        "type": "unhandled_errors",
+        "operator": "==",
+        "value": 0
+      },
+      "hidden": true,
+      "points": 100
+    }
+  ],
+  "metadata": {
+    "author": "Team Runtime",
+    "version": "1.0.0",
+    "created": "2024-01-15T00:00:00Z",
+    "updated": "2024-06-23T00:00:00Z",
+    "tags": [
+      "grief",
+      "time-travel",
+      "consciousness",
+      "debugging",
+      "emotional",
+      "technical",
+      "interactive-fiction"
+    ],
+    "contentWarnings": [
+      "child loss",
+      "grief",
+      "mental health themes"
+    ],
+    "estimatedPlayTime": {
+      "minimum": 45,
+      "average": 90,
+      "completionist": 180
+    }
+  }
+}

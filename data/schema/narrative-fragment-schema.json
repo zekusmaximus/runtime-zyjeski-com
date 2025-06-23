@@ -1,0 +1,281 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NarrativeFragment",
+  "description": "Defines a piece of narrative content and its triggering conditions",
+  "type": "object",
+  "required": ["id", "type", "content", "triggers"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z-]+$",
+      "description": "Unique fragment identifier"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["process_trigger", "memory_dump", "debug_log", "resolution", "dialogue", "observation", "system_message", "narrative_bridge"],
+      "description": "Fragment category"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "high", "critical"],
+      "default": "normal",
+      "description": "Display priority when multiple fragments trigger"
+    },
+    "content": {
+      "type": "object",
+      "required": ["text"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "The narrative content"
+        },
+        "formatting": {
+          "type": "string",
+          "enum": ["plain", "terminal", "memory", "error", "success", "warning"],
+          "default": "plain"
+        },
+        "voice": {
+          "type": "string",
+          "enum": ["narrator", "system", "character", "debug", "memory"],
+          "default": "narrator"
+        },
+        "displayDuration": {
+          "type": "integer",
+          "description": "Milliseconds to display (0 = permanent)"
+        }
+      }
+    },
+    "triggers": {
+      "type": "object",
+      "required": ["conditions"],
+      "properties": {
+        "conditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["type", "target", "operator", "value"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["progress", "emotional_state", "process_state", "memory_access", "error_count", "user_action", "time_elapsed", "choice_made", "achievement", "system_resource"]
+              },
+              "target": {
+                "type": "string",
+                "description": "What to check (e.g., 'grief_intensity', 'emily_connection.cpu')"
+              },
+              "operator": {
+                "type": "string",
+                "enum": [">", "<", ">=", "<=", "==", "!=", "contains", "matches", "between", "in"]
+              },
+              "value": {
+                "oneOf": [
+                  { "type": "string" },
+                  { "type": "number" },
+                  { "type": "boolean" },
+                  { "type": "array" },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "min": { "type": "number" },
+                      "max": { "type": "number" }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "logic": {
+          "type": "string",
+          "enum": ["AND", "OR", "XOR", "CUSTOM"],
+          "default": "AND",
+          "description": "How to combine multiple conditions"
+        },
+        "customLogic": {
+          "type": "string",
+          "description": "Custom boolean expression (e.g., '(A AND B) OR (C AND D)')"
+        },
+        "cooldown": {
+          "type": "integer",
+          "default": 0,
+          "description": "Milliseconds before fragment can trigger again"
+        },
+        "maxTriggers": {
+          "type": "integer",
+          "default": -1,
+          "description": "Maximum times fragment can trigger (-1 = unlimited)"
+        }
+      }
+    },
+    "effects": {
+      "type": "object",
+      "description": "Changes to consciousness state after fragment displays",
+      "properties": {
+        "emotional": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["emotion", "modifier"],
+            "properties": {
+              "emotion": {
+                "type": "string"
+              },
+              "modifier": {
+                "type": "number",
+                "description": "Change to intensity (-1 to 1)"
+              },
+              "duration": {
+                "type": "integer",
+                "description": "Effect duration in milliseconds"
+              }
+            }
+          }
+        },
+        "processes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["process", "action"],
+            "properties": {
+              "process": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string",
+                "enum": ["start", "stop", "restart", "modify", "error"]
+              },
+              "parameters": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "memory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["action", "address"],
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": ["unlock", "lock", "corrupt", "repair", "allocate", "free"]
+              },
+              "address": {
+                "type": "string"
+              },
+              "data": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "narrative": {
+          "type": "object",
+          "properties": {
+            "unlockFragments": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "progressUpdate": {
+              "type": "number"
+            },
+            "choiceUnlock": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "connections": {
+      "type": "object",
+      "description": "Relationships to other fragments",
+      "properties": {
+        "requires": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Fragments that must have triggered before this one"
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Fragments this prevents from triggering"
+        },
+        "chains": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "next": {
+                "type": "string"
+              },
+              "delay": {
+                "type": "integer"
+              },
+              "condition": {
+                "type": "object"
+              }
+            }
+          },
+          "description": "Fragments to trigger after this one"
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "description": "Additional context for fragment selection",
+      "properties": {
+        "location": {
+          "type": "string",
+          "enum": ["terminal", "memory_view", "process_monitor", "sidebar", "overlay", "notification"]
+        },
+        "emotionalContext": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "technicalContext": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "storyAct": {
+          "type": "integer"
+        },
+        "complexity": {
+          "type": "string",
+          "enum": ["novice", "intermediate", "advanced", "expert"]
+        }
+      }
+    },
+    "variations": {
+      "type": "array",
+      "description": "Alternative versions based on state",
+      "items": {
+        "type": "object",
+        "required": ["condition", "content"],
+        "properties": {
+          "condition": {
+            "type": "object"
+          },
+          "content": {
+            "type": "object"
+          },
+          "weight": {
+            "type": "number",
+            "default": 1,
+            "description": "Selection weight for random choice"
+          }
+        }
+      }
+    }
+  }
+}

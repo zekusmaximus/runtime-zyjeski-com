@@ -1,342 +1,440 @@
 {
   "id": "alexander-kane",
   "name": "Alexander Kane",
-  "status": "critical",
-  "description": "Temporal physicist experiencing severe consciousness fragmentation following the loss of his son Leo in a time experiment. Multiple critical processes are malfunctioning, creating recursive grief loops and memory leaks.",
-  "consciousness": {
-    "processes": [
-      {
-        "pid": 1001,
-        "name": "Grief_Manager.exe",
-        "status": "error",
-        "cpu_usage": 89.7,
-        "memory_mb": 847.2,
-        "priority": -5,
-        "start_time": "2024-03-15T14:30:00Z",
-        "last_activity": "2024-06-21T12:45:33Z",
-        "description": "Primary grief processing system - experiencing severe memory leak",
-        "error_message": "MEMORY_LEAK: Emotional attachment to Leo consuming increasing resources"
+  "version": "1.0.0",
+  "description": "Physicist searching for his missing son Leo through fractured timelines",
+  "baseProcesses": [
+    {
+      "name": "grief_processing",
+      "displayName": "Grief Processing",
+      "type": "emotional",
+      "baseLoad": {
+        "cpu": 25,
+        "memory": 512,
+        "threads": 3
       },
-      {
-        "pid": 1002,
-        "name": "Temporal_Sync.dll",
-        "status": "error",
-        "cpu_usage": 23.4,
-        "memory_mb": 156.8,
-        "priority": 0,
-        "start_time": "2024-03-15T14:30:00Z",
-        "last_activity": "2024-06-21T12:45:31Z",
-        "description": "Temporal perception synchronization module",
-        "error_message": "DESYNC_ERROR: Unable to maintain consistent temporal reference frame"
-      },
-      {
-        "pid": 1003,
-        "name": "Search_Protocol.exe",
-        "status": "error",
-        "cpu_usage": 67.2,
-        "memory_mb": 234.5,
-        "priority": -3,
-        "start_time": "2024-03-15T14:35:00Z",
-        "last_activity": "2024-06-21T12:45:33Z",
-        "description": "Continuous search algorithm for Leo across timelines",
-        "error_message": "INFINITE_LOOP: Search parameters never satisfied, consuming excessive CPU"
-      },
-      {
-        "pid": 1004,
-        "name": "Relationship_Handler.exe",
-        "status": "sleeping",
-        "cpu_usage": 2.1,
-        "memory_mb": 45.3,
-        "priority": 5,
-        "start_time": "2024-03-15T14:30:00Z",
-        "last_activity": "2024-06-20T08:22:15Z",
-        "description": "Manages relationships with Emily, Evelyn, and Marcus",
-        "error_message": "THREAD_STARVATION: Insufficient attention allocation"
-      },
-      {
-        "pid": 1005,
-        "name": "Physics_Engine.dll",
-        "status": "running",
-        "cpu_usage": 15.8,
-        "memory_mb": 89.7,
-        "priority": 2,
-        "start_time": "2024-03-15T14:30:00Z",
-        "last_activity": "2024-06-21T12:45:30Z",
-        "description": "Theoretical physics processing and calculations"
-      },
-      {
-        "pid": 1006,
-        "name": "Reality_Parser.exe",
-        "status": "error",
-        "cpu_usage": 34.6,
-        "memory_mb": 178.9,
-        "priority": 1,
-        "start_time": "2024-03-15T14:30:00Z",
-        "last_activity": "2024-06-21T12:45:32Z",
-        "description": "Processes and interprets sensory input from current reality",
-        "error_message": "IO_PROCESSING_ERROR: Difficulty distinguishing between timelines"
-      },
-      {
-        "pid": 1007,
-        "name": "Memory_Defrag.sys",
-        "status": "running",
-        "cpu_usage": 8.3,
-        "memory_mb": 67.4,
-        "priority": 10,
-        "start_time": "2024-06-21T12:00:00Z",
-        "last_activity": "2024-06-21T12:45:29Z",
-        "description": "Attempts to defragment corrupted memories"
-      }
-    ],
-    "memory": {
-      "0x7FF8A1B2C000": {
-        "type": "relationship",
-        "size": 2048576,
-        "description": "Leo Kane - Son, age 8, lost in temporal experiment",
-        "access_count": 15847,
-        "last_accessed": "2024-06-21T12:45:33Z",
-        "fragmented": true,
-        "protected": true
-      },
-      "0x7FF8A1B2D000": {
-        "type": "relationship",
-        "size": 1048576,
-        "description": "Emily Kane - Wife, relationship strained by grief",
-        "access_count": 3421,
-        "last_accessed": "2024-06-20T08:22:15Z",
-        "fragmented": false,
-        "protected": false
-      },
-      "0x7FF8A1B2E000": {
-        "type": "trauma",
-        "size": 3145728,
-        "description": "Temporal experiment failure - March 15, 2024",
-        "access_count": 8934,
-        "last_accessed": "2024-06-21T12:45:32Z",
-        "fragmented": true,
-        "protected": true
-      },
-      "0x7FF8A1B2F000": {
-        "type": "relationship",
-        "size": 524288,
-        "description": "Dr. Evelyn Cross - Research partner, guilt over experiment",
-        "access_count": 1256,
-        "last_accessed": "2024-06-19T16:30:22Z",
-        "fragmented": false,
-        "protected": false
-      },
-      "0x7FF8A1B30000": {
-        "type": "relationship",
-        "size": 786432,
-        "description": "Marcus Webb - Lab assistant, witness to accident",
-        "access_count": 892,
-        "last_accessed": "2024-06-18T14:15:08Z",
-        "fragmented": false,
-        "protected": false
-      },
-      "0x7FF8A1B31000": {
-        "type": "knowledge",
-        "size": 4194304,
-        "description": "Temporal physics theories and equations",
-        "access_count": 5678,
-        "last_accessed": "2024-06-21T12:45:30Z",
-        "fragmented": false,
-        "protected": false
-      },
-      "0x7FF8A1B32000": {
-        "type": "emotion",
-        "size": 1572864,
-        "description": "Guilt over Leo's disappearance",
-        "access_count": 12456,
-        "last_accessed": "2024-06-21T12:45:33Z",
-        "fragmented": true,
-        "protected": true
-      },
-      "0x7FF8A1B33000": {
-        "type": "emotion",
-        "size": 1048576,
-        "description": "Hope for Leo's return",
-        "access_count": 7823,
-        "last_accessed": "2024-06-21T12:45:31Z",
-        "fragmented": false,
-        "protected": false
-      }
-    },
-    "threads": [
-      {
-        "tid": 2001,
-        "name": "Continuous_Leo_Search",
-        "status": "running",
-        "priority": 1,
-        "cpu_time": 847.3,
-        "related_process": 1003
-      },
-      {
-        "tid": 2002,
-        "name": "Guilt_Processing",
-        "status": "running",
-        "priority": 2,
-        "cpu_time": 623.7,
-        "related_process": 1001
-      },
-      {
-        "tid": 2003,
-        "name": "Emily_Relationship_Monitor",
-        "status": "waiting",
-        "priority": 6,
-        "cpu_time": 45.2,
-        "wait_reason": "Insufficient emotional energy allocation",
-        "related_process": 1004
-      },
-      {
-        "tid": 2004,
-        "name": "Timeline_Analysis",
-        "status": "blocked",
-        "priority": 3,
-        "cpu_time": 234.8,
-        "wait_reason": "Temporal_Sync.dll malfunction",
-        "related_process": 1002
-      },
-      {
-        "tid": 2005,
-        "name": "Memory_Reconstruction",
-        "status": "running",
-        "priority": 8,
-        "cpu_time": 156.4,
-        "related_process": 1007
-      }
-    ],
-    "system_errors": [
-      {
-        "type": "MEMORY_LEAK_DETECTED",
-        "message": "Grief_Manager.exe consuming excessive memory - 847MB and growing",
-        "timestamp": "2024-06-21T12:45:33Z",
-        "severity": "critical",
-        "related_process": 1001,
-        "stack_trace": [
-          "grief_manager.cpp:line 234 - emotional_attachment_loop()",
-          "memory_allocator.cpp:line 89 - allocate_emotional_memory()",
-          "consciousness_core.cpp:line 456 - process_grief_event()"
-        ],
-        "recovery_suggestion": "Implement grief processing limits or restart Grief_Manager.exe"
-      },
-      {
-        "type": "INFINITE_LOOP_WARNING",
-        "message": "Search_Protocol.exe stuck in infinite search loop for Leo",
-        "timestamp": "2024-06-21T12:45:32Z",
-        "severity": "error",
-        "related_process": 1003,
-        "stack_trace": [
-          "search_protocol.cpp:line 167 - search_all_timelines()",
-          "temporal_interface.cpp:line 203 - scan_timeline_branch()",
-          "quantum_observer.cpp:line 78 - collapse_probability_wave()"
-        ],
-        "recovery_suggestion": "Set search timeout parameters or modify search criteria"
-      },
-      {
-        "type": "THREAD_STARVATION",
-        "message": "Relationship processing threads starved of CPU time",
-        "timestamp": "2024-06-21T12:45:31Z",
-        "severity": "warning",
-        "related_process": 1004,
-        "recovery_suggestion": "Increase priority of Relationship_Handler.exe or allocate more attention resources"
-      },
-      {
-        "type": "IO_PROCESSING_ERROR",
-        "message": "Reality_Parser.exe unable to distinguish between timeline memories",
-        "timestamp": "2024-06-21T12:45:30Z",
-        "severity": "error",
-        "related_process": 1006,
-        "recovery_suggestion": "Recalibrate temporal reference frame or restart Reality_Parser.exe"
-      },
-      {
-        "type": "SEGMENTATION_FAULT",
-        "message": "Attempted to access protected memory region containing Leo's data",
-        "timestamp": "2024-06-21T12:44:15Z",
-        "severity": "warning",
-        "stack_trace": [
-          "memory_manager.cpp:line 445 - access_protected_memory()",
-          "grief_manager.cpp:line 189 - retrieve_leo_memories()"
-        ],
-        "recovery_suggestion": "Implement proper memory access protocols for protected emotional data"
-      }
-    ],
-    "resources": {
-      "attention": {
-        "current": 23.4,
-        "max": 100.0,
-        "allocation": {
-          "Leo_Search": 67.2,
-          "Grief_Processing": 22.5,
-          "Reality_Parsing": 8.1,
-          "Relationships": 2.2
+      "stability": 0.6,
+      "dependencies": ["memory_search", "temporal_analysis"],
+      "triggers": [
+        {
+          "condition": {
+            "type": "memory_access",
+            "target": "leo_memories",
+            "operator": "contains",
+            "value": "anniversary"
+          },
+          "effect": {
+            "action": "increase_load",
+            "magnitude": 2.5,
+            "target": "cpu"
+          }
         }
-      },
-      "emotional_energy": {
-        "current": 15.7,
-        "max": 100.0,
-        "regeneration_rate": 2.3
-      },
-      "processing_capacity": {
-        "current": 94.8,
-        "max": 100.0,
-        "efficiency": 34.2
-      }
+      ],
+      "errors": [
+        {
+          "code": "GRIEF_OVERFLOW",
+          "type": "overflow",
+          "message": "Grief processing exceeding emotional capacity",
+          "severity": "high",
+          "probability": 0.3
+        }
+      ]
     },
-    "debug_hooks": [
+    {
+      "name": "memory_search",
+      "displayName": "Memory Search Protocol",
+      "type": "cognitive",
+      "baseLoad": {
+        "cpu": 35,
+        "memory": 1024,
+        "threads": 4
+      },
+      "stability": 0.8,
+      "dependencies": [],
+      "triggers": [
+        {
+          "condition": {
+            "type": "emotional_state",
+            "target": "grief",
+            "operator": ">",
+            "value": 0.7
+          },
+          "effect": {
+            "action": "spawn_thread",
+            "magnitude": 2,
+            "target": "search_threads"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "MEMORY_FRAGMENTATION",
+          "type": "segfault",
+          "message": "Memory fragments corrupted by temporal distortion",
+          "severity": "critical",
+          "probability": 0.2
+        }
+      ]
+    },
+    {
+      "name": "temporal_analysis",
+      "displayName": "Temporal Analysis Engine",
+      "type": "cognitive",
+      "baseLoad": {
+        "cpu": 40,
+        "memory": 768,
+        "threads": 2
+      },
+      "stability": 0.5,
+      "dependencies": ["reality_check"],
+      "triggers": [
+        {
+          "condition": {
+            "type": "event",
+            "target": "timeline_shift",
+            "operator": "==",
+            "value": true
+          },
+          "effect": {
+            "action": "increase_load",
+            "magnitude": 1.5,
+            "target": "memory"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "TEMPORAL_PARADOX",
+          "type": "deadlock",
+          "message": "Conflicting timeline data causing logical paradox",
+          "severity": "critical",
+          "probability": 0.15
+        }
+      ]
+    },
+    {
+      "name": "reality_check",
+      "displayName": "Reality Verification",
+      "type": "executive",
+      "baseLoad": {
+        "cpu": 10,
+        "memory": 128,
+        "threads": 1
+      },
+      "stability": 0.9,
+      "dependencies": [],
+      "triggers": [],
+      "errors": [
+        {
+          "code": "REALITY_MISMATCH",
+          "type": "null_reference",
+          "message": "Current reality does not match expected parameters",
+          "severity": "medium",
+          "probability": 0.1
+        }
+      ]
+    },
+    {
+      "name": "emily_connection",
+      "displayName": "Emily Relationship Handler",
+      "type": "social",
+      "baseLoad": {
+        "cpu": 15,
+        "memory": 256,
+        "threads": 2
+      },
+      "stability": 0.7,
+      "dependencies": ["emotional_regulation"],
+      "triggers": [
+        {
+          "condition": {
+            "type": "event",
+            "target": "emily_interaction",
+            "operator": "==",
+            "value": true
+          },
+          "effect": {
+            "action": "allocate_memory",
+            "magnitude": 128,
+            "target": "relationship_buffer"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "CONNECTION_TIMEOUT",
+          "type": "deadlock",
+          "message": "Unable to maintain connection with Emily",
+          "severity": "high",
+          "probability": 0.25
+        }
+      ]
+    },
+    {
+      "name": "obsession_loop",
+      "displayName": "Obsessive Search Pattern",
+      "type": "emotional",
+      "baseLoad": {
+        "cpu": 30,
+        "memory": 384,
+        "threads": 3
+      },
+      "stability": 0.4,
+      "dependencies": ["memory_search", "temporal_analysis"],
+      "triggers": [
+        {
+          "condition": {
+            "type": "cpu_threshold",
+            "target": "memory_search",
+            "operator": ">",
+            "value": 80
+          },
+          "effect": {
+            "action": "trigger_error",
+            "magnitude": 1,
+            "target": "infinite_loop"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "INFINITE_LOOP",
+          "type": "infinite_loop",
+          "message": "Caught in obsessive thought pattern about Leo",
+          "severity": "high",
+          "probability": 0.4
+        }
+      ]
+    }
+  ],
+  "memoryMap": {
+    "totalSize": 8192,
+    "pageSize": 4096,
+    "regions": [
       {
-        "id": "grief_memory_leak",
-        "name": "Grief Manager Memory Leak",
-        "type": "breakpoint",
-        "target": "Grief_Manager.exe",
-        "condition": "memory_usage > 800MB",
-        "enabled": true,
-        "description": "Triggers when grief processing consumes excessive memory"
+        "address": "0x1000000000000000",
+        "size": 2048,
+        "type": "episodic",
+        "label": "Leo's Memories",
+        "protected": true,
+        "fragmentable": true,
+        "volatility": 0.1,
+        "corruptionRisk": 0.3
       },
       {
-        "id": "search_loop_timeout",
-        "name": "Search Protocol Timeout",
-        "type": "watchpoint",
-        "target": "Search_Protocol.exe",
-        "condition": "cpu_usage > 60% for 30 seconds",
-        "enabled": true,
-        "description": "Monitors for infinite search loops"
+        "address": "0x2000000000000000",
+        "size": 1024,
+        "type": "emotional",
+        "label": "Grief Storage",
+        "protected": false,
+        "fragmentable": true,
+        "volatility": 0.8,
+        "corruptionRisk": 0.5
       },
       {
-        "id": "leo_memory_access",
-        "name": "Leo Memory Protection",
-        "type": "memory_edit",
-        "target": "0x7FF8A1B2C000",
-        "condition": "unauthorized_access_attempt",
-        "enabled": true,
-        "description": "Protects Leo's memory from corruption"
+        "address": "0x3000000000000000",
+        "size": 1536,
+        "type": "semantic",
+        "label": "Physics Knowledge",
+        "protected": false,
+        "fragmentable": false,
+        "volatility": 0.05,
+        "corruptionRisk": 0.1
       },
       {
-        "id": "attention_rebalance",
-        "name": "Attention Resource Rebalancing",
-        "type": "resource_adjustment",
-        "target": "attention",
-        "condition": "relationship_allocation < 10%",
-        "enabled": false,
-        "description": "Automatically rebalances attention to maintain relationships"
+        "address": "0x4000000000000000",
+        "size": 768,
+        "type": "procedural",
+        "label": "Research Protocols",
+        "protected": false,
+        "fragmentable": false,
+        "volatility": 0.2,
+        "corruptionRisk": 0.15
       },
       {
-        "id": "temporal_sync_restart",
-        "name": "Temporal Sync Recovery",
-        "type": "process_control",
-        "target": "Temporal_Sync.dll",
-        "condition": "desync_error_count > 5",
-        "enabled": true,
-        "description": "Restarts temporal synchronization when errors accumulate"
+        "address": "0x5000000000000000",
+        "size": 512,
+        "type": "working",
+        "label": "Active Calculations",
+        "protected": false,
+        "fragmentable": true,
+        "volatility": 0.9,
+        "corruptionRisk": 0.2
+      },
+      {
+        "address": "0x6000000000000000",
+        "size": 1024,
+        "type": "episodic",
+        "label": "Timeline Fragments",
+        "protected": true,
+        "fragmentable": true,
+        "volatility": 0.6,
+        "corruptionRisk": 0.7
+      },
+      {
+        "address": "0x7000000000000000",
+        "size": 512,
+        "type": "emotional",
+        "label": "Emily Relationship",
+        "protected": false,
+        "fragmentable": false,
+        "volatility": 0.4,
+        "corruptionRisk": 0.3
+      },
+      {
+        "address": "0x8000000000000000",
+        "size": 768,
+        "type": "sensory",
+        "label": "Sensory Archives",
+        "protected": false,
+        "fragmentable": true,
+        "volatility": 0.3,
+        "corruptionRisk": 0.2
       }
     ]
   },
-  "metadata": {
-    "created": "2024-03-15T14:30:00Z",
-    "last_updated": "2024-06-21T12:45:33Z",
-    "version": "1.0",
-    "story_context": "Fractured Time",
-    "debug_difficulty": "advanced"
+  "emotionalStates": {
+    "grief": {
+      "baseIntensity": 0.8,
+      "processes": ["grief_processing", "memory_search", "obsession_loop"],
+      "memoryRegions": ["0x1000000000000000", "0x2000000000000000"],
+      "systemImpact": {
+        "cpuModifier": 1.5,
+        "memoryModifier": 1.3,
+        "stabilityModifier": 0.7
+      },
+      "triggers": [
+        {
+          "type": "time",
+          "condition": "anniversary_date",
+          "intensityModifier": 0.3
+        },
+        {
+          "type": "memory",
+          "condition": "leo_photo_access",
+          "intensityModifier": 0.2
+        }
+      ]
+    },
+    "hope": {
+      "baseIntensity": 0.4,
+      "processes": ["temporal_analysis", "reality_check"],
+      "memoryRegions": ["0x6000000000000000", "0x3000000000000000"],
+      "systemImpact": {
+        "cpuModifier": 1.2,
+        "memoryModifier": 1.1,
+        "stabilityModifier": 1.1
+      },
+      "triggers": [
+        {
+          "type": "process",
+          "condition": "timeline_match_found",
+          "intensityModifier": 0.5
+        }
+      ]
+    },
+    "guilt": {
+      "baseIntensity": 0.6,
+      "processes": ["grief_processing", "emily_connection"],
+      "memoryRegions": ["0x1000000000000000", "0x7000000000000000"],
+      "systemImpact": {
+        "cpuModifier": 1.1,
+        "memoryModifier": 1.2,
+        "stabilityModifier": 0.8
+      },
+      "triggers": [
+        {
+          "type": "external",
+          "condition": "emily_neglect",
+          "intensityModifier": 0.3
+        }
+      ]
+    },
+    "desperation": {
+      "baseIntensity": 0.7,
+      "processes": ["obsession_loop", "memory_search", "temporal_analysis"],
+      "memoryRegions": ["0x1000000000000000", "0x5000000000000000", "0x6000000000000000"],
+      "systemImpact": {
+        "cpuModifier": 2.0,
+        "memoryModifier": 1.5,
+        "stabilityModifier": 0.5
+      },
+      "triggers": [
+        {
+          "type": "process",
+          "condition": "search_failure_count > 10",
+          "intensityModifier": 0.2
+        }
+      ]
+    }
+  },
+  "systemResources": {
+    "cpu": {
+      "cores": 4,
+      "baseFrequency": 2.4,
+      "turboFrequency": 3.6
+    },
+    "memory": {
+      "total": 8192,
+      "available": 6144
+    },
+    "threads": {
+      "max": 16,
+      "reserved": 2
+    }
+  },
+  "debugInterface": {
+    "commands": [
+      {
+        "command": "ps",
+        "description": "List all running processes",
+        "category": "process",
+        "requiresAuth": false,
+        "riskLevel": "safe"
+      },
+      {
+        "command": "kill",
+        "description": "Terminate a process",
+        "category": "process",
+        "requiresAuth": false,
+        "riskLevel": "caution"
+      },
+      {
+        "command": "dump",
+        "description": "Dump memory contents",
+        "category": "memory",
+        "requiresAuth": false,
+        "riskLevel": "safe"
+      },
+      {
+        "command": "stabilize",
+        "description": "Run system stabilization",
+        "category": "system",
+        "requiresAuth": true,
+        "riskLevel": "safe"
+      },
+      {
+        "command": "reboot",
+        "description": "Reboot consciousness system",
+        "category": "system",
+        "requiresAuth": true,
+        "riskLevel": "dangerous"
+      }
+    ],
+    "monitors": ["cpu", "memory", "threads", "errors", "emotional", "stability"]
+  },
+  "defaultState": {
+    "emotionalState": "grief",
+    "activeProcesses": ["grief_processing", "memory_search", "reality_check"],
+    "memoryFragments": [
+      {
+        "address": "0x1000000000000000",
+        "content": "Leo's last words: 'See you tomorrow, Dad'"
+      },
+      {
+        "address": "0x6000000000000000",
+        "content": "Timeline Fragment: Park, 3:47 PM, sunny day"
+      }
+    ]
   }
 }
-

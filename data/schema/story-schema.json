@@ -1,0 +1,493 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StoryConfiguration",
+  "description": "Defines a story's structure, progression, and debugging scenarios",
+  "type": "object",
+  "required": ["id", "title", "series", "chronology", "protagonist", "narrative", "technical", "themes"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z-]+$",
+      "description": "Unique story identifier"
+    },
+    "title": {
+      "type": "string",
+      "description": "Story display title"
+    },
+    "subtitle": {
+      "type": "string",
+      "description": "Optional subtitle or tagline"
+    },
+    "series": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z-]+$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "universe": {
+          "type": "string",
+          "description": "Larger universe this series belongs to"
+        }
+      }
+    },
+    "chronology": {
+      "type": "object",
+      "required": ["position", "timeline"],
+      "properties": {
+        "position": {
+          "type": "string",
+          "enum": ["prequel", "main", "sequel", "parallel", "standalone"]
+        },
+        "timeline": {
+          "type": "object",
+          "required": ["start", "end"],
+          "properties": {
+            "start": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "end": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "keyEvents": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["date", "event"],
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "event": {
+                    "type": "string"
+                  },
+                  "significance": {
+                    "type": "string",
+                    "enum": ["minor", "moderate", "major", "critical"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "protagonist": {
+      "type": "object",
+      "required": ["characterId", "consciousnessFile", "startingState"],
+      "properties": {
+        "characterId": {
+          "type": "string",
+          "pattern": "^[a-z-]+$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "consciousnessFile": {
+          "type": "string",
+          "pattern": "^characters/[a-z-]+\\.json$"
+        },
+        "startingState": {
+          "type": "object",
+          "required": ["emotional", "stability", "corruption"],
+          "properties": {
+            "emotional": {
+              "type": "object",
+              "properties": {
+                "primary": {
+                  "type": "string"
+                },
+                "intensity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "secondary": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "emotion": {
+                        "type": "string"
+                      },
+                      "intensity": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "stability": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "corruption": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    },
+    "narrative": {
+      "type": "object",
+      "required": ["structure", "pacing", "branches"],
+      "properties": {
+        "structure": {
+          "type": "object",
+          "required": ["acts", "choicePoints", "endings"],
+          "properties": {
+            "acts": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "choicePoints": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "endings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "type", "condition"],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["success", "failure", "partial", "alternate", "hidden"]
+                  },
+                  "condition": {
+                    "type": "object",
+                    "description": "Requirements to achieve this ending"
+                  },
+                  "achievement": {
+                    "type": "string",
+                    "description": "Optional achievement name"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "pacing": {
+          "type": "object",
+          "properties": {
+            "style": {
+              "type": "string",
+              "enum": ["linear", "exponential", "episodic", "dynamic"]
+            },
+            "tensionCurve": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "progress": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "tension": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "branches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "condition", "impact"],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "condition": {
+                "type": "object"
+              },
+              "impact": {
+                "type": "object",
+                "properties": {
+                  "narrative": {
+                    "type": "string"
+                  },
+                  "technical": {
+                    "type": "string"
+                  },
+                  "emotional": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "technical": {
+      "type": "object",
+      "required": ["focus", "difficulty", "concepts"],
+      "properties": {
+        "focus": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["memory_management", "process_control", "threading", "error_handling", "resource_allocation", "system_stability", "performance_optimization"]
+          }
+        },
+        "difficulty": {
+          "type": "object",
+          "required": ["initial", "progression"],
+          "properties": {
+            "initial": {
+              "type": "string",
+              "enum": ["novice", "intermediate", "advanced", "expert"]
+            },
+            "progression": {
+              "type": "string",
+              "enum": ["static", "linear", "adaptive", "player_controlled"]
+            },
+            "maxLevel": {
+              "type": "string",
+              "enum": ["novice", "intermediate", "advanced", "expert"]
+            }
+          }
+        },
+        "concepts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "introduction", "mastery"],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "introduction": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Story progress when concept introduced"
+              },
+              "mastery": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Expected mastery by story end"
+              },
+              "prerequisites": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "debuggingScenarios": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "trigger", "type", "objective"],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "trigger": {
+                "type": "object",
+                "properties": {
+                  "progress": {
+                    "type": "number"
+                  },
+                  "event": {
+                    "type": "string"
+                  },
+                  "condition": {
+                    "type": "object"
+                  }
+                }
+              },
+              "type": {
+                "type": "string",
+                "enum": ["tutorial", "challenge", "crisis", "exploration", "optimization"]
+              },
+              "objective": {
+                "type": "string"
+              },
+              "hints": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "trigger": {
+                      "type": "string"
+                    },
+                    "content": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "themes": {
+      "type": "object",
+      "required": ["emotional", "philosophical", "technical"],
+      "properties": {
+        "emotional": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Core emotional themes explored"
+        },
+        "philosophical": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Philosophical questions raised"
+        },
+        "technical": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Technical metaphors for life concepts"
+        }
+      }
+    },
+    "visualTheme": {
+      "type": "object",
+      "required": ["colorScheme", "cssFile"],
+      "properties": {
+        "colorScheme": {
+          "type": "string",
+          "enum": ["dark", "light", "high_contrast", "custom"]
+        },
+        "cssFile": {
+          "type": "string",
+          "pattern": "^story-themes/[a-z-]+\\.css$"
+        },
+        "primaryColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-F]{6}$"
+        },
+        "accentColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-F]{6}$"
+        },
+        "font": {
+          "type": "object",
+          "properties": {
+            "terminal": {
+              "type": "string"
+            },
+            "narrative": {
+              "type": "string"
+            },
+            "ui": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "achievements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "description", "condition"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "condition": {
+            "type": "object"
+          },
+          "hidden": {
+            "type": "boolean",
+            "default": false
+          },
+          "points": {
+            "type": "integer",
+            "default": 10
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "author": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "contentWarnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "estimatedPlayTime": {
+          "type": "object",
+          "properties": {
+            "minimum": {
+              "type": "integer",
+              "description": "Minutes for speed run"
+            },
+            "average": {
+              "type": "integer",
+              "description": "Minutes for typical playthrough"
+            },
+            "completionist": {
+              "type": "integer",
+              "description": "Minutes for 100% completion"
+            }
+          }
+        }
+      }
+    }
+  }
+}
