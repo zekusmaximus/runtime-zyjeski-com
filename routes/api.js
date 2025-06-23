@@ -41,6 +41,12 @@ router.get('/characters', async (req, res) => {
 router.get('/character/:id', async (req, res) => {
   try {
     const characterId = req.params.id;
+
+    // Only allow alphanumeric, underscore, and hyphen
+    if (!/^[\w-]+$/.test(characterId)) {
+      return res.status(400).json({ error: 'Invalid character ID' });
+    }
+
     const filePath = path.join(__dirname, '../data/characters', `${characterId}.json`);
     const data = await fs.readFile(filePath, 'utf8');
     const character = JSON.parse(data);
