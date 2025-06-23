@@ -3,6 +3,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { error } from '../lib/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -32,7 +33,7 @@ router.get('/characters', async (req, res) => {
     
     res.json(characters);
   } catch (error) {
-    console.error('Error loading characters:', error);
+    error('Error loading characters', { error });
     res.status(500).json({ error: 'Failed to load characters' });
   }
 });
@@ -53,7 +54,7 @@ router.get('/character/:id', async (req, res) => {
     
     res.json(character);
   } catch (error) {
-    console.error('Error loading character:', error);
+    error('Error loading character', { error, characterId });
     res.status(404).json({ error: 'Character not found' });
   }
 });
@@ -72,7 +73,7 @@ router.post('/debug/:characterId', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Error starting debug session:', error);
+    error('Error starting debug session', { error, characterId });
     res.status(500).json({ error: 'Failed to start debugging session' });
   }
 });
@@ -92,7 +93,7 @@ router.put('/process/:pid/kill', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Error killing process:', error);
+    error('Error killing process', { error, characterId, processId });
     res.status(500).json({ error: 'Failed to kill process' });
   }
 });

@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { info, error } from './lib/logger.js';
 
 // Import routes
 import apiRoutes from './routes/api.js';
@@ -67,26 +68,26 @@ app.use('/api/*', (req, res) => {
 
 // WebSocket connection handling
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+  info('Client connected', { socketId: socket.id });
   
   // Initialize WebSocket handlers
   websocketHandlers.initializeHandlers(socket, io);
   
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+    info('Client disconnected', { socketId: socket.id });
   });
 });
 
 // Error handling
 app.use((err, req, res, next) => {
-  console.error('Server error:', err);
+  error('Server error', { error: err });
   res.status(500).json({ error: 'Internal server error' });
 });
 
 // Start server
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Runtime.zyjeski.com server running on port ${PORT}`);
-  console.log(`Access the application at http://localhost:${PORT}`);
+  info(`Runtime.zyjeski.com server running on port ${PORT}`);
+  info(`Access the application at http://localhost:${PORT}`);
 });
 
 export { app, server, io };

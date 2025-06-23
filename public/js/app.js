@@ -1,3 +1,5 @@
+import logger from './logger.js';
+
 // Fixed Main Application Controller - Prevent duplicate character loading
 class App {
   constructor() {
@@ -108,7 +110,7 @@ class App {
         
         // Prevent double-clicks and concurrent loads
         if (this.isLoadingCharacter) {
-          console.log('Character loading in progress, ignoring duplicate request');
+          logger.debug('Character loading in progress, ignoring duplicate request');
           return;
         }
         
@@ -123,7 +125,7 @@ class App {
       const characters = await response.json();
       this.renderCharacters(characters);
     } catch (error) {
-      console.error('Failed to load characters:', error);
+      logger.error('Failed to load characters', { error });
       this.showError('Failed to load character profiles');
     }
   }
@@ -145,13 +147,13 @@ class App {
   async selectCharacter(characterId) {
     // Prevent concurrent character loads
     if (this.isLoadingCharacter) {
-      console.log(`Character loading already in progress, skipping ${characterId}`);
+      logger.debug('Character loading already in progress', { characterId });
       return;
     }
 
     // If the same character is already loaded, don't reload
     if (this.currentCharacter && this.currentCharacter.id === characterId) {
-      console.log(`Character ${characterId} already loaded`);
+      logger.debug('Character already loaded', { characterId });
       this.updateCharacterSelection(characterId);
       return;
     }
@@ -179,7 +181,7 @@ class App {
       this.showSuccess(`Loaded ${character.name}'s consciousness profile`);
       
     } catch (error) {
-      console.error('Failed to load character:', error);
+      logger.error('Failed to load character', { error, characterId });
       this.hideLoading();
       this.showError('Failed to load character consciousness');
     } finally {
@@ -358,7 +360,7 @@ class App {
 
       return await response.json();
     } catch (error) {
-      console.error('API call error:', error);
+      logger.error('API call error', { error });
       throw error;
     }
   }
@@ -398,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Global error handler
 window.addEventListener('error', (event) => {
-  console.error('Global error:', event.error);
+  logger.error('Global error', { error: event.error });
   if (window.app) {
     window.app.showError('An unexpected error occurred');
   }
@@ -406,7 +408,7 @@ window.addEventListener('error', (event) => {
 
 // Handle unhandled promise rejections
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('Unhandled promise rejection:', event.reason);
+  logger.error('Unhandled promise rejection', { error: event.reason });
   if (window.app) {
     window.app.showError('An unexpected error occurred');
   }
