@@ -263,19 +263,23 @@
     <!-- Logger (must be loaded first) -->
     <script type="module" src="/js/logger.js"></script>
     
-    <!-- JavaScript Modules -->
-    <script type="module" src="js/onboarding.js"></script>
-    <script type="module" src="/js/manual-system.js"></script>
+    <!-- Core modules in dependency order -->
     <script type="module" src="/js/state-manager.js"></script>
     <script type="module" src="/js/socket-client.js"></script>
     <script type="module" src="/js/consciousness.js"></script>
-    <script type="module" src="/js/terminal.js"></script>
     <script type="module" src="/js/monitor.js"></script>
-    <script type="module" src="/js/debugger.js"></script>
     <script type="module" src="/js/app.js"></script>
+    
+    <!-- Initialization fix to ensure proper startup -->
+    <script type="module" src="/js/init-fix.js"></script>
+    
+    <!-- Non-critical modules -->
+    <script type="module" src="js/onboarding.js"></script>
+    <script type="module" src="/js/manual-system.js"></script>
+    <script type="module" src="/js/terminal.js"></script>
+    <script type="module" src="/js/debugger.js"></script>
     <script type="module" src="/js/home-manual.js"></script>
     <script type="module" src="/js/narrative-integration.js"></script>
     <script type="module" src="js/intervention-system.js"></script>
 </body>
 </html>
-

@@ -96,59 +96,143 @@ class Monitor {
   }
 
   setupSocketListeners() {
-    if (!window.socketClient) {
-      console.warn('Socket client not available for monitor');
-      return;
-    }
+  if (!window.socketClient) {
+    console.error('SocketClient not available for monitor');
+    return;
+  }
 
-    // Real-time consciousness updates
-    window.socketClient.on('consciousness-update', (data) => {
-      if (this.isActive && this.currentCharacter && data.characterId === this.currentCharacter.id) {
+  // ENHANCED Real-time consciousness updates with extensive debugging
+  window.socketClient.on('consciousness-update', (data) => {
+    console.log('🧠 MONITOR: Received consciousness-update:', {
+      timestamp: new Date().toISOString(),
+      monitorIsActive: this.isActive,
+      hasCurrentCharacter: !!this.currentCharacter,
+      currentCharacterID: this.currentCharacter?.id,
+      dataCharacterID: data?.characterId,
+      dataStructure: {
+        hasState: !!data?.state,
+        hasConsciousness: !!data?.consciousness,
+        hasProcesses: !!(data?.processes || data?.state?.processes || data?.consciousness?.processes),
+        stateKeys: data?.state ? Object.keys(data.state) : null,
+        directKeys: Object.keys(data || {})
+      }
+    });
+
+    // CRITICAL: Process consciousness updates regardless of isActive
+    if (this.currentCharacter && data?.characterId === this.currentCharacter.id) {
+      console.log('✅ MONITOR: Processing consciousness update');
+      
+      try {
         this.updateDisplays(data);
         this.updateDataHistory(data);
+        
+        // Force monitor to become active if it isn't already
+        if (!this.isActive) {
+          console.log('🔄 MONITOR: Auto-activating due to consciousness update');
+          this.isActive = true;
+          this.updateButtonStates();
+        }
+        
+        console.log('✅ MONITOR: Successfully processed consciousness update');
+        
+      } catch (error) {
+        console.error('❌ MONITOR: Error processing consciousness update:', error);
       }
-    });
+    } else {
+      console.warn('❌ MONITOR: Skipping consciousness update:', {
+        reason: !this.currentCharacter ? 'No current character' : 
+                !data?.characterId ? 'No character ID in data' :
+                data.characterId !== this.currentCharacter.id ? 'Character ID mismatch' : 'Unknown',
+        expected: this.currentCharacter?.id,
+        received: data?.characterId
+      });
+    }
+  });
 
-    // System resources data
-    window.socketClient.on('system-resources', (data) => {
-      console.log('Received system resources:', data);
-      if (data.resources) {
-        this.updateResourceMeters(data.resources);
+  // Enhanced monitoring started handler
+  window.socketClient.on('monitoring-started', (data) => {
+    console.log('🚀 MONITOR: monitoring-started event received:', data);
+    
+    if (this.currentCharacter && data?.characterId === this.currentCharacter.id) {
+      console.log('✅ MONITOR: Activating for monitoring-started');
+      this.isActive = true;
+      this.updateButtonStates();
+      
+      // Process initial state if provided
+      if (data.initialState) {
+        console.log('📊 MONITOR: Processing initial state from monitoring-started');
+        this.updateDisplays({ state: data.initialState });
       }
-    });
+    }
+  });
 
-    // Error logs data
-    window.socketClient.on('error-logs', (data) => {
-      console.log('Received error logs:', data);
-      if (data.errors) {
-        this.updateErrorLog(data.errors);
-      }
-    });
+  // Keep your existing handlers...
+  window.socketClient.on('system-resources', (data) => {
+    console.log('📈 MONITOR: Received system resources:', data);
+    if (data.resources) {
+      this.updateResourceMeters(data.resources);
+    }
+  });
 
-    // Memory allocation data
-    window.socketClient.on('memory-allocation', (data) => {
-      console.log('Received memory allocation:', data);
-      if (data.memoryData) {
-        this.updateMemoryVisualization(data.memoryData);
-      }
-    });
+  window.socketClient.on('error-logs', (data) => {
+    console.log('🚨 MONITOR: Received error logs:', data);
+    if (data.errors) {
+      this.updateErrorLog(data.errors);
+    }
+  });
 
-    // Intervention results
-    window.socketClient.on('intervention-applied', (data) => {
-      this.showInterventionFeedback(data);
-    });
+  window.socketClient.on('memory-allocation', (data) => {
+    console.log('🧠 MONITOR: Received memory allocation:', data);
+    if (data.memoryData) {
+      this.updateMemoryVisualization(data.memoryData);
+    }
+  });
 
-    // Debug hooks
-    window.socketClient.on('debug-hook-triggered', (data) => {
-      this.showDebugAlert(data);
-    });
-
-    // Socket errors
-    window.socketClient.on('error', (error) => {
-      console.error('Socket error in monitor:', error);
+  window.socketClient.on('error', (error) => {
+    console.error('💥 MONITOR: Socket error:', error);
+    if (this.showStatus) {
       this.showStatus(`Socket error: ${error.message}`, 'error');
-    });
+    }
+  });
+}
+
+// ALSO ADD: Enhanced startCharacterMonitoring method
+startCharacterMonitoring(character) {
+  if (!window.socketClient || !character) return;
+
+  console.log('🎯 Starting character monitoring for:', character.id);
+
+  // Ensure monitor is active
+  this.isActive = true;
+  this.updateButtonStates();
+
+  // Start WebSocket monitoring
+  window.socketClient.startMonitoring(character.id);
+
+  // Request initial data with delay to ensure server is ready
+  setTimeout(() => {
+    console.log('📡 Requesting initial system data...');
+    window.socketClient.emit('get-system-resources');
+    window.socketClient.emit('get-error-logs'); 
+    window.socketClient.emit('get-memory-allocation');
+  }, 200);
+}
+
+// ENHANCED: Add debug method to check monitor state
+getDebugState() {
+  return {
+    isActive: this.isActive,
+    currentCharacter: this.currentCharacter?.id || null,
+    hasSocketClient: !!window.socketClient,
+    socketConnected: window.socketClient?.isConnected || false,
+    lastUpdateTime: this.lastUpdateTime,
+    dataHistoryLengths: {
+      resources: this.dataHistory?.resources?.length || 0,
+      processes: this.dataHistory?.processes?.length || 0,
+      errors: this.dataHistory?.errors?.length || 0
+    }
   }
+}
 
   subscribeToStateChanges() {
     if (!window.stateManager) return;
@@ -290,55 +374,87 @@ class Monitor {
   }
 
   updateDisplays(data) {
-    if (!data) return;
-    
-    // Handle different data structure formats
-    let consciousness = null;
-    
-    if (data.state && data.state.consciousness) {
-      consciousness = data.state.consciousness;
-    } else if (data.consciousness) {
-      consciousness = data.consciousness;
-    } else if (data.processes || data.system_errors) {
-      consciousness = data;
-    } else {
-      consciousness = data;
-    }
-    
-    if (!consciousness) {
-      console.warn('No valid consciousness data found');
-      return;
-    }
-    
-    // Update all components
-    const processes = consciousness.processes || [];
-    const resources = consciousness.resources;
-    const memory = consciousness.memory;
-    const system_errors = consciousness.system_errors || [];
-    
-    if (processes.length > 0) {
-      this.updateProcessTable(processes);
-    }
-    
-    if (resources) {
-      this.updateResourceMeters(resources);
-    } else if (processes.length > 0) {
-      this.generateResourcesFromProcesses(processes);
-    }
-    
-    if (memory) {
-      this.updateMemoryVisualization(memory);
-    }
-    
-    if (system_errors.length > 0) {
-      this.updateErrorLog(system_errors);
-    }
-    
-    // Update timestamps and visual feedback
-    this.lastUpdateTime = new Date();
-    this.updateStatusTime();
-    this.flashUpdate();
+  console.log('🎯 MONITOR: updateDisplays called with:', {
+    dataType: typeof data,
+    hasState: !!data?.state,
+    hasConsciousness: !!data?.consciousness,
+    hasProcesses: !!(data?.processes || data?.state?.processes || data?.consciousness?.processes),
+    dataKeys: Object.keys(data || {})
+  });
+
+  if (!data) {
+    console.warn('❌ MONITOR: updateDisplays received null/undefined data');
+    return;
   }
+  
+  // Handle different data structure formats
+  let consciousness = null;
+  
+  if (data.state && data.state.consciousness) {
+    consciousness = data.state.consciousness;
+    console.log('📊 MONITOR: Using data.state.consciousness');
+  } else if (data.consciousness) {
+    consciousness = data.consciousness;
+    console.log('📊 MONITOR: Using data.consciousness');
+  } else if (data.processes || data.system_errors) {
+    consciousness = data;
+    console.log('📊 MONITOR: Using data directly as consciousness');
+  } else {
+    consciousness = data;
+    console.log('📊 MONITOR: Using data as fallback consciousness');
+  }
+  
+  if (!consciousness) {
+    console.warn('❌ MONITOR: No valid consciousness data found in updateDisplays');
+    return;
+  }
+  
+  console.log('✅ MONITOR: Extracted consciousness data:', {
+    hasProcesses: !!consciousness.processes,
+    processCount: consciousness.processes?.length || 0,
+    hasResources: !!consciousness.resources,
+    hasMemory: !!consciousness.memory,
+    hasErrors: !!consciousness.system_errors
+  });
+  
+  // Update all components with debugging
+  const processes = consciousness.processes || [];
+  const resources = consciousness.resources;
+  const memory = consciousness.memory;
+  const system_errors = consciousness.system_errors || [];
+  
+  if (processes.length > 0) {
+    console.log('🔄 MONITOR: Updating process table with', processes.length, 'processes');
+    this.updateProcessTable(processes);
+  } else {
+    console.log('⚠️ MONITOR: No processes to update');
+  }
+  
+  if (resources) {
+    console.log('🔄 MONITOR: Updating resource meters');
+    this.updateResourceMeters(resources);
+  } else if (processes.length > 0) {
+    console.log('🔄 MONITOR: Generating synthetic resources from processes');
+    this.generateResourcesFromProcesses(processes);
+  }
+  
+  if (memory) {
+    console.log('🔄 MONITOR: Updating memory visualization');
+    this.updateMemoryVisualization(memory);
+  }
+  
+  if (system_errors.length > 0) {
+    console.log('🔄 MONITOR: Updating error log with', system_errors.length, 'errors');
+    this.updateErrorLog(system_errors);
+  }
+  
+  // Update timestamps and visual feedback
+  this.lastUpdateTime = new Date();
+  this.updateStatusTime();
+  this.flashUpdate();
+  
+  console.log('✅ MONITOR: updateDisplays completed successfully');
+}
 
   updateDataHistory(data) {
     const timestamp = new Date();
@@ -1032,6 +1148,34 @@ generateResourcesFromProcesses(processes) {
     console.log(`Showing details for memory block: ${address}`);
     // Implement memory block detail modal/popup here
   }
+// ADDED: Debug method to check monitor state
+  getDebugState() {
+    return {
+      isActive: this.isActive,
+      currentCharacter: this.currentCharacter?.id || null,
+      hasSocketClient: !!window.socketClient,
+      socketConnected: window.socketClient?.isConnected || false,
+      lastUpdateTime: this.lastUpdateTime,
+      dataHistoryLengths: {
+        resources: this.dataHistory?.resources?.length || 0,
+        processes: this.dataHistory?.processes?.length || 0,
+        errors: this.dataHistory?.errors?.length || 0
+      }
+    };
+  }
+
+  // ADDED: Method to manually force activation (for debugging)
+  forceActivate() {
+    console.log('🔥 Forcing monitor activation...');
+    this.isActive = true;
+    this.updateButtonStates();
+    this.showStatus('Monitor force-activated', 'info');
+    
+    if (this.currentCharacter) {
+      this.startCharacterMonitoring(this.currentCharacter);
+    }
+  }
+
 }
 
 // Initialize monitor when DOM is ready
@@ -1049,8 +1193,10 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       window.monitor = new Monitor();
       console.log('✅ Monitor initialized successfully');
-      console.log('📋 Monitor methods:', Object.getOwnPropertyNames(Monitor.prototype));
       
+
+      
+
       // Auto-start monitoring if character is already selected
       if (window.stateManager && window.stateManager.getCurrentCharacter()) {
         console.log('🎯 Auto-starting monitoring for existing character');
