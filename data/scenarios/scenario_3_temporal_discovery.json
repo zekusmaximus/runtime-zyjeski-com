@@ -1,0 +1,286 @@
+{
+  "id": "scenario_3_temporal_discovery",
+  "title": "Temporal Anomaly Discovery",
+  "description": "Weeks later - Alexander discovers the temporal fractures and timeline multiplication",
+  "narrative_context": "April 22, 2024 - The first evidence that Leo might exist in parallel timelines",
+  "conditions": {
+    "triggers": [
+      {
+        "type": "time_based",
+        "days_elapsed": 38
+      },
+      {
+        "type": "discovery",
+        "process": "timeline_analysis_v*.exe",
+        "threshold": "breakthrough"
+      }
+    ],
+    "prerequisites": ["scenario_2_first_hours"]
+  },
+  "initial_state": {
+    "consciousness_state": {
+      "stability": 0.5,
+      "timeline_awareness": 0.2,
+      "hope_index": 0.15,
+      "exhaustion_level": 0.7
+    },
+    "processes": [
+      {
+        "name": "search_protocol_v17.exe",
+        "cpu": 67,
+        "memory": 1536,
+        "status": "iterating",
+        "description": "17th iteration of search algorithms"
+      },
+      {
+        "name": "temporal_scan.dll",
+        "cpu": 45,
+        "memory": 768,
+        "status": "active",
+        "description": "Scanning for quantum signatures"
+      },
+      {
+        "name": "grief_manager.exe",
+        "cpu": 23,
+        "memory": 456,
+        "status": "managed",
+        "description": "Grief held at 'sustainable' levels"
+      }
+    ]
+  },
+  "narrative": {
+    "intro": [
+      "LAB JOURNAL - Day 38",
+      "",
+      "The equations don’t lie. Can’t lie.",
+      "Seven distinct quantum signatures at the moment of field collapse.",
+      "Seven paths. Seven possibilities.",
+      "",
+      "In one, the experiment was cancelled.",
+      "In another, Leo never came to the lab.",
+      "In a third, the field held stable.",
+      "",
+      "Somewhere, in some timeline, Leo is still feeding ducks.",
+      "",
+      "SYSTEM: Timeline fragmentation analysis complete",
+      "SYSTEM: Probability matrices calculated",
+      "SYSTEM: WARNING: Pursuing multiple timelines may fracture consciousness"
+    ]
+  },
+  "objectives": [
+    {
+      "id": "analyze_timelines",
+      "description": "Successfully process timeline analysis without fragmenting",
+      "type": "complex_task",
+      "subtasks": [
+        {
+          "id": "maintain_coherence",
+          "description": "Keep consciousness coherence above 0.4",
+          "metric": "consciousness.coherence > 0.4"
+        },
+        {
+          "id": "map_timelines",
+          "description": "Map at least 5 timeline branches",
+          "metric": "timeline_map.size >= 5"
+        },
+        {
+          "id": "avoid_paradox",
+          "description": "Prevent paradox cascade",
+          "metric": "!system_errors.contains('PARADOX_CASCADE')"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "evelyn_intervention",
+      "trigger_condition": {
+        "time_elapsed": 180
+      },
+      "type": "character_moment",
+      "effects": {
+        "narrative": [
+          "EXTERNAL INPUT: Dr. Evelyn Cross",
+          "",
+          "'Alexander, I’ve been reviewing your data.'",
+          "'The timeline theory is… it’s possible.'",
+          "'But pursuing this path could shatter your mind.'",
+          "'You’d exist across multiple realities simultaneously.'",
+          "",
+          "'Is finding one version of Leo worth losing yourself?'"
+        ],
+        "spawn_process": {
+          "name": "doubt_thread.dll",
+          "cpu": 12,
+          "memory": 128,
+          "status": "background"
+        }
+      }
+    },
+    {
+      "id": "timeline_resonance",
+      "trigger_condition": {
+        "process_state": "temporal_scan.dll.cpu > 70"
+      },
+      "type": "breakthrough",
+      "effects": {
+        "narrative": [
+          "QUANTUM RESONANCE DETECTED",
+          "",
+          "Timeline ALPHA: Leo, age 8, laughter coefficient 0.97",
+          "Timeline BETA: Lab accident, Leo injured but alive",
+          "Timeline GAMMA: Field holds, Leo phase-shifted but recoverable",
+          "Timeline DELTA: No experiment scheduled that day",
+          "Timeline EPSILON: [DATA CORRUPTED]",
+          "Timeline ZETA: Consciousness merger father/son",
+          "Timeline OMEGA: [PARADOX - DO NOT ACCESS]",
+          "",
+          "WARNING: Each timeline equally valid in quantum superposition"
+        ],
+        "consciousness_changes": {
+          "timeline_awareness": 0.8,
+          "stability": "-0.2",
+          "hope_index": "+0.4"
+        },
+        "spawn_processes": [
+          {
+            "name": "timeline_navigator.exe",
+            "cpu": 34,
+            "memory": 512,
+            "status": "mapping"
+          },
+          {
+            "name": "paradox_prevention.dll",
+            "cpu": 28,
+            "memory": 384,
+            "status": "monitoring"
+          }
+        ]
+      }
+    }
+  ],
+  "player_interventions": [
+    {
+      "id": "focus_single_timeline",
+      "description": "Choose one timeline to investigate deeply",
+      "effects": {
+        "narrative": "You narrow your focus. One path. One possibility.",
+        "consciousness_changes": {
+          "stability": "+0.3",
+          "timeline_awareness": "-0.4",
+          "determination": "+0.2"
+        },
+        "modify_process": {
+          "temporal_scan.dll": {
+            "cpu": 25,
+            "status": "focused"
+          }
+        }
+      }
+    },
+    {
+      "id": "embrace_multiplicity",
+      "description": "Attempt to process all timelines simultaneously",
+      "requirements": {
+        "consciousness.coherence": "> 0.6",
+        "system_resources.available": "> 40%"
+      },
+      "effects": {
+        "narrative": "You open your mind to infinite possibilities. The fractures spread.",
+        "consciousness_changes": {
+          "stability": "-0.4",
+          "timeline_awareness": "+0.6",
+          "quantum_state": "superposition"
+        },
+        "spawn_processes": [
+          {
+            "name": "quantum_consciousness.exe",
+            "cpu": 78,
+            "memory": 2048,
+            "status": "transcending"
+          }
+        ]
+      }
+    },
+    {
+      "id": "scientific_method",
+      "description": "Apply rigorous scientific methodology to timeline analysis",
+      "effects": {
+        "narrative": "You approach this as a scientist, not just a father.",
+        "spawn_process": {
+          "name": "methodology_framework.dll",
+          "cpu": 20,
+          "memory": 256,
+          "status": "structuring"
+        },
+        "consciousness_changes": {
+          "stability": "+0.2",
+          "emotional_distance": "+0.3"
+        }
+      }
+    }
+  ],
+  "timeline_interactions": {
+    "viewing_mechanics": {
+      "description": "Each timeline can be viewed but not directly accessed",
+      "cost": {
+        "per_view": {
+          "emotional_energy": 5,
+          "stability": -0.05
+        }
+      }
+    },
+    "timeline_descriptions": {
+      "ALPHA": {
+        "summary": "The timeline where nothing went wrong",
+        "leo_status": "Safe, playing at home",
+        "pain_level": 0.95,
+        "accessibility": 0.1
+      },
+      "BETA": {
+        "summary": "Partial accident - Leo injured but recoverable",
+        "leo_status": "In temporal rehabilitation",
+        "hope_level": 0.7,
+        "accessibility": 0.3
+      },
+      "GAMMA": {
+        "summary": "Successful experiment - Leo phase-shifted",
+        "leo_status": "Exists between dimensions",
+        "complexity": 0.9,
+        "accessibility": 0.4
+      }
+    }
+  },
+  "outcome_conditions": [
+    {
+      "id": "timeline_lock",
+      "condition": "player.chose('focus_single_timeline') && stability > 0.6",
+      "next_scenario": "scenario_4_single_path",
+      "narrative": [
+        "You’ve chosen your path.",
+        "One timeline. One possibility. One hope.",
+        "The others fade like dreams upon waking."
+      ]
+    },
+    {
+      "id": "quantum_evolution",
+      "condition": "quantum_consciousness.active && timeline_awareness > 0.8",
+      "next_scenario": "scenario_4_quantum_state",
+      "narrative": [
+        "Your consciousness evolves beyond singular existence.",
+        "You see all timelines. Experience all possibilities.",
+        "But which one is real? All of them. None of them."
+      ]
+    },
+    {
+      "id": "analysis_paralysis",
+      "condition": "doubt_thread.cpu > 50 || stability < 0.3",
+      "next_scenario": "scenario_4_breakdown",
+      "narrative": [
+        "Too many possibilities. Too many paths.",
+        "The analysis becomes a prison of infinite choice.",
+        "In trying to find every Leo, you risk losing yourself."
+      ]
+    }
+  ]
+}
