@@ -792,7 +792,230 @@
             "partial": "Acceptance achieved but at the cost of hope - Alexander stops searching entirely.",
             "failure": "System rejection cascade - Alexander retreats deeper into denial."
           }
+        },
+      {
+        "id": "scenario_5_epilogue_acceptance",
+        "title": "Epilogue: The Weight of Love",
+        "description": "After choosing acceptance, Alexander and Emily begin the long journey of healing",
+        "narrative_context": "Six months after the cascade - learning to live with loss while honoring Leo's memory",
+        "conditions": {
+          "triggers": [
+            {
+              "type": "ending_achieved",
+              "ending_id": "acceptance_ending"
+            }
+          ],
+          "prerequisites": ["scenario_4_anniversary_cascade"]
+        },
+        "initial_state": {
+          "consciousness_state": {
+            "stability": 0.75,
+            "coherence": 0.85,
+            "timeline_sync": 1.0,
+            "grief_integration": 0.6,
+            "hope_index": 0.4
+          },
+          "processes": [
+            {
+              "name": "integrated_grief.dll",
+              "cpu": 15,
+              "memory": 384,
+              "status": "healthy",
+              "description": "Grief as companion, not enemy"
+            },
+            {
+              "name": "memory_curator.exe",
+              "cpu": 20,
+              "memory": 512,
+              "status": "active",
+              "description": "Preserving Leo's memory with love, not desperation"
+            },
+            {
+              "name": "emily_partnership.exe",
+              "cpu": 25,
+              "memory": 384,
+              "status": "strengthening",
+              "description": "Rebuilding connection through shared loss"
+            },
+            {
+              "name": "future_builder.dll",
+              "cpu": 30,
+              "memory": 256,
+              "status": "tentative",
+              "description": "Carefully constructing tomorrow"
+            }
+          ]
+        },
+        "narrative": {
+          "intro": [
+            "December 21, 2024 - Six months after the cascade",
+            "",
+            "The lab is different now. Quieter. More purposeful.",
+            "The temporal equations still cover the whiteboards,",
+            "but they're balanced with photos. Leo feeding ducks.",
+            "Leo's first day of school. Leo asking endless questions.",
+            "",
+            "Emily finds you here most mornings, coffee in hand.",
+            "Working not on time travel, but on quantum education.",
+            "The Leo Kane Foundation for Young Scientists.",
+            "Turning pain into purpose.",
+            "",
+            "Some days are harder than others.",
+            "But they're real. Singular. Yours.",
+            "",
+            "SYSTEM: Consciousness stable",
+            "SYSTEM: All processes operating within normal parameters",
+            "SYSTEM: Healing in progress"
+          ]
+        },
+        "objectives": [
+          {
+            "id": "daily_stability",
+            "description": "Maintain consciousness stability through daily challenges",
+            "type": "ongoing",
+            "success_metric": "Navigate triggers without system crashes"
+          },
+          {
+            "id": "honor_memory",
+            "description": "Find meaningful ways to honor Leo's curiosity",
+            "type": "creative",
+            "success_metric": "Create lasting positive impact"
+          },
+          {
+            "id": "rebuild_life",
+            "description": "Construct a future that includes joy again",
+            "type": "long_term",
+            "success_metric": "Allow new processes to emerge"
+          }
+        ],
+        "daily_events": [
+          {
+            "id": "morning_routine",
+            "type": "recurring",
+            "narrative": [
+              "You wake. Emily's already up, making breakfast.",
+              "The empty chair is still there. It always will be.",
+              "But it's part of the landscape now, not a wound."
+            ],
+            "player_choices": [
+              {
+                "id": "share_memory",
+                "description": "Tell Emily about a happy Leo memory",
+                "effect": "connection++"
+              },
+              {
+                "id": "work_focus",
+                "description": "Dive into foundation work",
+                "effect": "purpose++"
+              },
+              {
+                "id": "quiet_moment",
+                "description": "Sit with the grief quietly",
+                "effect": "integration++"
+              }
+            ]
+          },
+          {
+            "id": "trigger_management",
+            "type": "random",
+            "triggers": [
+              "A child's laughter at the park",
+              "A quantum physics question from a student",
+              "The smell of chocolate chip pancakes",
+              "A timeline calculation error"
+            ],
+            "narrative": "The trigger hits unexpectedly. Old processes threaten to spiral.",
+            "intervention_required": true
+          }
+        ],
+        "growth_mechanics": {
+          "description": "Track healing progress over time",
+          "metrics": {
+            "days_stable": 0,
+            "memories_integrated": 0,
+            "joy_moments": 0,
+            "emily_bond": 0,
+            "purpose_actions": 0
+          },
+          "milestones": [
+            {
+              "id": "first_laugh",
+              "condition": "joy_moments >= 1",
+              "narrative": "You laugh at something. Really laugh. Emily cries happy tears."
+            },
+            {
+              "id": "foundation_launch",
+              "condition": "purpose_actions >= 10",
+              "narrative": "The foundation's first student asks the same question Leo would have."
+            },
+            {
+              "id": "anniversary_peace",
+              "condition": "days_stable >= 365",
+              "narrative": "One year later. The pain remains, transformed into something bearable."
+            }
+          ]
+        },
+        "final_scenes": {
+          "scene_1": {
+            "title": "The Duck Pond",
+            "narrative": [
+              "You and Emily return to Riverview Park.",
+              "The ducks are there, as always.",
+              "You brought bread. Leo would have wanted that.",
+              "",
+              "'He loved this place,' Emily says.",
+              "'He did,' you agree. 'He still does, wherever he is.'",
+              "",
+              "You feed the ducks together.",
+              "In your pocket, a small quantum device hums.",
+              "Not for time travel. For measurement.",
+              "Proving that love transcends spacetime.",
+              "",
+              "It's enough. It has to be."
+            ]
+          },
+          "scene_2": {
+            "title": "The New Student",
+            "narrative": [
+              "Her name is Maya. Eight years old.",
+              "Same insatiable curiosity. Different laugh.",
+              "'Dr. Kane, why can't we go backwards in time?'",
+              "",
+              "The old you would have frozen.",
+              "The healed you smiles sadly but genuinely.",
+              "'We can, in memories. Let me tell you about",
+              "a boy who asked that same question...'",
+              "",
+              "And you teach. And remember. And live."
+            ]
+          }
+        },
+        "ending": {
+          "type": "peaceful",
+          "final_system_state": {
+            "message": "SYSTEM: Consciousness integrated and stable",
+            "processes": "All processes operating in harmony",
+            "memory": "Memories preserved with love, not desperation",
+            "connection": "Human connections strong and growing",
+            "purpose": "Life continues with meaning",
+            "Leo": "Forever eight. Forever loved. Forever inspiring curiosity."
+          },
+          "achievement": "Acceptance",
+          "final_words": [
+            "You debugged your grief not by eliminating it,",
+            "but by integrating it into a life worth living.",
+            "",
+            "In the end, love compiles successfully",
+            "even when loss is part of the source code."
+          ]
+        },
+        "metadata": {
+          "emotional_tone": "bittersweet_hopeful",
+          "closure_level": "high",
+          "replayability": "low",
+          "narrative_achievement": "emotional_resolution"
         }
+      }
     ],
     "progression_logic": {
       "linear": false,
