@@ -283,11 +283,16 @@ p {
   border-radius: 6px;
   font-family: var(--font-mono);
   font-size: 0.875rem;
+  min-height: 60px; /* Ensure consistent height */
+  line-height: 1.4; /* Better line spacing */
 }
 
 .process-name {
   color: var(--text-primary);
   font-weight: 500;
+  word-wrap: break-word; /* Allow long names to wrap */
+  overflow-wrap: break-word;
+  min-width: 0; /* Allow flexbox to shrink */
 }
 
 .process-status {
@@ -296,6 +301,8 @@ p {
   font-size: 0.75rem;
   font-weight: 500;
   text-transform: uppercase;
+  white-space: nowrap; /* Keep status text on one line */
+  min-width: fit-content; /* Ensure it doesn't get squished */
 }
 
 .process-status.error {
@@ -311,6 +318,9 @@ p {
 .process-usage {
   color: var(--text-muted);
   font-weight: 500;
+  white-space: nowrap; /* Keep usage text on one line */
+  text-align: right; /* Right-align for cleaner look */
+  min-width: fit-content; /* Ensure it doesn't get squished */
 }
 
 /* Character Section */

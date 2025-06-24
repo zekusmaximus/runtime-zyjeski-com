@@ -227,19 +227,27 @@ class StandaloneMonitor {
     if (!resources) return;
 
     // CPU Usage
-    if (resources.cpu) {
-      const cpuPercent = Math.min(100, resources.cpu.usage || 0);
+    if (resources.cpu !== undefined) {
+      const cpuPercent = Math.min(100, Math.max(0, resources.cpu));
       this.cpuBar.style.width = cpuPercent + '%';
       this.cpuValue.textContent = cpuPercent.toFixed(1) + '%';
     }
 
-    // Memory Usage
+    // FIXED: Memory Usage - Use proper capacity calculation
     if (resources.memory) {
-      const memUsed = resources.memory.used || 0;
-      const memTotal = resources.memory.total || 1;
-      const memPercent = (memUsed / memTotal) * 100;
-      this.memoryBar.style.width = memPercent + '%';
-      this.memoryValue.textContent = memUsed.toFixed(0) + ' MB';
+      // Use the new memory capacity structure if available
+      if (resources.memory.total && resources.memory.used !== undefined) {
+        const memPercent = (resources.memory.used / resources.memory.total) * 100;
+        this.memoryBar.style.width = memPercent + '%';
+        this.memoryValue.textContent = `${resources.memory.used.toFixed(0)}MB / ${resources.memory.total}MB`;
+      } else {
+        // Fallback for legacy format
+        const memUsed = resources.memory.used || 0;
+        const memTotal = resources.memory.total || 1;
+        const memPercent = (memUsed / memTotal) * 100;
+        this.memoryBar.style.width = memPercent + '%';
+        this.memoryValue.textContent = memUsed.toFixed(0) + ' MB';
+      }
     }
 
     // Thread Count
@@ -255,7 +263,7 @@ class StandaloneMonitor {
     if (resources.processes && Array.isArray(resources.processes)) {
       this.updateProcessList(resources.processes);
     }
-  }
+}
 
   updateProcessList(processes) {
     if (!processes || processes.length === 0) {
