@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Monitor - Runtime.zyjeski.com</title>
+    <link rel="stylesheet" href="css/monitor.css">
+</head>
+<body>
+    <div class="monitor-container">
+        <header>
+            <h1>System Monitor</h1>
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-indicator"></span>
+                <span class="status-text">Disconnected</span>
+            </div>
+        </header>
+
+        <div class="monitor-grid">
+            <!-- System Resources Panel -->
+            <div class="panel" id="resourcesPanel">
+                <h2>System Resources</h2>
+                <div class="resource-meters">
+                    <div class="resource-item">
+                        <label>CPU Usage</label>
+                        <div class="progress-bar">
+                            <div class="progress-fill cpu" id="cpuBar"></div>
+                        </div>
+                        <span class="resource-value" id="cpuValue">0%</span>
+                    </div>
+                    <div class="resource-item">
+                        <label>Memory Usage</label>
+                        <div class="progress-bar">
+                            <div class="progress-fill memory" id="memoryBar"></div>
+                        </div>
+                        <span class="resource-value" id="memoryValue">0 MB</span>
+                    </div>
+                    <div class="resource-item">
+                        <label>Thread Count</label>
+                        <div class="progress-bar">
+                            <div class="progress-fill threads" id="threadsBar"></div>
+                        </div>
+                        <span class="resource-value" id="threadsValue">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Process List Panel -->
+            <div class="panel" id="processPanel">
+                <h2>Active Processes</h2>
+                <div class="process-list" id="processList">
+                    <div class="empty-state">No processes running</div>
+                </div>
+            </div>
+
+            <!-- Memory Allocation Panel -->
+            <div class="panel" id="memoryPanel">
+                <h2>Memory Allocation</h2>
+                <div class="memory-pools" id="memoryPools">
+                    <div class="memory-pool">
+                        <label>Short Term</label>
+                        <div class="pool-bar">
+                            <div class="pool-fill" id="shortTermBar"></div>
+                        </div>
+                        <span class="pool-value" id="shortTermValue">0</span>
+                    </div>
+                    <div class="memory-pool">
+                        <label>Long Term</label>
+                        <div class="pool-bar">
+                            <div class="pool-fill" id="longTermBar"></div>
+                        </div>
+                        <span class="pool-value" id="longTermValue">0</span>
+                    </div>
+                    <div class="memory-pool">
+                        <label>Procedural</label>
+                        <div class="pool-bar">
+                            <div class="pool-fill" id="proceduralBar"></div>
+                        </div>
+                        <span class="pool-value" id="proceduralValue">0</span>
+                    </div>
+                    <div class="memory-pool">
+                        <label>Traumatic</label>
+                        <div class="pool-bar">
+                            <div class="pool-fill traumatic" id="traumaticBar"></div>
+                        </div>
+                        <span class="pool-value" id="traumaticValue">0</span>
+                    </div>
+                </div>
+                <div class="memory-stats">
+                    <div class="stat-item">
+                        <label>Total Memories:</label>
+                        <span id="totalMemories">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <label>Fragmentation:</label>
+                        <span id="fragmentation">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Log Panel -->
+            <div class="panel" id="errorPanel">
+                <h2>System Errors</h2>
+                <div class="error-log" id="errorLog">
+                    <div class="empty-state">No errors detected</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Character Selection -->
+        <div class="character-selector">
+            <label for="characterSelect">Monitor Character:</label>
+            <select id="characterSelect">
+                <option value="">Select a character...</option>
+                <option value="alexander-kane">Alexander Kane</option>
+            </select>
+            <button id="startMonitoring" disabled>Start Monitoring</button>
+            <button id="stopMonitoring" disabled>Stop Monitoring</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/monitor-standalone.js"></script>
+</body>
+</html>

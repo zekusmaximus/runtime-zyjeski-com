@@ -22,7 +22,11 @@ class SocketClient {
 
   connect() {
     try {
-      this.socket = io({
+      // Use explicit URL for development to avoid connection issues
+      const socketUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:3000'
+        : undefined; // Use default in production
+      this.socket = io(socketUrl, {
         transports: ['websocket', 'polling'],
         timeout: 5000,
         forceNew: false

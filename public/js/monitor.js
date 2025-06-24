@@ -105,6 +105,21 @@ handleInterventionResult(data) {
     window.socketClient.on('debug-hook-triggered', (data) => {
       this.showDebugAlert(data);
     });
+
+    // NEW: Listen for system resources
+    window.socketClient.on('system-resources', (data) => {
+      this.updateResourceMeters(data.resources);
+    });
+
+    // NEW: Listen for error logs
+    window.socketClient.on('error-logs', (data) => {
+      this.updateErrorLog(data.errors);
+    });
+
+    // NEW: Listen for memory allocation
+    window.socketClient.on('memory-allocation', (data) => {
+      this.updateMemoryVisualization(data.memoryData);
+    });
   }
 
   subscribeToStateChanges() {
@@ -136,20 +151,25 @@ handleInterventionResult(data) {
 
   startMonitoring() {
     this.isActive = true;
-    
+
     if (this.currentCharacter) {
       this.loadCharacterData(this.currentCharacter);
-      
+
       // Start real-time monitoring via WebSocket
       window.socketClient.startMonitoring(this.currentCharacter.id);
+
+      // NEW: Request initial data
+      window.socketClient.emit('get-system-resources');
+      window.socketClient.emit('get-error-logs');
+      window.socketClient.emit('get-memory-allocation');
     }
-    
+
     // Update button states
     if (this.pauseBtn) {
       this.pauseBtn.textContent = 'Pause';
       this.pauseBtn.classList.remove('paused');
     }
-    
+
     this.showStatus('Monitoring started', 'success');
   }
 
@@ -178,7 +198,7 @@ handleInterventionResult(data) {
   }
 
   loadCharacterData(character) {
-    if (!character.consciousness) return;
+    if (!character) return;
     
     // Clear data history for new character
     this.dataHistory = {
@@ -187,11 +207,41 @@ handleInterventionResult(data) {
       errors: []
     };
     
-    // Initial data load
-    this.updateResourceMeters(character.consciousness.resources);
-    this.updateProcessTable(character.consciousness.processes);
-    this.updateMemoryVisualization(character.consciousness.memory);
-    this.updateErrorLog(character.consciousness.system_errors);
+    // Try to load data from different possible structures
+    let processes = null;
+    let resources = null;
+    let system_errors = null;
+    let memory = null;
+    
+    // Check if character has consciousness data at different levels
+    if (character.consciousness) {
+      processes = character.consciousness.processes || character.processes;
+      resources = character.consciousness.resources || character.resources;
+      system_errors = character.consciousness.system_errors || character.system_errors;
+      memory = character.consciousness.memory || character.memory;
+    } else {
+      processes = character.processes;
+      resources = character.resources;
+      system_errors = character.system_errors;
+      memory = character.memory;
+    }
+    
+    // Initial data load with fallback handling
+    if (processes) {
+      this.updateProcessTable(processes);
+    }
+    if (resources) {
+      this.updateResourceMeters(resources);
+    } else {
+      // If no resources data, show placeholder or generate from processes
+      this.generateResourcesFromProcesses(processes);
+    }
+    if (memory) {
+      this.updateMemoryVisualization(memory);
+    }
+    if (system_errors) {
+      this.updateErrorLog(system_errors);
+    }
     
     this.showStatus(`Loaded ${character.name}'s consciousness`, 'info');
   }
@@ -205,7 +255,8 @@ handleInterventionResult(data) {
       const response = await fetch(`/api/consciousness/${this.currentCharacter.id}/state`);
       const state = await response.json();
       
-      this.updateDisplays({ state: state, type: 'manual-refresh' });
+      // The consciousness API returns the state directly with processes, system_errors at top level
+      this.updateDisplays(state);
       this.showStatus('Data refreshed', 'success');
     } catch (error) {
       console.error('Failed to refresh monitor data:', error);
@@ -214,22 +265,56 @@ handleInterventionResult(data) {
   }
 
   updateDisplays(data) {
-    if (!data.state || !data.state.consciousness) return;
+    if (!data) return;
     
-    const consciousness = data.state.consciousness;
+    // Handle different data structure formats
+    let consciousness = null;
     
-    // Update all components
-    if (consciousness.resources) {
-      this.updateResourceMeters(consciousness.resources);
+    // Format 1: { state: { consciousness: {...} } }
+    if (data.state && data.state.consciousness) {
+      consciousness = data.state.consciousness;
     }
-    if (consciousness.processes) {
-      this.updateProcessTable(consciousness.processes);
+    // Format 2: { consciousness: {...} }
+    else if (data.consciousness) {
+      consciousness = data.consciousness;
     }
-    if (consciousness.memory) {
-      this.updateMemoryVisualization(consciousness.memory);
+    // Format 3: Direct consciousness data with top-level processes, system_errors
+    else if (data.processes || data.system_errors) {
+      consciousness = data;
     }
-    if (consciousness.system_errors) {
-      this.updateErrorLog(consciousness.system_errors);
+    // Format 4: Direct consciousness state
+    else {
+      consciousness = data;
+    }
+    
+    if (!consciousness) {
+      console.warn('No valid consciousness data found in:', data);
+      return;
+    }
+    
+    // Update all components with flexible data access
+    const processes = consciousness.processes || [];
+    const resources = consciousness.resources;
+    const memory = consciousness.memory;
+    const system_errors = consciousness.system_errors || [];
+    
+    if (processes.length > 0) {
+      this.updateProcessTable(processes);
+    }
+    
+    if (resources) {
+      this.updateResourceMeters(resources);
+    } else {
+      // Generate resources from processes if not available
+      this.generateResourcesFromProcesses(processes);
+    }
+    
+    if (memory) {
+      this.updateMemoryVisualization(memory);
+    }
+    
+    if (system_errors.length > 0) {
+      this.updateErrorLog(system_errors);
     }
     
     // Update last update time
@@ -243,33 +328,46 @@ handleInterventionResult(data) {
   updateDataHistory(data) {
     const timestamp = new Date();
     
+    // Handle different data structure formats
+    let consciousness = null;
+    
+    if (data.state && data.state.consciousness) {
+      consciousness = data.state.consciousness;
+    } else if (data.consciousness) {
+      consciousness = data.consciousness;
+    } else {
+      consciousness = data;
+    }
+    
+    if (!consciousness) return;
+    
     // Add resource history
-    if (data.state.consciousness.resources) {
+    if (consciousness.resources) {
       this.dataHistory.resources.push({
         timestamp,
-        data: { ...data.state.consciousness.resources }
+        data: { ...consciousness.resources }
       });
     }
     
     // Add process history
-    if (data.state.consciousness.processes) {
-      const totalCpu = data.state.consciousness.processes.reduce((sum, p) => sum + (p.cpu_usage || 0), 0);
-      const totalMemory = data.state.consciousness.processes.reduce((sum, p) => sum + (p.memory_mb || 0), 0);
+    if (consciousness.processes) {
+      const totalCpu = consciousness.processes.reduce((sum, p) => sum + (p.cpu_usage || 0), 0);
+      const totalMemory = consciousness.processes.reduce((sum, p) => sum + (p.memory_mb || 0), 0);
       
       this.dataHistory.processes.push({
         timestamp,
         totalCpu,
         totalMemory,
-        processCount: data.state.consciousness.processes.length
+        processCount: consciousness.processes.length
       });
     }
     
     // Add error history
-    if (data.state.consciousness.system_errors) {
+    if (consciousness.system_errors) {
       this.dataHistory.errors.push({
         timestamp,
-        errorCount: data.state.consciousness.system_errors.length,
-        criticalCount: data.state.consciousness.system_errors.filter(e => e.severity === 'critical').length
+        errorCount: consciousness.system_errors.length,
+        criticalCount: consciousness.system_errors.filter(e => e.severity === 'critical').length
       });
     }
     
@@ -375,11 +473,11 @@ handleInterventionResult(data) {
                 <td class="memory-usage">${Math.round(process.memory_mb || 0)}MB</td>
                 <td class="last-activity">${process.last_activity ? new Date(process.last_activity).toLocaleTimeString() : 'N/A'}</td>
                 <td class="actions">
-                  <button class="action-btn kill-btn" onclick="window.monitor.killProcess(${process.pid})" 
+                  <button class="action-btn kill-btn" onclick="window.monitor.killProcess('${process.pid}')" 
                           ${process.status === 'terminated' ? 'disabled' : ''}>Kill</button>
-                  <button class="action-btn restart-btn" onclick="window.monitor.restartProcess(${process.pid})"
+                  <button class="action-btn restart-btn" onclick="window.monitor.restartProcess('${process.pid}')"
                           ${process.status === 'running' ? 'disabled' : ''}>Restart</button>
-                  <button class="action-btn optimize-btn" onclick="window.monitor.optimizeProcess(${process.pid})">Optimize</button>
+                  <button class="action-btn optimize-btn" onclick="window.monitor.optimizeProcess('${process.pid}')">Optimize</button>
                 </td>
               </tr>
             `;
@@ -397,9 +495,17 @@ handleInterventionResult(data) {
     // Clear existing visualization
     this.memoryVisualization.innerHTML = '';
     
-    // Calculate total memory usage
+    // Handle the new structured memory format from the updated consciousness engine
+    if (memory.capacity && memory.pools) {
+      this.updateStructuredMemoryVisualization(memory);
+      return;
+    }
+    
+    // Fallback: Handle legacy memory format (address-block pairs)
     const memoryEntries = Object.entries(memory);
-    const totalSize = memoryEntries.reduce((sum, [_, block]) => sum + block.size, 0);
+    const totalSize = memoryEntries.reduce((sum, [_, block]) => {
+      return sum + (block && typeof block.size === 'number' ? block.size : 0);
+    }, 0);
     
     if (totalSize === 0) {
       this.memoryVisualization.innerHTML = '<div class="no-memory">No memory allocated</div>';
@@ -414,7 +520,8 @@ handleInterventionResult(data) {
     const maxBlocksPerRow = 8;
     
     memoryEntries
-      .sort(([,a], [,b]) => b.size - a.size) // Sort by size, largest first
+      .filter(([_, block]) => block && typeof block === 'object' && typeof block.size === 'number')
+      .sort(([,a], [,b]) => (b.size || 0) - (a.size || 0)) // Sort by size, largest first
       .forEach(([address, block], index) => {
         const percentage = (block.size / totalSize) * 100;
         const minSize = 30;
@@ -425,7 +532,8 @@ handleInterventionResult(data) {
         const col = index % maxBlocksPerRow;
         
         const blockElement = document.createElement('div');
-        blockElement.className = `memory-block ${block.type} ${block.protected ? 'protected' : ''} ${block.fragmented ? 'fragmented' : ''}`;
+        const blockType = block.type || 'unknown';
+        blockElement.className = `memory-block ${blockType} ${block.protected ? 'protected' : ''} ${block.fragmented ? 'fragmented' : ''}`;
         blockElement.dataset.address = address;
         blockElement.style.cssText = `
           left: ${col * 15}%;
@@ -439,14 +547,16 @@ handleInterventionResult(data) {
         const blockContent = document.createElement('div');
         blockContent.className = 'memory-block-content';
         blockContent.innerHTML = `
-          <div class="memory-address">${address.slice(-4)}</div>
-          <div class="memory-type">${block.type.charAt(0).toUpperCase()}</div>
+          <div class="memory-address">${address.toString().slice(-4)}</div>
+          <div class="memory-type">${blockType.charAt(0).toUpperCase()}</div>
           <div class="memory-size">${this.formatBytes(block.size)}</div>
         `;
         blockElement.appendChild(blockContent);
         
         // Add hover tooltip
-        blockElement.title = `${address}\n${block.description}\nType: ${block.type}\nSize: ${this.formatBytes(block.size)}\nAccess Count: ${block.access_count}`;
+        const description = block.description || `${blockType} memory block`;
+        const accessCount = block.access_count || 0;
+        blockElement.title = `${address}\n${description}\nType: ${blockType}\nSize: ${this.formatBytes(block.size)}\nAccess Count: ${accessCount}`;
         
         memoryContainer.appendChild(blockElement);
       });
@@ -458,9 +568,12 @@ handleInterventionResult(data) {
     statsElement.className = 'memory-stats';
     
     const byType = {};
-    memoryEntries.forEach(([_, block]) => {
-      byType[block.type] = (byType[block.type] || 0) + block.size;
-    });
+    memoryEntries
+      .filter(([_, block]) => block && typeof block === 'object' && typeof block.size === 'number')
+      .forEach(([_, block]) => {
+        const blockType = block.type || 'unknown';
+        byType[blockType] = (byType[blockType] || 0) + block.size;
+      });
     
     statsElement.innerHTML = `
       <div class="memory-total">Total: ${this.formatBytes(totalSize)}</div>
@@ -476,6 +589,84 @@ handleInterventionResult(data) {
     `;
     
     this.memoryVisualization.appendChild(statsElement);
+  }
+
+  // Handle the new structured memory format from the updated consciousness engine
+  updateStructuredMemoryVisualization(memory) {
+    // Create a summary view of the structured memory data
+    const memoryContainer = document.createElement('div');
+    memoryContainer.className = 'memory-structured-container';
+    
+    // Memory capacity overview
+    const capacitySection = document.createElement('div');
+    capacitySection.className = 'memory-capacity-section';
+    capacitySection.innerHTML = `
+      <h4>Memory Capacity</h4>
+      <div class="capacity-bar">
+        <div class="capacity-used" style="width: ${memory.capacity.utilizationPercentage || 0}%"></div>
+      </div>
+      <div class="capacity-stats">
+        <span>Used: ${this.formatBytes(memory.capacity.allocated || 0)}</span>
+        <span>Available: ${this.formatBytes(memory.capacity.available || 0)}</span>
+        <span>Total: ${this.formatBytes(memory.capacity.total || 10000)}</span>
+      </div>
+    `;
+    
+    // Memory pools
+    const poolsSection = document.createElement('div');
+    poolsSection.className = 'memory-pools-section';
+    poolsSection.innerHTML = `
+      <h4>Memory Pools</h4>
+      <div class="pools-grid">
+        ${Object.entries(memory.pools || {}).map(([poolType, poolData]) => {
+          const count = typeof poolData === 'number' ? poolData : poolData.count || 0;
+          const maxSize = typeof poolData === 'object' ? poolData.maxSize || 2000 : 2000;
+          const percentage = Math.round((count / maxSize) * 100);
+          return `
+            <div class="pool-item ${poolType}">
+              <div class="pool-header">
+                <span class="pool-name">${poolType}</span>
+                <span class="pool-count">${count}</span>
+              </div>
+              <div class="pool-bar">
+                <div class="pool-used" style="width: ${percentage}%"></div>
+              </div>
+              <div class="pool-percentage">${percentage}%</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+    
+    // Memory issues if any
+    if (memory.issues && Object.keys(memory.issues).length > 0) {
+      const issuesSection = document.createElement('div');
+      issuesSection.className = 'memory-issues-section';
+      const hasIssues = Object.values(memory.issues).some(issue => 
+        Array.isArray(issue) ? issue.length > 0 : Boolean(issue)
+      );
+      
+      if (hasIssues) {
+        issuesSection.innerHTML = `
+          <h4>Memory Issues</h4>
+          <div class="issues-list">
+            ${Object.entries(memory.issues).map(([issueType, issueData]) => {
+              if (Array.isArray(issueData) && issueData.length > 0) {
+                return `<div class="issue-item warning">${issueType}: ${issueData.length} detected</div>`;
+              } else if (issueData === true) {
+                return `<div class="issue-item warning">${issueType}: Active</div>`;
+              }
+              return '';
+            }).filter(item => item).join('')}
+          </div>
+        `;
+        memoryContainer.appendChild(issuesSection);
+      }
+    }
+    
+    memoryContainer.appendChild(capacitySection);
+    memoryContainer.appendChild(poolsSection);
+    this.memoryVisualization.appendChild(memoryContainer);
   }
 
   updateErrorLog(errors) {
@@ -964,6 +1155,54 @@ handleInterventionResult(data) {
     if (event === 'consciousness-updated' && this.isActive) {
       this.updateDisplays({ state: { consciousness: data } });
     }
+  }
+
+  generateResourcesFromProcesses(processes) {
+    if (!processes || processes.length === 0) {
+      this.updateResourceMeters({});
+      return;
+    }
+    
+    // Calculate aggregate resource usage from processes
+    let totalCpu = 0;
+    let totalMemory = 0;
+    let processCount = processes.length;
+    
+    processes.forEach(process => {
+      totalCpu += process.cpu_usage || process.cpu || 0;
+      totalMemory += process.memory_mb || process.memory_usage || process.memory || 0;
+    });
+    
+    // Generate synthetic resource data
+    const syntheticResources = {
+      cpu: {
+        current: Math.min(totalCpu, 100),
+        max: 100,
+        unit: '%'
+      },
+      memory: {
+        current: totalMemory,
+        max: 2048, // 2GB default max
+        unit: 'MB'
+      },
+      attention: {
+        current: Math.max(0, 100 - (totalCpu * 0.8)),
+        max: 100,
+        unit: '%'
+      },
+      emotional_energy: {
+        current: Math.max(20, 100 - (totalCpu * 0.6)),
+        max: 100,
+        unit: '%'
+      },
+      active_processes: {
+        current: processCount,
+        max: 10,
+        unit: 'count'
+      }
+    };
+    
+    this.updateResourceMeters(syntheticResources);
   }
 }
 

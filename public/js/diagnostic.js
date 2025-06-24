@@ -148,18 +148,18 @@ class DiagnosticTool {
       const response = await fetch('/api/character/alexander-kane');
       if (response.ok) {
         const data = await response.json();
-        this.log(`✓ Character data loaded: ${data.data?.name}`, 'info');
-        this.log(`Character structure: ${Object.keys(data.data || {}).join(', ')}`, 'debug');
+        this.log(`✓ Character data loaded: ${data.name}`, 'info');
+        this.log(`Character structure:`, 'debug');
 
-        if (data.data?.consciousness) {
-          this.log('✓ Consciousness data present in character', 'info');
-          this.log(`Consciousness structure: ${Object.keys(data.data.consciousness).join(', ')}`, 'debug');
+        if (data.baseProcesses && Array.isArray(data.baseProcesses)) {
+          this.log('✓ Consciousness data (baseProcesses) present in character', 'info');
+          this.log(`Found ${data.baseProcesses.length} base processes`, 'debug');
         } else {
           this.log('✗ No consciousness data in character object', 'warning');
         }
 
-        this.testResults.push({ test: 'character_loading', passed: true, data: data.data });
-        return data.data;
+        this.testResults.push({ test: 'character_loading', passed: true, data: data });
+        return data;
       }
       this.log(`✗ Character loading failed: ${response.status}`, 'error');
       this.testResults.push({ test: 'character_loading', passed: false });
@@ -228,23 +228,25 @@ class DiagnosticTool {
     this.log('Testing character selection process...', 'debug');
 
     try {
-      const characterSelect = document.getElementById('characterSelect');
-      if (!characterSelect) {
-        this.log('✗ Character select element not found', 'error');
+      const characterGrid = document.getElementById('characterGrid');
+      if (!characterGrid) {
+        this.log('✗ Character grid element not found', 'error');
         this.testResults.push({ test: 'character_selection', passed: false });
         return;
       }
 
-      this.log('✓ Character select element found', 'info');
+      this.log('✓ Character grid element found', 'info');
 
-      const alexanderOption = Array.from(characterSelect.options).find(option => option.value === 'alexander-kane');
+      // Check if Alexander Kane character card exists
+      const alexanderCard = document.querySelector('[data-character-id="alexander-kane"]');
 
-      if (alexanderOption) {
-        this.log('✓ Alexander Kane option found in selector', 'info');
+      if (alexanderCard) {
+        this.log('✓ Alexander Kane character card found', 'info');
         this.testResults.push({ test: 'character_selection', passed: true });
       } else {
-        this.log('✗ Alexander Kane not found in character selector', 'error');
-        this.log(`Available options: ${Array.from(characterSelect.options).map(o => o.value).join(', ')}`, 'debug');
+        this.log('✗ Alexander Kane character card not found', 'error');
+        const availableCards = Array.from(document.querySelectorAll('[data-character-id]')).map(card => card.dataset.characterId);
+        this.log(`Available character cards: ${availableCards.join(', ')}`, 'debug');
         this.testResults.push({ test: 'character_selection', passed: false });
       }
     } catch (error) {
@@ -256,20 +258,21 @@ class DiagnosticTool {
   async testConsciousnessDataStructure() {
     this.log('Testing consciousness data structure validation...', 'debug');
 
-    const consciousnessTest = this.testResults.find(r => r.test === 'consciousness_api');
+    const characterTest = this.testResults.find(r => r.test === 'character_loading');
 
-    if (!consciousnessTest || !consciousnessTest.passed || !consciousnessTest.data) {
-      this.log('✗ No consciousness data available for structure validation', 'error');
+    if (!characterTest || !characterTest.passed || !characterTest.data) {
+      this.log('✗ No character data available for structure validation', 'error');
       this.testResults.push({ test: 'data_structure', passed: false });
       return;
     }
 
-    const consciousness = consciousnessTest.data;
+    const character = characterTest.data;
     let structureValid = true;
 
-    const requiredFields = ['processes', 'resources', 'system_errors'];
+    // Check for character data structure that forms consciousness
+    const requiredFields = ['baseProcesses', 'systemResources', 'defaultState'];
     requiredFields.forEach(field => {
-      if (Object.prototype.hasOwnProperty.call(consciousness, field)) {
+      if (Object.prototype.hasOwnProperty.call(character, field)) {
         this.log(`✓ Required field '${field}' present`, 'info');
       } else {
         this.log(`✗ Required field '${field}' missing`, 'error');
@@ -277,12 +280,12 @@ class DiagnosticTool {
       }
     });
 
-    if (Array.isArray(consciousness.processes)) {
-      this.log(`✓ Processes is an array with ${consciousness.processes.length} items`, 'info');
+    if (Array.isArray(character.baseProcesses)) {
+      this.log(`✓ BaseProcesses is an array with ${character.baseProcesses.length} items`, 'info');
 
-      if (consciousness.processes.length > 0) {
-        const process = consciousness.processes[0];
-        const processFields = ['pid', 'name', 'status', 'cpu_usage', 'memory_usage'];
+      if (character.baseProcesses.length > 0) {
+        const process = character.baseProcesses[0];
+        const processFields = ['name', 'type', 'baseLoad'];
         const missingFields = processFields.filter(field => !Object.prototype.hasOwnProperty.call(process, field));
 
         if (missingFields.length === 0) {
@@ -293,7 +296,7 @@ class DiagnosticTool {
         }
       }
     } else {
-      this.log(`✗ Processes is not an array: ${typeof consciousness.processes}`, 'error');
+      this.log(`✗ BaseProcesses is not an array: ${typeof character.baseProcesses}`, 'error');
       structureValid = false;
     }
 

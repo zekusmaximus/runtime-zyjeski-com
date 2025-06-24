@@ -135,28 +135,41 @@ class ConsciousnessManager {
     if (!processList) {
       console.warn('Process list element not found in consciousness preview');
       return;
+    }    // Validate consciousness data structure
+    if (!consciousness || typeof consciousness !== 'object') {
+      console.warn('Invalid consciousness data: not an object');
+      processList.innerHTML = '<div class="no-processes">Invalid consciousness data<br><small>Check server connection</small></div>';
+      return;
     }
 
-    // FIXED: Handle different possible data structures
+    // Try different paths to find the processes array with improved validation
     let processes = null;
 
-    // Try different paths to find the processes array
-    if (consciousness.processes && Array.isArray(consciousness.processes)) {
+    if (Array.isArray(consciousness.processes)) {
       processes = consciousness.processes;
       console.log('Found processes in consciousness.processes');
-    } else if (consciousness.data && consciousness.data.processes && Array.isArray(consciousness.data.processes)) {
+    } else if (consciousness.consciousness && Array.isArray(consciousness.consciousness.processes)) {
+      processes = consciousness.consciousness.processes;
+      console.log('Found processes in consciousness.consciousness.processes');
+    } else if (consciousness.data && Array.isArray(consciousness.data.processes)) {
       processes = consciousness.data.processes;
       console.log('Found processes in consciousness.data.processes');
-    } else if (consciousness.state && consciousness.state.processes && Array.isArray(consciousness.state.processes)) {
+    } else if (consciousness.state && Array.isArray(consciousness.state.processes)) {
       processes = consciousness.state.processes;
       console.log('Found processes in consciousness.state.processes');
     } else {
       // No valid processes array found
       console.warn('No valid processes array found in consciousness data:', consciousness);
       console.log('Available keys:', Object.keys(consciousness));
-
-      processList.innerHTML = '<div class="no-processes">No processes data available<br><small>Check server connection and character data</small></div>';
-      return;
+      
+      // Try to extract from nested structures as fallback
+      if (consciousness.consciousness && consciousness.consciousness.processes) {
+        console.log('Found non-array processes in consciousness.consciousness.processes:', typeof consciousness.consciousness.processes);
+        processes = [];
+      } else {
+        processList.innerHTML = '<div class="no-processes">No processes data available<br><small>Check server connection and character data</small></div>';
+        return;
+      }
     }
 
     console.log(`Found ${processes.length} processes to display`);

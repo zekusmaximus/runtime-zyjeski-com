@@ -15,14 +15,42 @@ async function ensureEngineInitialized() {
   }
 }
 
+// Helper function to ensure data is a valid array
+async function ensureValidArray(dataFetcher) {
+  try {
+    const data = await dataFetcher();
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    error('Error fetching array data:', { error: err.message });
+    return [];
+  }
+}
+
 // Get consciousness state for a character
 router.get('/:characterId/state', async (req, res) => {
   try {
     const characterId = req.params.characterId;
     await ensureEngineInitialized();
     await consciousnessEngine.loadCharacter(characterId);
+    
+    // Get the base state
     const state = await consciousnessEngine.getState(characterId);
-    res.json(state);
+    
+    // Ensure all required arrays are properly formatted at the top level
+    const completeState = {
+      ...state,
+      // Extract processes from nested structure and ensure it's a valid array
+      processes: state.consciousness?.processes || await ensureValidArray(() => consciousnessEngine.getProcesses(characterId)),
+      system_errors: await ensureValidArray(() => consciousnessEngine.getErrors(characterId)),
+      threads: Array.isArray(state.threads) ? state.threads : [],
+      // Preserve the nested consciousness structure as well
+      consciousness: {
+        ...state.consciousness,
+        memory: state.consciousness?.memory || {},
+      }
+    };
+    
+    res.json(completeState);
   } catch (err) {
     error('Error getting consciousness state:', { error: err.message, characterId });
     res.status(500).json({ error: 'Failed to get consciousness state' });
@@ -37,7 +65,20 @@ router.post('/:characterId/update', async (req, res) => {
     await ensureEngineInitialized();
     await consciousnessEngine.loadCharacter(characterId);
     const newState = await consciousnessEngine.updateState(characterId, updates);
-    res.json(newState);
+    
+    // Apply the same normalization to the updated state
+    const normalizedState = {
+      ...newState,
+      processes: newState.consciousness?.processes || await ensureValidArray(() => consciousnessEngine.getProcesses(characterId)),
+      system_errors: await ensureValidArray(() => consciousnessEngine.getErrors(characterId)),
+      threads: Array.isArray(newState.threads) ? newState.threads : [],
+      consciousness: {
+        ...newState.consciousness,
+        memory: newState.consciousness?.memory || {},
+      }
+    };
+    
+    res.json(normalizedState);
   } catch (err) {
     error('Error updating consciousness state:', { error: err.message, characterId });
     res.status(500).json({ error: 'Failed to update consciousness state' });
