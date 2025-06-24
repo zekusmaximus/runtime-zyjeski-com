@@ -1,0 +1,235 @@
+{
+  "id": "scenario_2_first_hours",
+  "title": "The First Hours",
+  "description": "The immediate aftermath - denial, search protocols, and system overload",
+  "narrative_context": "Hours after Leo's disappearance, Alexander's consciousness begins showing critical failures",
+  "conditions": {
+    "triggers": [
+      {
+        "type": "scenario_complete",
+        "scenario_id": "scenario_1_experiment_day"
+      }
+    ],
+    "prerequisites": ["scenario_1_experiment_day"]
+  },
+  "initial_state": {
+    "consciousness_state": {
+      "stability": 0.4,
+      "search_intensity": 0.95,
+      "denial_level": 0.9,
+      "time_perception": "distorted"
+    },
+    "processes": [
+      {
+        "modify": "grief_processing.exe",
+        "cpu": 5,
+        "memory": 128,
+        "status": "suppressed",
+        "description": "Grief is not allowed to process yet"
+      },
+      {
+        "spawn": "denial_protocol.exe",
+        "cpu": 78,
+        "memory": 768,
+        "status": "monopolizing",
+        "description": "This is not happening. There's an explanation."
+      }
+    ],
+    "resources": {
+      "emotional_energy": {
+        "current": 45,
+        "drain_rate": 5.2
+      },
+      "logical_processing": {
+        "current": 89,
+        "allocation": {
+          "search_algorithms": 72,
+          "reality_testing": 3,
+          "self_care": 0,
+          "relationships": 0
+        }
+      }
+    }
+  },
+  "narrative": {
+    "intro": [
+      "TIME ELAPSED: 3 hours, 17 minutes since temporal event",
+      "",
+      "The park is swarming with people now.",
+      "Police. Scientists. Emily's tears.",
+      "None of it processes correctly.",
+      "",
+      "This is a test. A simulation. A temporal echo.",
+      "Leo is hiding. It's a game. He'll jump out laughing.",
+      "The math must be wrong. Check it again.",
+      "",
+      "SYSTEM: Multiple reality-testing failures detected",
+      "SYSTEM: Denial protocols consuming excessive resources",
+      "SYSTEM: Emily_connection.dll is requesting attention [BLOCKED]"
+    ]
+  },
+  "objectives": [
+    {
+      "id": "maintain_search",
+      "description": "Keep search protocols active while managing resource drain",
+      "type": "balance",
+      "success_conditions": {
+        "search_protocol.active": true,
+        "emotional_energy.current": "> 10"
+      },
+      "failure_narrative": "The search consumes everything. System exhaustion imminent."
+    },
+    {
+      "id": "acknowledge_emily",
+      "description": "Allow emily_connection.dll at least 10% CPU",
+      "type": "allocate",
+      "target_process": "emily_connection.dll",
+      "target_cpu": 10,
+      "narrative_success": "You see Emily's pain mirroring your own",
+      "narrative_failure": "Emily becomes just another background process"
+    }
+  ],
+  "events": [
+    {
+      "id": "first_memory_surge",
+      "trigger_condition": {
+        "time_elapsed": 120
+      },
+      "type": "memory_flood",
+      "effects": {
+        "narrative": [
+          "MEMORY SURGE DETECTED",
+          "",
+          "Leo at age 3: 'Daddy, where does time go?'",
+          "Leo at age 5: 'Can we build a time machine?'",
+          "Leo at age 7: 'I want to help with your work!'",
+          "Leo at age 8: 'Look at all the ducks, Dad!'",
+          "",
+          "WARNING: Memory access causing recursive loop"
+        ],
+        "spawn_processes": [
+          {
+            "name": "memory_loop_01.dll",
+            "cpu": 34,
+            "memory": 512,
+            "status": "looping"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official_search_begins",
+      "trigger_condition": {
+        "time_elapsed": 300
+      },
+      "type": "external_event",
+      "effects": {
+        "narrative": [
+          "EXTERNAL INPUT: Search and Rescue Coordination",
+          "",
+          "They're using conventional methods.",
+          "They don't understand the temporal variables.",
+          "You need to run your own calculations.",
+          "",
+          "The field collapse patterns suggest seven possible vectors.",
+          "Seven timelines where Leo might have been displaced."
+        ],
+        "spawn_processes": [
+          {
+            "name": "timeline_analysis_v1.exe",
+            "cpu": 56,
+            "memory": 1024,
+            "status": "calculating"
+          }
+        ]
+      }
+    }
+  ],
+  "player_interventions": [
+    {
+      "id": "accept_help",
+      "description": "Accept external assistance and collaboration",
+      "effects": {
+        "narrative": "You allow others into your process. The load lightens slightly.",
+        "consciousness_changes": {
+          "stability": "+0.1",
+          "isolation_index": "-0.2"
+        },
+        "resource_changes": {
+          "emotional_energy.drain_rate": "-1.0"
+        }
+      }
+    },
+    {
+      "id": "isolate_systems",
+      "description": "Block all external inputs to focus on the search",
+      "effects": {
+        "narrative": "You seal yourself off. Only the search matters now.",
+        "consciousness_changes": {
+          "isolation_index": "+0.4",
+          "search_intensity": "+0.05"
+        },
+        "process_changes": {
+          "emily_connection.dll": {
+            "cpu": 0,
+            "status": "terminated"
+          }
+        }
+      }
+    },
+    {
+      "id": "force_grief_processing",
+      "description": "Remove denial blocks and allow grief to process",
+      "requirements": {
+        "player_level": "advanced",
+        "prior_knowledge": "grief_mechanics"
+      },
+      "effects": {
+        "narrative": "You lower the walls. The pain floods in like a tsunami.",
+        "kill_processes": ["denial_protocol.exe"],
+        "spawn_process": {
+          "name": "grief_processing_unfiltered.exe",
+          "cpu": 95,
+          "memory": 2048,
+          "status": "overwhelming"
+        },
+        "consciousness_changes": {
+          "stability": "-0.3",
+          "coherence": "+0.2"
+        }
+      }
+    }
+  ],
+  "outcome_conditions": [
+    {
+      "id": "exhaustion",
+      "condition": "emotional_energy.current < 5",
+      "next_scenario": "scenario_3_first_collapse",
+      "narrative": [
+        "The system cannot maintain this intensity.",
+        "Consciousness begins emergency shutdown procedures.",
+        "In the darkness, Emily's voice: 'Alex, please…'"
+      ]
+    },
+    {
+      "id": "obsession_lock",
+      "condition": "search_intensity > 0.98 && isolation_index > 0.7",
+      "next_scenario": "scenario_3_search_spiral",
+      "narrative": [
+        "The search becomes everything.",
+        "Other processes shut down one by one.",
+        "There is only the search. Only finding Leo."
+      ]
+    },
+    {
+      "id": "support_accepted",
+      "condition": "emily_connection.cpu > 15 || isolation_index < 0.3",
+      "next_scenario": "scenario_3_shared_grief",
+      "narrative": [
+        "You're not alone in this.",
+        "Emily's hand finds yours in the chaos.",
+        "Together, you begin to process the impossible."
+      ]
+    }
+  ]
+}
