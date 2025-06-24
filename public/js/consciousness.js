@@ -103,11 +103,22 @@ class ConsciousnessManager {
     }
   }
 
-  // FIXED: Add comprehensive data validation to updateConsciousnessPreview
+  // Updated preview renderer with robust validation
   updateConsciousnessPreview(consciousness) {
+    console.log('updateConsciousnessPreview called with:', consciousness);
+
     // Validate input data
     if (!consciousness || typeof consciousness !== 'object') {
       console.warn('Invalid consciousness data provided to updateConsciousnessPreview:', consciousness);
+
+      // Show error message in preview
+      const preview = document.getElementById('consciousnessPreview');
+      if (preview) {
+        const processList = preview.querySelector('.process-list');
+        if (processList) {
+          processList.innerHTML = '<div class="no-processes">Error: Invalid consciousness data</div>';
+        }
+      }
       return;
     }
 
@@ -123,13 +134,29 @@ class ConsciousnessManager {
       return;
     }
 
-    // FIXED: Ensure processes exists and is an array
-    const processes = consciousness.processes;
-    if (!Array.isArray(processes)) {
-      console.warn('Consciousness processes is not an array:', processes);
-      processList.innerHTML = '<div class="no-processes">No processes available</div>';
+    // FIXED: Handle different possible data structures
+    let processes = null;
+
+    // Try different paths to find the processes array
+    if (consciousness.processes && Array.isArray(consciousness.processes)) {
+      processes = consciousness.processes;
+      console.log('Found processes in consciousness.processes');
+    } else if (consciousness.data && consciousness.data.processes && Array.isArray(consciousness.data.processes)) {
+      processes = consciousness.data.processes;
+      console.log('Found processes in consciousness.data.processes');
+    } else if (consciousness.state && consciousness.state.processes && Array.isArray(consciousness.state.processes)) {
+      processes = consciousness.state.processes;
+      console.log('Found processes in consciousness.state.processes');
+    } else {
+      // No valid processes array found
+      console.warn('No valid processes array found in consciousness data:', consciousness);
+      console.log('Available keys:', Object.keys(consciousness));
+
+      processList.innerHTML = '<div class="no-processes">No processes data available<br><small>Check server connection and character data</small></div>';
       return;
     }
+
+    console.log(`Found ${processes.length} processes to display`);
 
     if (processes.length === 0) {
       processList.innerHTML = '<div class="no-processes">No active processes</div>';
@@ -144,19 +171,23 @@ class ConsciousnessManager {
           return '<div class="process-item invalid">Invalid process data</div>';
         }
 
-        const name = process.name || 'Unknown Process';
+        const name = process.name || process.displayName || 'Unknown Process';
         let statusClass = 'running';
         let statusText = 'Running';
-        
-        if (process.status === 'error' || (process.cpu_usage && process.cpu_usage > 80)) {
+
+        if (process.status === 'crashed' || process.status === 'error') {
           statusClass = 'error';
-          statusText = process.status === 'error' ? 'Error' : 'High CPU';
-        } else if (process.cpu_usage && process.cpu_usage > 50) {
+          statusText = process.status === 'crashed' ? 'Crashed' : 'Error';
+        } else if (process.status === 'warning' || (process.cpu_usage && process.cpu_usage > 80)) {
           statusClass = 'warning';
           statusText = 'Warning';
+        } else if (process.status) {
+          statusText = process.status.charAt(0).toUpperCase() + process.status.slice(1);
         }
 
-        const usage = this.formatProcessUsage(process);
+        const cpu = process.cpu_usage || process.cpu || 0;
+        const memory = process.memory_usage || process.memory_mb || process.memory || 0;
+        const usage = `CPU: ${cpu.toFixed(1)}% | MEM: ${memory.toFixed(1)}MB`;
 
         return `
           <div class="process-item">
@@ -166,9 +197,11 @@ class ConsciousnessManager {
           </div>
         `;
       }).join('');
+
+      console.log('Successfully updated consciousness preview');
     } catch (error) {
       console.error('Error updating consciousness preview:', error);
-      processList.innerHTML = '<div class="process-item error">Error displaying processes</div>';
+      processList.innerHTML = '<div class="process-item error">Error displaying processes - check console</div>';
     }
   }
 
