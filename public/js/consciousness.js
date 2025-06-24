@@ -92,11 +92,14 @@ class ConsciousnessManager {
     }
 
     console.log('Initializing consciousness for:', character.name);
-    
+
     // Update preview visualization with safe data
     const consciousness = character.consciousness || {};
     this.updateConsciousnessPreview(consciousness);
-    
+
+    // Always fetch the latest state from the server so process data is available
+    this.requestConsciousnessUpdate();
+
     // Start monitoring if socket is connected
     if (window.socketClient && window.socketClient.isSocketConnected()) {
       window.socketClient.startMonitoring(character.id);

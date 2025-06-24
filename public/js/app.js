@@ -168,11 +168,18 @@ class App {
       }
       
       const character = await response.json();
-      
+
+      // Fetch initial consciousness state so required process data is available
+      const stateRes = await fetch(`/api/consciousness/${characterId}/state`);
+      if (stateRes.ok) {
+        const state = await stateRes.json();
+        character.consciousness = state.consciousness;
+      }
+
       this.currentCharacter = character;
       this.updateCharacterSelection(characterId);
-      
-      // FIXED: Only initialize consciousness if not already done
+
+      // Initialize the consciousness with complete data
       if (window.consciousness) {
         window.consciousness.loadCharacter(character);
       }
