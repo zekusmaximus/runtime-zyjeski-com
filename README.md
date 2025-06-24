@@ -129,6 +129,21 @@ Consciousness profiles use comprehensive JSON schema:
 - **Resources**: Attention, emotional energy, processing capacity
 - **Debug Hooks**: Player intervention points and debugging capabilities
 
+### Scenario Engine
+
+The `ScenarioEngine` loads JSON files from `data/scenarios/` and tracks player
+progress across branching debugging challenges. It listens to
+`consciousness-engine` events and emits real-time updates over WebSockets.
+
+```javascript
+import { consciousnessEngine } from './lib/websocket-handlers.js';
+import ScenarioEngine from './lib/scenario-engine.js';
+
+const scenarioEngine = new ScenarioEngine();
+await scenarioEngine.initialize();
+scenarioEngine.attach(consciousnessEngine);
+```
+
 ## 🛠️ Development
 
 ### Prerequisites
