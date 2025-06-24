@@ -375,69 +375,226 @@
           ]
         },
       {
-          "id": "scenario_1_park_memory",
-          "title": "The Day Everything Changed",
-          "description": "Alexander's consciousness is stuck replaying the moment Leo disappeared at Riverview Park. The memory loop is consuming increasing resources.",
-          "narrative_context": "March 15th, 3:47 PM - The last moment Alexander saw his son before the temporal field collapsed.",
-          "initial_state": {
-            "processes": [
-              {
-                "name": "park_memory_replay.exe",
-                "cpu": 95,
-                "memory": 1247,
-                "status": "infinite_loop",
-                "error_message": "Memory fragment 0x1000000000000000 locked in recursive access pattern"
-              }
-            ],
-            "system_errors": [
-              {
-                "code": "TEMPORAL_LOCK",
-                "message": "Consciousness trapped at timestamp 2024-03-15T15:47:00Z",
-                "severity": "critical"
-              }
-            ]
+          "id": "scenario_1_experiment_day",
+          "title": "The Experiment Day",
+          "description": "March 15, 2024 - The temporal field generator activation that changed everything",
+          "narrative_context": "Alexander's routine afternoon at Riverview Park with Leo turns catastrophic when a temporal experiment goes wrong",
+          "conditions": {
+              "triggers": [
+                  {
+                      "type": "story_start",
+                      "auto_trigger": true
+                  }
+              ],
+              "prerequisites": []
           },
-          "debug_objectives": [
-            {
-              "id": "break_memory_loop",
-              "description": "Interrupt the recursive memory access without corrupting Leo's memories",
-              "success_conditions": {
-                "park_memory_replay.cpu": "< 30",
-                "memory_integrity": "> 0.95"
+          "initial_state": {
+              "consciousness_state": {
+                  "stability": 0.95,
+                  "coherence": 1.0,
+                  "timeline_sync": 1.0
+              },
+              "processes": [
+                  {
+                      "spawn": "memory_recorder.exe",
+                      "cpu": 15,
+                      "memory": 256,
+                      "status": "recording",
+                      "description": "Recording a perfect day with Leo"
+                  },
+                  {
+                      "spawn": "temporal_field_monitor.dll",
+                      "cpu": 45,
+                      "memory": 512,
+                      "status": "active",
+                      "description": "Monitoring experimental parameters"
+                  }
+              ]
+          },
+          "narrative": {
+              "intro": [
+                  "TIMESTAMP: March 15, 2024 - 14:30:00",
+                  "LOCATION: Temporal Research Lab / Riverview Park",
+                  "",
+                  "The ducks were particularly eager that afternoon.",
+                  "Leo's laughter echoes across the pond as breadcrumbs scatter.",
+                  "'Dad, why do ducks like bread so much?'",
+                  "",
+                  "Your phone buzzes. The lab. The experiment is ready.",
+                  "Just a quick check. Marcus can handle the preliminary readings.",
+                  "Leo won't even notice you're distracted.",
+                  "",
+                  "SYSTEM: Temporal field generator warming up…",
+                  "SYSTEM: All parameters nominal",
+                  "SYSTEM: What could go wrong?"
+              ],
+              "progress_messages": {
+                  "25": "The temporal field begins to fluctuate unexpectedly…",
+                  "50": "WARNING: Quantum resonance exceeding safe parameters",
+                  "75": "CRITICAL: Temporal field collapse imminent",
+                  "90": "Leo notices the strange light from the lab…"
               }
-            },
-            {
-              "id": "temporal_unlock",
-              "description": "Release consciousness from temporal lock",
-              "success_conditions": {
-                "system_errors": "!contains TEMPORAL_LOCK",
-                "timeline_sync": "restored"
+          },
+          "objectives": [
+              {
+                  "id": "maintain_normalcy",
+                  "description": "Keep consciousness stable during the last normal moments",
+                  "type": "maintain",
+                  "target_metric": "stability",
+                  "target_value": "> 0.8",
+                  "time_limit": 180,
+                  "narrative_success": "You savor these final moments of peace",
+                  "narrative_failure": "Anxiety creeps in - something feels wrong"
+              },
+              {
+                  "id": "monitor_experiment",
+                  "description": "Keep track of the temporal field readings",
+                  "type": "monitor",
+                  "target_process": "temporal_field_monitor.dll",
+                  "watch_for": "anomalies",
+                  "narrative_success": "You notice the irregularities in time",
+                  "narrative_failure": "The warnings go unnoticed until too late"
               }
-            }
+          ],
+          "events": [
+              {
+                  "id": "the_flash",
+                  "trigger_condition": {
+                      "time_elapsed": 180,
+                      "or_condition": "temporal_field_monitor.cpu > 80"
+                  },
+                  "type": "catastrophic",
+                  "effects": {
+                      "spawn_processes": [
+                          {
+                              "name": "temporal_shock.exe",
+                              "cpu": 95,
+                              "memory": 2048,
+                              "status": "critical"
+                          },
+                          {
+                              "name": "reality_fracture.dll",
+                              "cpu": 78,
+                              "memory": 1024,
+                              "status": "error"
+                          }
+                      ],
+                      "kill_processes": [
+                          "memory_recorder.exe"
+                      ],
+                      "system_errors": [
+                          {
+                              "code": "TEMPORAL_CASCADE_FAILURE",
+                              "message": "Temporal field collapsed - subject displacement detected",
+                              "severity": "critical"
+                          }
+                      ],
+                      "consciousness_changes": {
+                          "stability": 0.3,
+                          "coherence": 0.4,
+                          "timeline_sync": 0.1
+                      }
+                  },
+                  "narrative": [
+                      "CRITICAL SYSTEM FAILURE",
+                      "",
+                      "A blinding flash engulfs the park.",
+                      "The sound of Leo's laughter cuts off mid-note.",
+                      "Time seems to stretch, fracture, shatter.",
+                      "",
+                      "When your vision clears, the swing is empty.",
+                      "The pond is still.",
+                      "Leo is gone.",
+                      "",
+                      "ERROR: Cannot locate process 'leo_presence.dll'",
+                      "ERROR: Timeline integrity compromised",
+                      "ERROR: ERROR: ERROR: ERROR: ERROR: ERROR:"
+                  ]
+              }
           ],
           "player_interventions": [
-            {
-              "type": "memory_redirect",
-              "description": "Redirect memory access to adjacent timeline fragments",
-              "effect": "Reduces loop intensity but risks memory fragmentation"
-            },
-            {
-              "type": "process_throttle",
-              "description": "Limit CPU allocation to force process interruption",
-              "effect": "Breaks loop but may cause temporary disorientation"
-            },
-            {
-              "type": "inject_closure",
-              "description": "Insert acceptance subroutine into memory processing",
-              "effect": "Allows memory to complete naturally"
-            }
+              {
+                  "id": "emergency_shutdown",
+                  "description": "Attempt emergency consciousness shutdown",
+                  "availability": "the_flash.triggered",
+                  "effects": {
+                      "narrative": "You try to shut down, to not process what happened",
+                      "success_rate": 0.3,
+                      "success_effect": {
+                          "consciousness_changes": {
+                              "stability": "+0.2",
+                              "coherence": "-0.3"
+                          }
+                      },
+                      "failure_effect": {
+                          "spawn_process": {
+                              "name": "panic_cascade.exe",
+                              "cpu": 100,
+                              "memory": 512
+                          }
+                      }
+                  }
+              },
+              {
+                  "id": "search_immediate",
+                  "description": "Initialize immediate search protocols",
+                  "availability": "the_flash.triggered",
+                  "effects": {
+                      "narrative": "Every process redirects to finding Leo",
+                      "spawn_process": {
+                          "name": "search_protocol_alpha.exe",
+                          "cpu": 85,
+                          "memory": 1024,
+                          "status": "desperate"
+                      }
+                  }
+              }
           ],
-          "narrative_outcomes": {
-            "success": "Alexander's consciousness releases from the loop, allowing him to process the loss without being trapped in it.",
-            "partial": "The loop is broken but memory corruption makes Leo's face unclear in Alexander's mind.",
-            "failure": "The temporal lock strengthens, fragmenting Alexander's perception of linear time."
+          "outcome_conditions": [
+              {
+                  "id": "shattered",
+                  "condition": "consciousness.stability < 0.2",
+                  "next_scenario": null,
+                  "narrative": [
+                      "Your consciousness fragments completely.",
+                      "Alexander Kane ceases to function as a coherent entity.",
+                      "GAME OVER - TOTAL SYSTEM FAILURE"
+                  ]
+              },
+              {
+                  "id": "searching",
+                  "condition": "search_protocol_alpha.active",
+                  "next_scenario": "scenario_2_first_hours",
+                  "narrative": [
+                      "The search begins immediately.",
+                      "Every resource, every thought, every process.",
+                      "You will find him. You have to find him."
+                  ]
+              },
+              {
+                  "id": "shocked",
+                  "condition": "default",
+                  "next_scenario": "scenario_2_first_hours",
+                  "narrative": [
+                      "Shock sets in. This can't be real.",
+                      "The system struggles to process the impossible.",
+                      "But the empty swing doesn't lie."
+                  ]
+              }
+          ],
+          "metadata": {
+              "author": "Fractured Time",
+              "version": "1.0",
+              "tags": [
+                  "intro",
+                  "trauma",
+                  "catastrophic",
+                  "timeline_fracture"
+              ],
+              "estimated_duration": "5-10 minutes",
+              "emotional_intensity": "extreme"
           }
-        },
+      },
       {
           "id": "scenario_2_emily_neglect",
           "title": "Thread Starvation: A Marriage in Crisis",
