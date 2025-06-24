@@ -1,0 +1,31 @@
+{
+  "id": "scenario_1_park_memory",
+  "title": "The Day Everything Changed",
+  "conditions": {
+    "triggers": ["action === 'peek' && result.success"],
+    "prerequisites": []
+  },
+  "modifications": {
+    "processes": [
+      { "name": "park_memory_replay.exe", "action": "start", "parameters": {} }
+    ],
+    "resources": {},
+    "errors": []
+  },
+  "objectives": [
+    {
+      "id": "break_memory_loop",
+      "success_conditions": {
+        "loopBroken": "state.processes.running <= 5"
+      }
+    }
+  ],
+  "interventions": [],
+  "narrative": {
+    "intro": ["Memories of the park surge into focus, overwhelming the system."],
+    "outcomes": {
+      "success": "The loop releases its grip, freeing Alexander to move forward.",
+      "failure": "Temporal lock intensifies, scattering consciousness across timelines."
+    }
+  }
+}
