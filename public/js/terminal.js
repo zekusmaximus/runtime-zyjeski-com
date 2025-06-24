@@ -1,4 +1,5 @@
 // Enhanced Terminal Interface Module
+import StoryTerminalCommands from './story-terminal-commands.js';
 class Terminal {
   constructor() {
     this.element = null;
@@ -34,6 +35,10 @@ class Terminal {
       'df': this.diskUsageCommand.bind(this),
       'tail': this.tailCommand.bind(this)
     };
+
+    // Integrate story-specific commands
+    this.storyCommands = new StoryTerminalCommands(this);
+    Object.assign(this.commands, this.storyCommands.getCommands());
     
     this.init();
   }
