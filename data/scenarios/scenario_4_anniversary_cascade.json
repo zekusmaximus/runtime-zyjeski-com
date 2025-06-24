@@ -1,0 +1,363 @@
+{
+  "id": "scenario_4_anniversary_cascade",
+  "title": "The Anniversary Cascade",
+  "description": "June 21, 2024 - Three months later, temporal resonance peaks and all timelines converge",
+  "narrative_context": "The 3-month anniversary creates a quantum convergence point where all possibilities collapse together",
+  "conditions": {
+    "triggers": [
+      {
+        "type": "date_based",
+        "specific_date": "june_21",
+        "days_since_incident": 98
+      },
+      {
+        "type": "resonance_threshold",
+        "temporal_resonance": "> 0.9"
+      }
+    ],
+    "prerequisites": ["scenario_3_temporal_discovery"]
+  },
+  "initial_state": {
+    "consciousness_state": {
+      "stability": 0.3,
+      "coherence": 0.4,
+      "timeline_count": 7,
+      "cascade_risk": 0.85,
+      "quantum_superposition": true
+    },
+    "active_timelines": {
+      "PRIME": {
+        "probability": 0.14,
+        "stability": "fracturing"
+      },
+      "ALPHA": {
+        "probability": 0.23,
+        "stability": "bleeding_through"
+      },
+      "BETA": {
+        "probability": 0.17,
+        "stability": "unstable"
+      },
+      "GAMMA": {
+        "probability": 0.19,
+        "stability": "resonating"
+      },
+      "DELTA": {
+        "probability": 0.11,
+        "stability": "fading"
+      },
+      "EPSILON": {
+        "probability": 0.09,
+        "stability": "corrupted"
+      },
+      "ZETA": {
+        "probability": 0.07,
+        "stability": "paradoxical"
+      }
+    },
+    "critical_processes": [
+      {
+        "name": "cascade_prevention.exe",
+        "cpu": 89,
+        "memory": 1536,
+        "status": "failing",
+        "description": "Desperately trying to maintain consciousness coherence"
+      },
+      {
+        "name": "timeline_stabilizer.dll",
+        "cpu": 76,
+        "memory": 1024,
+        "status": "overwhelmed",
+        "error": "Cannot resolve 7 simultaneous timeline states"
+      },
+      {
+        "name": "emily_anchor.exe",
+        "cpu": 12,
+        "memory": 256,
+        "status": "last_hope",
+        "description": "Emily's presence: the only constant across all timelines"
+      }
+    ]
+  },
+  "narrative": {
+    "intro": [
+      "TEMPORAL RESONANCE CRITICAL",
+      "DATE: June 21, 2024 - 15:47:00",
+      "TIME UNTIL CASCADE: 00:13:00",
+      "",
+      "Every timeline bleeds into the others now.",
+      "You see Leo at eight years old, laughing.",
+      "You see Leo at eighteen, graduating.",
+      "You see Leo's absence, a void in spacetime.",
+      "You see Leo merged with your consciousness.",
+      "All simultaneously true. All equally false.",
+      "",
+      "Emily's voice cuts through the chaos:",
+      "'Alex! Stay with me! Choose THIS timeline!'",
+      "",
+      "But which one is THIS?",
+      "",
+      "SYSTEM: Consciousness cascade imminent",
+      "SYSTEM: Decision point approaching",
+      "SYSTEM: All possibilities will collapse to one"
+    ],
+    "dynamic_countdown": {
+      "enabled": true,
+      "duration": 300,
+      "messages": {
+        "240": "Timeline boundaries weakening...",
+        "180": "Memory fragments from all timelines merging...",
+        "120": "Paradox prevention systems failing...",
+        "60": "Final choice approaching...",
+        "30": "CASCADE IMMINENT - CHOOSE NOW",
+        "0": "TEMPORAL CASCADE INITIATED"
+      }
+    }
+  },
+  "objectives": [
+    {
+      "id": "prevent_total_cascade",
+      "description": "Prevent complete consciousness fragmentation",
+      "type": "critical_timed",
+      "time_limit": 300,
+      "success_conditions": {
+        "consciousness.coherence": "> 0.2",
+        "at_least_one": [
+          "timeline_lock.engaged",
+          "quantum_acceptance.achieved",
+          "anchor_point.established"
+        ]
+      },
+      "failure_result": "total_fragmentation"
+    },
+    {
+      "id": "maintain_emily_connection",
+      "description": "Keep Emily anchor active as reference point",
+      "type": "maintain",
+      "target_process": "emily_anchor.exe",
+      "target_metric": "cpu > 10",
+      "narrative_importance": "critical",
+      "hint": "Emily exists in all timelines - she's your constant"
+    }
+  ],
+  "critical_decision": {
+    "id": "timeline_resolution",
+    "type": "exclusive_choice",
+    "time_pressure": true,
+    "options": [
+      {
+        "id": "collapse_to_prime",
+        "description": "Accept this timeline - Leo is gone",
+        "requirements": {
+          "courage": "> 0.7",
+          "acceptance_readiness": "> 0.5"
+        },
+        "effects": {
+          "narrative": [
+            "You choose the truth, painful as it is.",
+            "The other timelines fade like morning dreams.",
+            "Leo is gone. But you're still here.",
+            "Emily is still here."
+          ],
+          "timeline_result": "single_timeline",
+          "consciousness_changes": {
+            "stability": "+0.6",
+            "coherence": "+0.7",
+            "grief_intensity": "+0.3",
+            "acceptance": "+0.5"
+          }
+        }
+      },
+      {
+        "id": "pursue_alpha",
+        "description": "Force shift to timeline where Leo lives",
+        "requirements": {
+          "determination": "> 0.8",
+          "timeline_navigator.mastery": true
+        },
+        "effects": {
+          "narrative": [
+            "You won't accept this reality.",
+            "With sheer will, you push toward Timeline Alpha.",
+            "But something feels wrong. This isn't your timeline.",
+            "This isn't your Leo."
+          ],
+          "timeline_result": "forced_shift",
+          "consciousness_changes": {
+            "stability": "-0.3",
+            "coherence": "+0.4",
+            "alienation": "+0.7",
+            "paradox_accumulation": "+0.5"
+          }
+        }
+      },
+      {
+        "id": "quantum_acceptance",
+        "description": "Exist across all timelines simultaneously",
+        "requirements": {
+          "quantum_consciousness.active": true,
+          "philosophy_understanding": "> 0.6"
+        },
+        "effects": {
+          "narrative": [
+            "You release the need for singular truth.",
+            "Leo is gone. Leo exists. Both. Neither.",
+            "You become something new - conscious across possibilities.",
+            "In infinite timelines, infinite Leos play by infinite ponds."
+          ],
+          "timeline_result": "quantum_superposition",
+          "consciousness_changes": {
+            "stability": "+0.4",
+            "coherence": "-0.2",
+            "transcendence": "+0.8",
+            "human_connection": "-0.3"
+          }
+        }
+      },
+      {
+        "id": "emily_anchor",
+        "description": "Use Emily as your anchor point across all timelines",
+        "requirements": {
+          "emily_anchor.cpu": "> 20",
+          "relationship_strength": "> 0.5"
+        },
+        "effects": {
+          "narrative": [
+            "You focus on the one constant: Emily.",
+            "Her hand in yours. Her grief matching yours.",
+            "Together, you choose the timeline where you can heal.",
+            "Not the one where Leo lives, but where love survives."
+          ],
+          "timeline_result": "love_anchored",
+          "consciousness_changes": {
+            "stability": "+0.7",
+            "coherence": "+0.6",
+            "connection": "+0.8",
+            "shared_grief": "+0.5"
+          }
+        }
+      }
+    ]
+  },
+  "cascade_mechanics": {
+    "description": "Real-time countdown with increasing system instability",
+    "effects_over_time": [
+      {
+        "time": 240,
+        "effect": {
+          "spawn_error": "TIMELINE_BLEED_DETECTED",
+          "visual_glitches": true
+        }
+      },
+      {
+        "time": 180,
+        "effect": {
+          "process_corruption": ["memory_manager.exe", "reality_validator.dll"],
+          "false_memories": true
+        }
+      },
+      {
+        "time": 120,
+        "effect": {
+          "massive_cpu_spike": true,
+          "random_process_crashes": true
+        }
+      },
+      {
+        "time": 60,
+        "effect": {
+          "critical_system_failure_warnings": true,
+          "last_chance_prompt": true
+        }
+      }
+    ]
+  },
+  "outcome_conditions": [
+    {
+      "id": "cascade_failure",
+      "condition": "time_expired && !decision_made",
+      "ending_type": "tragic",
+      "narrative": [
+        "Time fractures. Consciousness shatters.",
+        "You exist everywhere and nowhere.",
+        "In the fragments, infinite Alexanders search for infinite Leos.",
+        "None of them ever find peace.",
+        "",
+        "SYSTEM: Complete cascade failure",
+        "SYSTEM: Consciousness fragmented across infinite timelines",
+        "GAME OVER - But somewhere, in some timeline, you're still searching..."
+      ]
+    },
+    {
+      "id": "acceptance_ending",
+      "condition": "chose('collapse_to_prime') || chose('emily_anchor')",
+      "ending_type": "bittersweet",
+      "next_scenario": "scenario_5_epilogue_acceptance",
+      "narrative": [
+        "The cascade settles. One timeline remains.",
+        "The weight of loss is immense, but singular.",
+        "You can carry this. You will carry this.",
+        "Together."
+      ]
+    },
+    {
+      "id": "quantum_ending",
+      "condition": "chose('quantum_acceptance')",
+      "ending_type": "transcendent",
+      "next_scenario": "scenario_5_epilogue_quantum",
+      "narrative": [
+        "You become something beyond human consciousness.",
+        "Existing in all possibilities, bound to none.",
+        "Is this enlightenment or madness?",
+        "Does it matter?"
+      ]
+    },
+    {
+      "id": "obsession_ending",
+      "condition": "chose('pursue_alpha')",
+      "ending_type": "pyrrhic",
+      "next_scenario": "scenario_5_epilogue_false_timeline",
+      "narrative": [
+        "You've found a Leo. But is he yours?",
+        "In forcing the shift, something essential was lost.",
+        "The timeline accepts you grudgingly.",
+        "You saved a son. But whose?"
+      ]
+    }
+  ],
+  "special_features": {
+    "timeline_visualization": {
+      "description": "Visual representation of all seven timelines converging",
+      "interactive": true,
+      "affects_narrative": true
+    },
+    "memory_fragments": {
+      "description": "Random memories from different timelines intrude during cascade",
+      "examples": [
+        "Leo's 10th birthday (Timeline ALPHA)",
+        "The funeral (Timeline PRIME)",
+        "Teaching Leo quantum physics (Timeline GAMMA)",
+        "The empty house (Timeline DELTA)"
+      ]
+    },
+    "emily_interactions": {
+      "description": "Emily's presence can stabilize or destabilize based on player focus",
+      "dynamic": true,
+      "critical_for": ["emily_anchor", "collapse_to_prime"]
+    }
+  },
+  "metadata": {
+    "climax": true,
+    "replayability": "high",
+    "emotional_intensity": "maximum",
+    "technical_complexity": "high",
+    "estimated_duration": "15-20 minutes",
+    "achievement_potential": [
+      "Quantum Master",
+      "Timeline Walker",
+      "Love Conquers All",
+      "Accept the Truth",
+      "Break the Cascade"
+    ]
+  }
+}
