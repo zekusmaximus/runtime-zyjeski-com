@@ -1,43 +1,40 @@
-export default class MonitorSocket {
-  constructor(socketClient, handlers = {}) {
-    this.client = socketClient;
-    this.handlers = handlers;
-    this.bound = false;
+class MonitorSocket {
+  constructor(eventHandler) {
+    this.socket = null;
+    this.eventHandler = eventHandler;
   }
 
-  bindEvents() {
-    if (!this.client || this.bound) return;
-    this.bound = true;
-    const on = (e, h) => this.client.on(e, h);
-    if (this.handlers.onConsciousnessUpdate) {
-      on('consciousness-update', this.handlers.onConsciousnessUpdate);
-    }
-    if (this.handlers.onMonitoringStarted) {
-      on('monitoring-started', this.handlers.onMonitoringStarted);
-    }
-    if (this.handlers.onMonitoringStopped) {
-      on('monitoring-stopped', this.handlers.onMonitoringStopped);
-    }
-    if (this.handlers.onSystemResources) {
-      on('system-resources', this.handlers.onSystemResources);
-    }
-    if (this.handlers.onErrorLogs) {
-      on('error-logs', this.handlers.onErrorLogs);
-    }
-    if (this.handlers.onMemoryAllocation) {
-      on('memory-allocation', this.handlers.onMemoryAllocation);
-    }
+  connect() {
+    // The socket-client.js script is loaded in the HTML, so io should be globally available.
+    this.socket = io();
+
+    this.socket.on('connect', () => this.eventHandler('connect'));
+    this.socket.on('disconnect', () => this.eventHandler('disconnect'));
+    this.socket.on('character-list', (data) => this.eventHandler('character-list', data));
+    this.socket.on('consciousness-update', (data) => this.eventHandler('consciousness-update', data));
+    this.socket.on('monitoring-started', (data) => this.eventHandler('monitoring-started', data));
+    this.socket.on('monitoring-stopped', (data) => this.eventHandler('monitoring-stopped', data));
   }
 
-  startMonitoring(id) {
-    this.client?.startMonitoring(id);
+  startMonitoring(characterId) {
+    this.socket.emit('monitor:start', { characterId });
   }
 
-  stopMonitoring(id) {
-    this.client?.stopMonitoring(id);
+  stopMonitoring(characterId) {
+    this.socket.emit('monitor:stop', { characterId });
   }
 
-  refresh() {
-    this.client?.emitToServer('refresh-monitor');
+  getCharacterList() {
+    this.socket.emit('monitor:get-characters');
+  }
+
+  getFreshState(characterId) {
+      this.socket.emit('monitor:get-state', { characterId });
+  }
+
+  clearErrors(characterId) {
+      this.socket.emit('monitor:clear-errors', { characterId });
   }
 }
+
+export default MonitorSocket;

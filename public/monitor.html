@@ -1,4 +1,46 @@
 <!-- Fixed Monitor Section with proper initialization -->
+<template id="resourceMeterTemplate">
+    <div class="resource-meter">
+        <div class="meter-label">
+            <span class="meter-name"></span>
+            <span class="meter-value"></span>
+        </div>
+        <div class="meter-bar">
+            <div class="meter-fill"></div>
+        </div>
+    </div>
+</template>
+
+<template id="processRowTemplate">
+    <tr class="process-row">
+        <td class="process-pid"></td>
+        <td class="process-name"></td>
+        <td class="process-status"></td>
+        <td class="process-cpu"></td>
+        <td class="process-memory"></td>
+        <td>
+            <button class="action-btn kill-btn">Kill</button>
+        </td>
+    </tr>
+</template>
+
+<template id="memoryBlockTemplate">
+    <div class="memory-block">
+        <div class="memory-block-id"></div>
+        <div class="memory-block-size"></div>
+    </div>
+</template>
+
+<template id="errorEntryTemplate">
+    <div class="error-entry">
+        <div class="error-header">
+            <span class="error-timestamp"></span>
+            <span class="error-severity"></span>
+        </div>
+        <div class="error-description"></div>
+    </div>
+</template>
+
 <section id="monitor" class="section">
     <div class="monitor-container">
         <div class="monitor-header">
@@ -62,6 +104,7 @@
     </div>
 </section>
 
+<script src="/socket.io/socket.io.js"></script>
 <script type="module" src="/js/monitor.js"></script>
 
 <style>

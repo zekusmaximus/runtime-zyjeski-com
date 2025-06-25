@@ -1,20 +1,26 @@
-export default class MonitorState {
+class MonitorState {
   constructor() {
-    this.resources = {};
-    this.processes = [];
-    this.memory = null;
-    this.errors = [];
-    this.lastUpdate = null;
+    this.connectionStatus = 'disconnected'; // disconnected, connected, error
+    this.isMonitoring = false;
+    this.selectedCharacter = null;
+    this.consciousnessData = null;
   }
 
-  update(data = {}) {
-    if (data.resources) this.resources = data.resources;
-    if (data.processes) this.processes = data.processes;
-    if (data.memory) this.memory = data.memory;
-    if (data.errors) this.errors = data.errors;
-    if (data.system_errors) this.errors = data.system_errors;
-    if (Object.keys(data).length > 0) {
-      this.lastUpdate = Date.now();
-    }
+  setConnectionStatus(status) {
+    this.connectionStatus = status;
+  }
+
+  setMonitoringStatus(isMonitoring) {
+    this.isMonitoring = isMonitoring;
+  }
+
+  setSelectedCharacter(characterId) {
+    this.selectedCharacter = characterId;
+  }
+
+  update(data) {
+    this.consciousnessData = data;
   }
 }
+
+export default MonitorState;

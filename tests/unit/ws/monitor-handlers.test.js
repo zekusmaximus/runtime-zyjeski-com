@@ -12,7 +12,7 @@ describe('monitor-handlers', () => {
 
     registerHandlers({ socket, handlers, consciousnessEngine: engine, ensureEngineInitialized: ensure });
 
-    await events['start-monitoring']({ characterId: 'c1' });
+    socket.emit('monitor:start', { characterId: 'c1' });
 
     expect(engine.loadCharacter).toHaveBeenCalledWith('c1');
     expect(engine.startMonitoring).toHaveBeenCalledWith('c1', 's1');
