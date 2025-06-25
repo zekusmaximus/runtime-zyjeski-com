@@ -64,37 +64,43 @@ npm run lint       # Code linting (not yet configured)
 
 ### Backend Structure
 ```
-server.js                      # Express server with Socket.io
+server.js                        # Express server with Socket.io
 ├── routes/
-│   ├── api.js                # General API endpoints
-│   └── consciousness.js      # Consciousness-specific endpoints
+│   ├── api.js                  # General API endpoints
+│   └── consciousness.js        # Engine actions
 ├── lib/
-│   ├── consciousness-engine.js   # Core consciousness simulation
-│   ├── process-simulator.js     # Mental process simulation
-│   └── websocket-handlers.js    # Real-time event handling
+│   ├── consciousness-engine.js     # Orchestrates characters
+│   ├── consciousness-instance.js   # Individual instance logic
+│   ├── engine/
+│   │   ├── tick-loop.js           # Global tick scheduler
+│   │   ├── character-loader.js    # Character loading utilities
+│   │   └── monitor-responder.js   # Monitoring/broadcasting
+│   ├── instance/action-router.js  # Maps debug actions
+│   └── ws-bootstrap.js            # WebSocket setup
 └── data/
-    ├── characters/           # Character consciousness profiles (JSON)
-    ├── schema/              # JSON schemas for validation
-    └── stories/             # Story and scenario data
+    ├── characters/               # Character profiles (JSON)
+    ├── schema/                   # JSON schemas for validation
+    └── stories/                  # Story and scenario data
 ```
 
 ### Frontend Structure
 ```
-public/                      # Static files served by Express
-├── js/                     # Client-side JavaScript (ES6 modules)
-│   ├── app.js               # Main application controller
-│   ├── state-manager.js     # Global state management
-│   ├── socket-client.js     # WebSocket communication
-│   ├── consciousness.js     # Consciousness management
-│   ├── terminal.js          # Terminal debugging interface
-│   ├── monitor.js           # Real-time monitoring dashboard
-│   └── debugger.js          # Interactive debugging interface
-├── css/                     # VS Code dark theme styling
-│   ├── main.css            # Main styles
-│   ├── terminal.css        # Terminal-specific styles
-│   ├── monitor.css         # Monitor dashboard styles
-│   └── debug.css           # Debugger interface styles
-└── index.html              # Single-page application entry point
+public/                        # Static files served by Express
+├── js/                       # Client-side JavaScript (ES6 modules)
+│   ├── app.js                 # Bootstraps client
+│   ├── connection-manager.js  # WebSocket connection wrapper
+│   ├── state-manager.js       # Shared state store
+│   ├── modules/
+│   │   └── monitor/           # Modular monitoring UI
+│   ├── consciousness.js       # Consciousness manager
+│   ├── terminal.js            # Terminal interface
+│   └── debugger.js            # Interactive debugger
+├── css/                       # VS Code dark theme styling
+│   ├── main.css              # Main styles
+│   ├── terminal.css          # Terminal-specific styles
+│   ├── monitor.css           # Monitor dashboard styles
+│   └── debug.css             # Debugger interface styles
+└── index.html                # Single-page application entry point
 ```
 
 **Technology Stack**: 

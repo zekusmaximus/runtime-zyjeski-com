@@ -22,3 +22,5 @@
 ## Regression Prevention
 - Add tests that fail if monitoring starts without user action.
 - Review all new code for accidental auto-starts or duplicate intervals.
+
+See also: `docs/ARCHITECTURE_MONITORING.md` for module responsibilities.

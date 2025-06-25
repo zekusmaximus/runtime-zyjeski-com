@@ -91,31 +91,41 @@ losing his 8-year-old son Leo in a time experiment.
 
 ### Backend (Node.js + Express + Socket.io)
 ```
-server.js                    # Express server with WebSocket
+server.js                     # Express entry point
 ├── routes/
-│   ├── api.js              # Character and debugging endpoints
-│   └── consciousness.js    # Consciousness state management
+│   ├── api.js               # REST endpoints
+│   └── consciousness.js     # Engine-driven actions
 ├── lib/
-│   ├── consciousness-engine.js  # Core consciousness simulation
-│   ├── process-simulator.js    # Mental process simulation
-│   └── websocket-handlers.js   # Real-time event handling
+│   ├── consciousness-engine.js      # Orchestrates instances and stories
+│   ├── consciousness-instance.js    # Individual character instance
+│   ├── engine/
+│   │   ├── tick-loop.js           # Global tick scheduler
+│   │   ├── character-loader.js    # Character loading utilities
+│   │   └── monitor-responder.js   # Monitoring and broadcasting
+│   ├── instance/
+│   │   ├── action-router.js       # Maps debug actions to subsystems
+│   │   ├── emotional-state.js     # EmotionStateEngine wrapper
+│   │   └── memory-state.js        # Memory manager facade
+│   └── ws-bootstrap.js            # WebSocket initialization and routing
 └── data/
-    ├── characters/         # Character consciousness profiles
-    └── stories/           # Story and scenario data
+    ├── characters/                # Character profiles
+    └── stories/                   # Story definitions
 ```
 
 ### Frontend (Vanilla JavaScript)
 ```
 public/
 ├── js/
-│   ├── app.js             # Main application controller
-│   ├── state-manager.js   # Global state management
-│   ├── socket-client.js   # WebSocket communication
-│   ├── terminal.js        # Terminal debugging interface
-│   ├── monitor.js         # Real-time monitoring dashboard
-│   └── debugger.js        # Interactive debugging interface
-├── css/                   # VS Code dark theme styling
-└── index.html            # Single-page application
+│   ├── app.js                   # Bootstraps client
+│   ├── connection-manager.js    # WebSocket connection wrapper
+│   ├── state-manager.js         # Shared state store
+│   ├── modules/
+│   │   └── monitor/             # Modular monitoring UI
+│   ├── terminal.js              # Terminal interface
+│   ├── debugger.js              # Interactive debugger
+│   └── consciousness.js         # Consciousness manager
+├── css/                         # VS Code dark theme styling
+└── index.html                  # Single-page application
 ```
 
 ### Data Schema

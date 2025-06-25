@@ -24,3 +24,5 @@
 ## Regression Prevention
 - Add a test that fails if monitoring starts without user action.
 - Document the expected event flow in your architecture docs.
+
+See also: `docs/ARCHITECTURE_MONITORING.md` for monitoring module details.

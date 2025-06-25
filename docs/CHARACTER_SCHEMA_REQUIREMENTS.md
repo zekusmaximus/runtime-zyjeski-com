@@ -1,6 +1,6 @@
 # Character Data Schema Requirements
 
-To ensure every character's consciousness is schema-compliant and works with the backend and frontend, each character JSON file (e.g., `alexander-kane.json`) **must include the following top-level fields**:
+To ensure every character's consciousness is schema-compliant and works with the backend and frontend, each character JSON file (e.g., `alexander-kane.json`) **must include the following top-level fields**. The full schema is detailed in `docs/CONSCIOUSNESS-SCHEMA.md`.
 
 ## Required Top-Level Fields
 

@@ -45,13 +45,13 @@ runtime-zyjeski/
 │   │   ├── monitor.css       # Monitoring dashboard styles
 │   │   └── debug.css         # Debugger interface styles
 │   ├── js/                   # JavaScript modules
-│   │   ├── app.js            # Main application controller
-│   │   ├── state-manager.js  # Global state management
-│   │   ├── socket-client.js  # WebSocket communication
-│   │   ├── consciousness.js  # Consciousness management
-│   │   ├── terminal.js       # Terminal interface
-│   │   ├── monitor.js        # Real-time monitoring
-│   │   └── debugger.js       # Interactive debugger
+│   │   ├── app.js               # Bootstraps client
+│   │   ├── connection-manager.js # WebSocket wrapper
+│   │   ├── state-manager.js      # Shared state store
+│   │   ├── modules/monitor/      # Monitoring UI modules
+│   │   ├── consciousness.js      # Consciousness manager
+│   │   ├── terminal.js           # Terminal interface
+│   │   └── debugger.js           # Interactive debugger
 │   └── workers/              # Web Workers for background processing
 ├── data/                     # Character and story data
 │   ├── characters/           # Character consciousness profiles
@@ -63,9 +63,14 @@ runtime-zyjeski/
 │   ├── api.js               # General API endpoints
 │   └── consciousness.js     # Consciousness-specific endpoints
 ├── lib/                     # Backend libraries
-│   ├── consciousness-engine.js # Core consciousness simulation
-│   ├── process-simulator.js   # Mental process simulation
-│   └── websocket-handlers.js  # Real-time event handling
+│   ├── consciousness-engine.js   # Orchestrates instances and stories
+│   ├── consciousness-instance.js # Per-character instance logic
+│   ├── engine/
+│   │   ├── tick-loop.js         # Global tick scheduler
+│   │   ├── character-loader.js  # Character loader utilities
+│   │   └── monitor-responder.js # Monitoring & broadcasting
+│   ├── instance/action-router.js  # Maps debug actions
+│   └── ws-bootstrap.js          # WebSocket initialization
 └── docs/                    # Documentation
     ├── API.md               # API documentation
     ├── CONSCIOUSNESS-SCHEMA.md # Consciousness data format
