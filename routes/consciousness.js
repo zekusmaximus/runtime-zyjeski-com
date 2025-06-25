@@ -1,5 +1,5 @@
 import express from 'express';
-import { consciousnessEngine } from '../lib/websocket-handlers.js';
+import { consciousnessEngine } from '../lib/ws-bootstrap.js';
 import { error, info } from '../lib/logger.js';
 import { validateConsciousnessData } from '../lib/validateConsciousness.js';
 

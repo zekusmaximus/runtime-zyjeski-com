@@ -13,7 +13,7 @@ import apiRoutes from './routes/api.js';
 import consciousnessRoutes from './routes/consciousness.js';
 
 // Import WebSocket handlers
-import websocketHandlers from './lib/websocket-handlers.js';
+import websocketHandlers from './lib/ws-bootstrap.js';
 
 // ES6 module compatibility for __dirname
 const __filename = fileURLToPath(import.meta.url);
