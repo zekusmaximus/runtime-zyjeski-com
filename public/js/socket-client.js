@@ -20,6 +20,7 @@ class SocketClient {
       'system-resources',
       'error-logs',
       'memory-allocation',
+      'refresh-monitor',
       'connect',
       'disconnect',
       'error'
@@ -191,6 +192,17 @@ class SocketClient {
     this.recordUserInteraction('stop-monitoring');
     
     this.socket.emit('stop-monitoring', { characterId });
+    return true;
+  }
+
+  refreshMonitor() {
+    if (!this.isConnected) {
+      console.error('Socket not connected');
+      return false;
+    }
+
+    this.recordUserInteraction('refresh-monitor');
+    this.socket.emit('refresh-monitor');
     return true;
   }
 

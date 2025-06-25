@@ -35,7 +35,7 @@ describe('ConsciousnessManager Monitoring Lifecycle', () => {
   it('starts monitoring only after userStartMonitoring()', () => {
     manager.userStartMonitoring();
     expect(manager.isMonitoring).toBe(true);
-    expect(manager.updateInterval).not.toBe(null);
+    expect(manager.updateInterval).toBe(null);
     expect(window.socketClient.startMonitoring).toHaveBeenCalledWith('alexander-kane');
   });
 

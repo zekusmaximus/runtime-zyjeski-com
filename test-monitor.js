@@ -18,10 +18,8 @@ socket.on('monitoring-started', (data) => {
     console.log('✓ Monitoring started:', data);
     
     // Test data requests
-    console.log('Testing data requests...');
-    socket.emit('get-system-resources');
-    socket.emit('get-error-logs');
-    socket.emit('get-memory-allocation');
+    console.log('Testing refresh-monitor event...');
+    socket.emit('refresh-monitor');
 });
 
 socket.on('system-resources', (data) => {
