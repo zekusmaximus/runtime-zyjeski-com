@@ -2,6 +2,10 @@
 
 This document describes the REST API and WebSocket interface for the
 Runtime.zyjeski.com consciousness debugging platform.
+The backend uses a modular engine (`ConsciousnessEngine`) composed of
+`ActionRouter`, `TickLoop`, `EmotionStateEngine` and related helpers.
+See also: `docs/ARCHITECTURE_MONITORING.md` and `docs/DEBUGGING.md` for
+real-time monitoring details.
 
 ## Base URL
 

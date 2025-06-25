@@ -3,6 +3,8 @@
 This document describes the data structure used to represent character consciousness
 states in the Runtime.zyjeski.com platform. The schema models the mind as a computer
 operating system with processes, memory, resources, and debug capabilities.
+The runtime implementation uses modules such as `EmotionStateEngine`, `ActionRouter`
+and `TickLoop` to manipulate this schema at runtime.
 
 ## Overview
 
