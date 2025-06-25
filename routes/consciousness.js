@@ -1,3 +1,4 @@
+// routes/consciousness.js - Add missing routes
 import express from 'express';
 import { consciousnessEngine } from '../lib/ws-bootstrap.js';
 import { error, info } from '../lib/logger.js';
@@ -133,6 +134,63 @@ router.get('/:characterId/state', async (req, res) => {
     const characterId = req.params.characterId;
     error('Error getting consciousness state:', { error: err.message, characterId });
     res.status(500).json({ error: 'Failed to get consciousness state' });
+  }
+});
+
+// Get process list for a character
+router.get('/:characterId/processes', async (req, res) => {
+  try {
+    const characterId = req.params.characterId;
+    await ensureEngineInitialized();
+    
+    const loadedCharacters = consciousnessEngine.instances || new Map();
+    if (!loadedCharacters.has(characterId)) {
+      await consciousnessEngine.loadCharacter(characterId);
+    }
+    
+    const processes = await consciousnessEngine.getProcesses(characterId);
+    res.json(processes);
+  } catch (err) {
+    error('Error getting processes:', { error: err.message });
+    res.status(500).json({ error: 'Failed to get processes' });
+  }
+});
+
+// Get memory allocation for a character - THIS WAS MISSING!
+router.get('/:characterId/memory', async (req, res) => {
+  try {
+    const characterId = req.params.characterId;
+    await ensureEngineInitialized();
+    
+    const loadedCharacters = consciousnessEngine.instances || new Map();
+    if (!loadedCharacters.has(characterId)) {
+      await consciousnessEngine.loadCharacter(characterId);
+    }
+    
+    const memory = await consciousnessEngine.getMemory(characterId);
+    res.json(memory);
+  } catch (err) {
+    error('Error getting memory data:', { error: err.message });
+    res.status(500).json({ error: 'Failed to get memory data' });
+  }
+});
+
+// Get system errors for a character - THIS WAS MISSING!
+router.get('/:characterId/errors', async (req, res) => {
+  try {
+    const characterId = req.params.characterId;
+    await ensureEngineInitialized();
+    
+    const loadedCharacters = consciousnessEngine.instances || new Map();
+    if (!loadedCharacters.has(characterId)) {
+      await consciousnessEngine.loadCharacter(characterId);
+    }
+    
+    const errors = await consciousnessEngine.getErrors(characterId);
+    res.json(errors);
+  } catch (err) {
+    error('Error getting system errors:', { error: err.message });
+    res.status(500).json({ error: 'Failed to get system errors' });
   }
 });
 

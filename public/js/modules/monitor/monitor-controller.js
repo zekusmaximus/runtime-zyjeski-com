@@ -1,250 +1,300 @@
-import MonitorState from './monitor-state.js';
+// public/js/modules/monitor/monitor-controller.js
 import MonitorUI from './monitor-ui.js';
-import MonitorSocket from './monitor-socket.js';
+import stateManager from '../state-manager.js';
 
-export default class MonitorController {
+export class MonitorController {
   constructor() {
-    this.state = new MonitorState();
     this.ui = new MonitorUI();
-    this.socket = null;
-    this.currentCharacter = null;
-    this.monitoring = false;
-  }
-
-  init() {
+    this.isConnected = false;
+    this.pollingInterval = null;
+    this.characterId = null;
+    
+    // Subscribe to state changes
+    stateManager.subscribe('stateChanged', (state) => this.handleStateUpdate(state));
+    stateManager.subscribe('characterLoaded', (character) => this.handleCharacterLoaded(character));
+    
     console.log('[MONITOR CONTROLLER] Initializing monitor controller...');
-    
-    if (window.socketClient) {
-      this.socket = new MonitorSocket(window.socketClient, {
-        onConsciousnessUpdate: (d) => this.handleUpdate(d),
-        onSystemResources: (d) => this.handleResources(d),
-        onErrorLogs: (d) => this.handleErrors(d),
-        onMemoryAllocation: (d) => this.handleMemory(d),
-        onMonitoringStarted: () => console.log('monitoring started'),
-        onMonitoringStopped: () => console.log('monitoring stopped')
-      });
-      this.socket.bindEvents();
-    }
-    this.bindUIActions();
-    
-    // Initialize monitor in disconnected/empty state
-    this.showDisconnectedState();
+    this.initialize();
   }
 
-  displayCharacterData(characterData) {
-    if (!characterData) {
-      console.log('Monitor: No character data provided');
+  async initialize() {
+    console.log('[MONITOR CONTROLLER] ===== INITIALIZE START =====');
+    
+    // Set up refresh button
+    const refreshBtn = document.getElementById('refreshMonitor');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => this.refresh());
+      console.log('[MONITOR CONTROLLER] Refresh button event listener added');
+    }
+
+    // Hide the character selector since we use the one from home page
+    const characterSelect = document.getElementById('characterSelect');
+    if (characterSelect) {
+      characterSelect.style.display = 'none';
+      console.log('[MONITOR CONTROLLER] Character selector hidden');
+    }
+
+    // Check if we already have a loaded character
+    const currentState = stateManager.getState();
+    const currentCharacter = stateManager.getCurrentCharacter();
+    
+    console.log('[MONITOR CONTROLLER] Current state exists:', !!currentState);
+    console.log('[MONITOR CONTROLLER] Current character:', currentCharacter);
+    
+    if (currentState && currentCharacter) {
+      console.log('[MONITOR CONTROLLER] Found existing character, connecting...');
+      this.characterId = currentCharacter.id;
+      this.isConnected = true;
+      this.handleStateUpdate(currentState);
+    } else if (currentCharacter && !currentState) {
+      console.log('[MONITOR CONTROLLER] Found character but no state, loading state...');
+      this.characterId = currentCharacter.id;
+      try {
+        await stateManager.loadCharacter(currentCharacter.id);
+        const newState = stateManager.getState();
+        if (newState) {
+          this.isConnected = true;
+          this.handleStateUpdate(newState);
+        }
+      } catch (error) {
+        console.error('[MONITOR CONTROLLER] Error loading character state:', error);
+        this.showDisconnectedState();
+      }
+    } else {
+      console.log('[MONITOR CONTROLLER] No character loaded, showing disconnected state');
+      this.showDisconnectedState();
+    }
+    
+    console.log('[MONITOR CONTROLLER] ===== INITIALIZE COMPLETE =====');
+  }
+
+  handleCharacterLoaded(character) {
+    console.log('[MONITOR CONTROLLER] Character loaded event received:', character.name);
+    this.characterId = character.id;
+    this.isConnected = true;
+    
+    // Update the character selector if it exists to reflect the loaded character
+    const characterSelect = document.getElementById('characterSelect');
+    if (characterSelect) {
+      characterSelect.value = character.id;
+    }
+  }
+
+  handleStateUpdate(state) {
+    console.log('[MONITOR CONTROLLER] ===== STATE UPDATE START =====');
+    console.log('[MONITOR CONTROLLER] State update received:', state);
+    console.log('[MONITOR CONTROLLER] Current isConnected:', this.isConnected);
+    console.log('[MONITOR CONTROLLER] Current characterId:', this.characterId);
+    
+    if (!state) {
+      console.log('[MONITOR CONTROLLER] No state provided, showing disconnected state');
       this.showDisconnectedState();
       return;
     }
-    
-    console.log('Monitor: Displaying character data for:', characterData.name);
-    console.log('Monitor: Character data:', characterData);
-    
-    // Extract consciousness data
-    const consciousness = characterData.consciousness || characterData;
-    
-    // Set the character in the dropdown
-    const select = document.getElementById('characterSelect');
-    if (select) {
-      select.value = characterData.id;
-      this.currentCharacter = characterData.id;
-      console.log('Monitor: Set character selection to:', characterData.id);
+
+    console.log('[MONITOR CONTROLLER] Processing state update with data:', {
+      processes: state.processes?.length || 0,
+      hasMemory: !!state.consciousness?.memory,
+      hasResources: !!state.consciousness?.resources,
+      hasSystemResources: !!state.systemResources,
+      hasErrors: !!state.system_errors
+    });
+
+    // Ensure we're marked as connected since we have data
+    if (!this.isConnected) {
+      console.log('[MONITOR CONTROLLER] Setting connected state to true');
+      this.isConnected = true;
     }
+
+    // Update UI with new state - use state.processes directly since it's extracted to top level
+    console.log('[MONITOR CONTROLLER] Updating processes...');
+    this.ui.updateProcesses(state.processes || []);
     
-    console.log('Monitor: Consciousness data:', consciousness);
-    
-    // Display processes
-    if (consciousness.processes) {
-      console.log('Monitor: Found processes:', consciousness.processes);
-      this.handleUpdate({ processes: consciousness.processes });
-    }
-    
-    // Display system resources - use 'resources' not 'systemResources'
-    if (consciousness.resources) {
-      console.log('Monitor: Found resources:', consciousness.resources);
-      this.handleResources({ resources: consciousness.resources });
+    // Handle memory data - check multiple possible locations
+    if (state.consciousness?.memory) {
+      console.log('[MONITOR CONTROLLER] Updating memory from consciousness.memory');
+      this.ui.updateMemory(state.consciousness.memory);
+    } else if (state.memoryMap) {
+      console.log('[MONITOR CONTROLLER] Updating memory from memoryMap');
+      this.ui.updateMemory(state.memoryMap);
     } else {
-      console.log('Monitor: No resources found');
+      // Always fetch memory data from API since it's not included in state
+      console.log('[MONITOR CONTROLLER] Fetching memory data from API');
+      this.fetchMemoryData();
     }
     
-    // Display memory data - extract from resources.memory since consciousness.memory doesn't exist
-    if (consciousness.memory) {
-      console.log('Monitor: Found consciousness.memory:', consciousness.memory);
-      this.handleMemory({ memoryData: consciousness.memory });
-    } else if (consciousness.resources && consciousness.resources.memory) {
-      console.log('Monitor: Found memory in resources:', consciousness.resources.memory);
-      console.log('Monitor: Calling handleMemory with resources.memory');
-      this.handleMemory({ memoryData: consciousness.resources.memory });
-    } else {
-      console.log('Monitor: No memory found anywhere');
-      console.log('Monitor: consciousness.resources exists:', !!consciousness.resources);
-      console.log('Monitor: consciousness.resources.memory exists:', !!(consciousness.resources && consciousness.resources.memory));
-      // Force display empty memory panel
-      this.handleMemory({ memoryData: null });
-    }
+    // Handle resources - check multiple possible locations
+    const resources = state.consciousness?.resources || state.systemResources || state.resources || {};
+    console.log('[MONITOR CONTROLLER] Using resources:', resources);
+    this.ui.updateResources(resources);
     
-    // Display any errors
-    if (consciousness.system_errors) {
-      console.log('Monitor: Found system errors:', consciousness.system_errors);
-      this.handleErrors({ errors: consciousness.system_errors });
-    } else {
-      console.log('Monitor: No system_errors found');
-    }
+    console.log('[MONITOR CONTROLLER] Updating errors...');
+    this.ui.updateErrors(state.system_errors || []);
     
-    console.log('Monitor loaded character data:', characterData.name);
-  }
-
-  bindUIActions() {
-    if (this.ui.refreshBtn) {
-      this.ui.refreshBtn.addEventListener('click', () => this.refresh());
-    }
+    console.log('[MONITOR CONTROLLER] Setting connection status to true...');
+    this.ui.setConnectionStatus(true);
     
-    // Hide the monitoring toggle button since we don't need active monitoring
-    if (this.ui.toggleBtn) {
-      this.ui.toggleBtn.style.display = 'none';
-    }
+    console.log('[MONITOR CONTROLLER] Updating timestamp...');
+    this.ui.updateTimestamp(Date.now());
     
-    const select = document.getElementById('characterSelect');
-    if (select) {
-      select.addEventListener('change', (e) => {
-        this.currentCharacter = e.target.value || null;
-        if (this.currentCharacter) {
-          this.loadCharacterFromAPI(this.currentCharacter);
-        }
-      });
+    console.log('[MONITOR CONTROLLER] ===== STATE UPDATE COMPLETE =====');
+  }
+
+  async fetchMemoryData() {
+    console.log('[MONITOR CONTROLLER] ===== FETCH MEMORY DATA START =====');
+    console.log('[MONITOR CONTROLLER] characterId:', this.characterId);
+    
+    if (!this.characterId) {
+      console.log('[MONITOR CONTROLLER] No characterId, cannot fetch memory data');
+      return;
     }
-    const clearBtn = document.getElementById('clearErrors');
-    if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
-        this.state.update({ errors: [] });
-        this.ui.updateErrors([]);
-      });
-    }
-  }
 
-  start() {
-    if (!this.currentCharacter || !this.socket) return;
-    this.socket.startMonitoring(this.currentCharacter);
-    this.monitoring = true;
-  }
-
-  stop() {
-    if (!this.currentCharacter || !this.socket) return;
-    this.socket.stopMonitoring(this.currentCharacter);
-    this.monitoring = false;
-  }
-
-  toggleMonitoring() {
-    if (this.monitoring) {
-      this.stop();
-    } else {
-      this.start();
-    }
-  }
-
-  refresh() {
-    // Refresh by reloading current character data
-    if (this.currentCharacter) {
-      this.loadCharacterFromAPI(this.currentCharacter);
-    } else if (window.app && window.app.currentCharacter) {
-      this.displayCharacterData(window.app.currentCharacter);
-    } else {
-      console.log('No character selected to refresh');
-    }
-  }
-
-  async loadCharacterFromAPI(characterId) {
     try {
-      const response = await fetch(`/api/consciousness/${characterId}/state`);
+      const url = `/api/consciousness/${this.characterId}/memory`;
+      console.log('[MONITOR CONTROLLER] Fetching memory from:', url);
+      
+      const response = await fetch(url);
+      console.log('[MONITOR CONTROLLER] Memory fetch response:', response.status, response.statusText);
+      
       if (response.ok) {
-        const characterData = await response.json();
-        this.displayCharacterData(characterData);
-        console.log('Monitor refreshed with latest data for:', characterData.name);
+        const memoryData = await response.json();
+        console.log('[MONITOR CONTROLLER] Memory data received:', memoryData);
+        this.ui.updateMemory(memoryData);
+        console.log('[MONITOR CONTROLLER] Memory UI updated');
       } else {
-        console.error('Failed to refresh character data:', response.statusText);
+        console.error('[MONITOR CONTROLLER] Memory fetch failed:', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('Error refreshing character data:', error);
+      console.error('[MONITOR CONTROLLER] Error fetching memory data:', error);
+    }
+    
+    console.log('[MONITOR CONTROLLER] ===== FETCH MEMORY DATA END =====');
+  }
+
+  async fetchAllData() {
+    if (!this.characterId) return;
+
+    try {
+      // Fetch all data types in parallel
+      const [processesRes, memoryRes, errorsRes] = await Promise.all([
+        fetch(`/api/consciousness/${this.characterId}/processes`),
+        fetch(`/api/consciousness/${this.characterId}/memory`),
+        fetch(`/api/consciousness/${this.characterId}/errors`)
+      ]);
+
+      if (processesRes.ok) {
+        const processes = await processesRes.json();
+        this.ui.updateProcesses(processes);
+      }
+
+      if (memoryRes.ok) {
+        const memory = await memoryRes.json();
+        this.ui.updateMemory(memory);
+      }
+
+      if (errorsRes.ok) {
+        const errors = await errorsRes.json();
+        this.ui.updateErrors(errors);
+      }
+
+      this.ui.updateTimestamp(Date.now());
+    } catch (error) {
+      console.error('[MONITOR CONTROLLER] Error fetching data:', error);
     }
   }
 
-  handleUpdate(data) {
-    this.state.update(data.consciousness || data);
-    this.ui.updateProcesses(this.state.processes);
-    this.ui.updateResources(this.state.resources);
-    this.ui.updateMemory(this.state.memory);
-    this.ui.updateErrors(this.state.errors);
-    if (this.state.lastUpdate) {
-      this.ui.updateTimestamp(this.state.lastUpdate);
+  connectToCharacter(character) {
+    console.log('[MONITOR CONTROLLER] Connecting to character:', character.name);
+    this.characterId = character.id;
+    this.isConnected = true;
+    
+    // Update UI with character data
+    if (character.consciousness) {
+      this.handleStateUpdate({
+        ...character,
+        processes: character.consciousness.processes || character.baseProcesses || [],
+        system_errors: character.consciousness.system_errors || [],
+        consciousness: character.consciousness
+      });
+    } else {
+      // Fetch fresh data if consciousness not included
+      this.fetchAllData();
     }
   }
 
-  handleResources(data) {
-    this.state.update({ resources: data.resources });
-    this.ui.updateResources(this.state.resources);
-  }
+  async refresh() {
+    console.log('[MONITOR CONTROLLER] Refreshing monitor data...');
+    
+    if (!this.isConnected || !this.characterId) {
+      console.warn('[MONITOR CONTROLLER] Cannot refresh - not connected');
+      return;
+    }
 
-  handleErrors(data) {
-    this.state.update({ errors: data.errors });
-    this.ui.updateErrors(this.state.errors);
-  }
+    // Show loading state
+    const refreshBtn = document.getElementById('refreshMonitor');
+    if (refreshBtn) {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = 'Refreshing...';
+    }
 
-  handleMemory(data) {
-    console.log('Monitor: handleMemory called with:', data);
-    this.state.update({ memory: data.memoryData });
-    console.log('Monitor: State updated, calling UI updateMemory with:', this.state.memory);
-    this.ui.updateMemory(this.state.memory);
-    console.log('Monitor: UI updateMemory completed');
+    try {
+      // Use state manager to refresh
+      await stateManager.refreshState();
+      
+      // Also fetch specific data that might not be in state
+      await this.fetchAllData();
+      
+      console.log('[MONITOR CONTROLLER] Refresh completed');
+    } catch (error) {
+      console.error('[MONITOR CONTROLLER] Refresh error:', error);
+    } finally {
+      // Reset button
+      if (refreshBtn) {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = 'Refresh';
+      }
+    }
   }
 
   showDisconnectedState() {
     console.log('[MONITOR CONTROLLER] Showing disconnected state');
+    this.isConnected = false;
+    this.characterId = null;
     
-    // Clear character selection
-    const select = document.getElementById('characterSelect');
-    if (select) {
-      select.value = '';
-    }
-    
-    // Show disconnected message in all panels
     this.ui.updateProcesses([]);
-    this.ui.updateResources(null);
     this.ui.updateMemory(null);
+    this.ui.updateResources({});
     this.ui.updateErrors([]);
+    this.ui.setConnectionStatus(false);
     
-    // Update connection status
-    const connectionStatus = document.getElementById('connectionStatus');
-    if (connectionStatus) {
-      connectionStatus.textContent = 'No Consciousness Connected';
-      connectionStatus.className = 'connection-status disconnected';
-    }
-    
-    // Disable controls
-    const refreshBtn = document.getElementById('refreshMonitor');
-    const toggleBtn = document.getElementById('toggleMonitoring');
-    if (refreshBtn) refreshBtn.disabled = true;
-    if (toggleBtn) toggleBtn.disabled = true;
-    
-    this.currentCharacter = null;
     console.log('[MONITOR CONTROLLER] Monitor reset to disconnected state');
   }
 
-  connectToCharacter(characterData) {
-    console.log('[MONITOR CONTROLLER] Connecting to character:', characterData.name);
-    this.displayCharacterData(characterData);
+  startPolling(interval = 5000) {
+    if (this.pollingInterval) return;
     
-    // Enable controls
-    const refreshBtn = document.getElementById('refreshMonitor');
-    const toggleBtn = document.getElementById('toggleMonitoring');
-    if (refreshBtn) refreshBtn.disabled = false;
-    if (toggleBtn) toggleBtn.disabled = false;
-    
-    // Update connection status
-    const connectionStatus = document.getElementById('connectionStatus');
-    if (connectionStatus) {
-      connectionStatus.textContent = `Connected to ${characterData.name}`;
-      connectionStatus.className = 'connection-status connected';
+    console.log(`[MONITOR CONTROLLER] Starting polling every ${interval}ms`);
+    this.pollingInterval = setInterval(() => {
+      if (this.isConnected) {
+        this.fetchAllData();
+      }
+    }, interval);
+  }
+
+  stopPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+      console.log('[MONITOR CONTROLLER] Polling stopped');
     }
   }
+
+  destroy() {
+    this.stopPolling();
+    // Note: We don't unsubscribe from state manager as it's a singleton
+    console.log('[MONITOR CONTROLLER] Monitor controller destroyed');
+  }
 }
+
+// Export for use in monitor.js
+export default MonitorController;

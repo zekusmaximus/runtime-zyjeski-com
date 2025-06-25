@@ -82,42 +82,46 @@ class ConsciousnessManager {
   }
 
   // FIXED: Main entry point that prevents double initialization
-  loadCharacter(character) {
-    if (!character) {
-      console.error('Cannot load character: character is null or undefined');
-      return;
-    }
+ loadCharacter(character) {
+  console.log('ConsciousnessManager.loadCharacter called with:', character?.name || 'no character');
 
-    // Prevent concurrent initialization
-    if (this.isInitializing) {
-      console.log('Character initialization already in progress, skipping duplicate');
-      return;
-    }
-
-    // If same character is already loaded, don't reload
-    if (this.currentCharacter && this.currentCharacter.id === character.id) {
-      console.log(`Character ${character.id} already loaded and initialized`);
-      return;
-    }
-
-    try {
-      this.isInitializing = true;
-      
-      // Set current character
-      this.currentCharacter = character;
-      
-      // Load character state in state manager
-      if (window.stateManager) {
-        window.stateManager.loadCharacterState(character);
-      }
-      
-      // Initialize consciousness once
-      this.initializeCharacterConsciousness(character);
-      
-    } finally {
-      this.isInitializing = false;
-    }
+  // Validate character data
+  if (!character || typeof character !== 'object') {
+    console.error('Cannot load character: character is null or undefined');
+    return;
   }
+
+  // Prevent concurrent initialization
+  if (this.isInitializing) {
+    console.log('Character initialization already in progress, skipping duplicate');
+    return;
+  }
+
+  // If same character is already loaded, don't reload
+  if (this.currentCharacter && this.currentCharacter.id === character.id) {
+    console.log(`Character ${character.id} already loaded and initialized`);
+    return;
+  }
+
+  try {
+    this.isInitializing = true;
+    
+    // Set current character
+    this.currentCharacter = character;
+    
+    // Load character state in state manager
+    if (window.stateManager) {
+      // FIX: Change from loadCharacterState to loadCharacter
+      window.stateManager.loadCharacter(character.id);
+    }
+    
+    // Initialize consciousness once
+    this.initializeCharacterConsciousness(character);
+    
+  } finally {
+    this.isInitializing = false;
+  }
+}
 
   initializeCharacterConsciousness(character) {
     if (!character) {

@@ -1,163 +1,103 @@
-import logger from './logger.js';
+// public/js/app.js
+import logger from '/js/logger.js';
+import '/js/init-fix.js';
+// import '/js/modules/init-state-manager.js'; // Remove this - we'll integrate it directly
+import stateManager from '/js/modules/state-manager.js';
 
-// Fixed Main Application Controller - Prevent duplicate character loading
-class App {
+// Make state manager available globally for debugging
+window.stateManager = stateManager;
+
+class RuntimeApp {
   constructor() {
-    this.currentSection = 'home';
-    this.isConnected = false;
     this.currentCharacter = null;
-    this.isLoadingCharacter = false; // ADDED: Prevent concurrent loads
-    this.isInitializingSocketClient = false; // ADDED: Prevent concurrent socket client inits
+    this.isLoadingCharacter = false;
+    this.initializeApp();
+  }
+
+  async initializeApp() {
+    logger.info('Initializing Runtime.zyjeski.com');
     
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => this.onDOMReady());
+    } else {
+      this.onDOMReady();
+    }
+  }
+
+  onDOMReady() {
     this.init();
   }
 
   init() {
     this.setupNavigation();
-    this.setupSocketConnection();
     this.setupEventListeners();
     this.loadCharacters();
-    this.hideLoading();
+    logger.info('App initialization complete');
   }
 
+  /**
+   * Configure UI navigation links.
+   * - If no .nav-link elements exist, exit gracefully so the rest of the app
+   *   continues to initialise.
+   * - When links are present, toggle their "active" state and show the
+   *   corresponding section whose id matches the data-section attribute.
+   */
   setupNavigation() {
     const navLinks = document.querySelectorAll('.nav-link');
-    const sections = document.querySelectorAll('.section');
+    if (!navLinks.length) {
+      logger.debug('No navigation links found – skipping navigation setup');
+      return;
+    }
 
-    navLinks.forEach(link => {
+    navLinks.forEach((link) => {
       link.addEventListener('click', (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Prevent default anchor behavior
+        
+        // Toggle active styling
+        navLinks.forEach((l) => l.classList.remove('active'));
+        link.classList.add('active');
+
+        // Get target section from data-section attribute
         const targetSection = link.dataset.section;
-        this.navigateToSection(targetSection);
-      });
-    });
-  }
+        if (!targetSection) return;
 
-  navigateToSection(sectionId) {
-    // Update navigation
-    document.querySelectorAll('.nav-link').forEach(link => {
-      link.classList.remove('active');
-    });
-    
-    const targetLink = document.querySelector(`[data-section="${sectionId}"]`);
-    if (targetLink) {
-      targetLink.classList.add('active');
-    }
+        // Hide all sections, then reveal the target
+        document
+          .querySelectorAll('.section')
+          .forEach((sec) => { sec.classList.remove('active'); });
 
-    // Update sections
-    document.querySelectorAll('.section').forEach(section => {
-      section.classList.remove('active');
-    });
-    
-    const targetSection = document.getElementById(sectionId);
-    if (targetSection) {
-      targetSection.classList.add('active');
-    }
-
-    this.currentSection = sectionId;
-
-    // Initialize section-specific functionality
-    this.initializeSection(sectionId);
-  }
-
-  initializeSection(sectionId) {
-    switch (sectionId) {
-      case 'terminal':
-        if (window.terminal) {
-          window.terminal.focus();
+        const targetSectionElement = document.getElementById(targetSection);
+        if (targetSectionElement) {
+          targetSectionElement.classList.add('active');
         }
-        break;
-      case 'monitor':
-        // Monitoring should only start via explicit user action
-        break;
-      case 'debugger':
-        if (window.debugger) {
-          window.debugger.initialize();
-        }
-        break;
-    }
-  }
-
-  setupSocketConnection() {
-    if (window.socketClient) {
-      // Subscribe to connection events
-      window.socketClient.on('connected', (data) => {
-        console.log('[APP] Socket connected event received');
-        this.updateConnectionStatus(true);
       });
-
-      window.socketClient.on('disconnected', (data) => {
-        console.log('[APP] Socket disconnected event received');
-        this.updateConnectionStatus(false);
-      });
-    }
+    });
   }
 
   setupEventListeners() {
-    // Start debugging button
-    const startDebuggingBtn = document.getElementById('startDebugging');
-    if (startDebuggingBtn) {
-      startDebuggingBtn.addEventListener('click', () => {
-        this.startDebugging();
+    // Character selection
+    const characterGrid = document.getElementById('characterGrid');
+    if (characterGrid) {
+      characterGrid.addEventListener('click', async (e) => {
+        const characterCard = e.target.closest('.character-card');
+        if (!characterCard) return;
+        
+        const characterId = characterCard.dataset.characterId;
+        
+        if (this.isLoadingCharacter) {
+          logger.debug('Character loading in progress, ignoring duplicate request');
+          return;
+        }
+        
+        // Ensure consciousness manager is initialized on first user action
+        if (!window.consciousness) {
+          window.initConsciousnessManager();
+        }
+        
+        this.selectCharacter(characterId);
       });
     }
-
-
-    // FIXED: Character selection with duplicate prevention
-    document.addEventListener('click', (e) => {
-      if (e.target.closest('.character-card')) {
-        // Prevent concurrent socket client initialization
-        if (!window.socketClient) {
-          if (this.isInitializingSocketClient) {
-            logger.debug('Socket client initialization in progress, ignoring click');
-            return;
-          }
-          this.isInitializingSocketClient = true;
-          import('./socket-client.js').then(module => {
-            window.socketClient = new module.default();
-            this.setupSocketConnection();
-            // Monitor is already initialized by monitor.js, no need to create a new one
-            // Just ensure it has the socket client available
-            if (window.monitor && window.monitor.socket === null) {
-              // Re-initialize the socket connection for the existing monitor
-              window.monitor.init();
-            }
-            
-            // Now continue with character selection
-            const characterCard = e.target.closest('.character-card');
-            const characterId = characterCard.dataset.characterId;
-            // Prevent double-clicks and concurrent loads
-            if (this.isLoadingCharacter) {
-              logger.debug('Character loading in progress, ignoring duplicate request');
-              this.isInitializingSocketClient = false;
-              return;
-            }
-            // Ensure consciousness manager is initialized on first user action
-            if (!window.consciousness) {
-              window.initConsciousnessManager();
-            }
-            this.selectCharacter(characterId);
-            this.isInitializingSocketClient = false;
-          }).catch(err => {
-            logger.error('Failed to load socket-client module', err);
-            this.isInitializingSocketClient = false;
-          });
-        } else {
-          const characterCard = e.target.closest('.character-card');
-          const characterId = characterCard.dataset.characterId;
-          // Prevent double-clicks and concurrent loads
-          if (this.isLoadingCharacter) {
-            logger.debug('Character loading in progress, ignoring duplicate request');
-            return;
-          }
-          // Ensure consciousness manager is initialized on first user action
-          if (!window.consciousness) {
-            window.initConsciousnessManager();
-          }
-          this.selectCharacter(characterId);
-        }
-      }
-    });
   }
 
   async loadCharacters() {
@@ -184,9 +124,9 @@ class App {
     `).join('');
   }
 
-  // FIXED: Prevent duplicate character loading
   async selectCharacter(characterId) {
     console.log(`[APP] selectCharacter called for id: ${characterId}`);
+    
     // Prevent concurrent character loads
     if (this.isLoadingCharacter) {
       logger.debug('Character loading already in progress', { characterId });
@@ -203,43 +143,37 @@ class App {
     try {
       this.isLoadingCharacter = true;
       this.showLoading('Loading character consciousness...');
-      console.log(`[APP] Fetching character profile for id: ${characterId}`);
-      const response = await fetch(`/api/character/${characterId}`);
-      if (!response.ok) {
-        throw new Error(`Failed to load character: ${response.statusText}`);
-      }
-      const character = await response.json();
-      console.log('[APP] Character profile loaded:', character);
-
-      // Fetch initial consciousness state so required process data is available
-      console.log(`[APP] Fetching consciousness state for id: ${characterId}`);
-      const stateRes = await fetch(`/api/consciousness/${characterId}/state`);
-      if (stateRes.ok) {
-        const state = await stateRes.json();
-        character.consciousness = state.consciousness;
-        console.log('[APP] Consciousness state loaded:', state);
-      }
-
-      this.currentCharacter = character;
-      this.updateCharacterSelection(characterId);
-
-      // Initialize the consciousness with complete data
-      if (window.consciousness) {
-        console.log('[APP] Loading character into consciousness manager');
-        window.consciousness.loadCharacter(character);
-      }
       
-      // Connect monitor to the loaded character data
-      if (window.monitor) {
-        window.monitor.connectToCharacter(character);
+      // Use state manager to load character
+      await stateManager.loadCharacter(characterId);
+      
+      // Get the loaded character from state manager
+      const state = stateManager.getState();
+      if (state) {
+        this.currentCharacter = {
+          id: state.id,
+          name: state.name,
+          consciousness: state.consciousness
+        };
+        
+        this.updateCharacterSelection(characterId);
+        
+        // Initialize the consciousness with complete data
+        if (window.consciousness) {
+          console.log('[APP] Loading character into consciousness manager');
+          window.consciousness.loadCharacter(this.currentCharacter);
+        }
+        
+        // Connect monitor to the loaded character data
+        if (window.monitor) {
+          window.monitor.connectToCharacter(this.currentCharacter);
+        }
+        
+        this.hideLoading();
+        this.showSuccess(`${state.name} consciousness loaded`);
       }
-      
-      this.hideLoading();
-      this.showSuccess(`Loaded ${character.name}'s consciousness profile`);
-      
     } catch (error) {
-      logger.error('Failed to load character', { error, characterId });
-      this.hideLoading();
+      logger.error('Failed to select character', { characterId, error });
       this.showError('Failed to load character consciousness');
     } finally {
       this.isLoadingCharacter = false;
@@ -247,69 +181,58 @@ class App {
   }
 
   updateCharacterSelection(characterId) {
+    // Update UI to show selected character
     document.querySelectorAll('.character-card').forEach(card => {
-      card.classList.remove('selected');
+      card.classList.toggle('selected', card.dataset.characterId === characterId);
     });
-    const selectedCard = document.querySelector(`[data-character-id="${characterId}"]`);
-    if (selectedCard) {
-      selectedCard.classList.add('selected');
+    
+    // Update any character selector dropdowns
+    const selector = document.getElementById('characterSelector');
+    if (selector) {
+      selector.value = characterId;
     }
   }
 
-  showLoading(message) {
-    const loader = document.getElementById('loader');
-    if (loader) {
-      loader.classList.add('active');
-      loader.querySelector('.loader-message').textContent = message || 'Loading...';
+  showLoading(message = 'Loading...') {
+    const status = document.getElementById('appStatus');
+    if (status) {
+      status.className = 'app-status loading';
+      status.textContent = message;
+      status.style.display = 'block';
     }
   }
 
   hideLoading() {
-    const loader = document.getElementById('loader');
-    if (loader) {
-      loader.classList.remove('active');
+    const status = document.getElementById('appStatus');
+    if (status) {
+      status.style.display = 'none';
     }
   }
 
   showError(message) {
-    const errorBox = document.getElementById('errorBox');
-    if (errorBox) {
-      errorBox.textContent = message;
-      errorBox.classList.add('active');
+    const status = document.getElementById('appStatus');
+    if (status) {
+      status.className = 'app-status error';
+      status.textContent = message;
+      status.style.display = 'block';
+      setTimeout(() => this.hideLoading(), 5000);
     }
   }
 
   showSuccess(message) {
-    const successBox = document.getElementById('successBox');
-    if (successBox) {
-      successBox.textContent = message;
-      successBox.classList.add('active');
-      setTimeout(() => {
-        successBox.classList.remove('active');
-      }, 3000);
-    }
-  }
-
-  startDebugging() {
-    if (this.currentCharacter) {
-      // Directly start debugging the current character's process
-      window.debugger.startDebugging(this.currentCharacter.id);
-    } else {
-      this.showError('No character selected for debugging');
-    }
-  }
-
-  updateConnectionStatus(isConnected) {
-    this.isConnected = isConnected;
-    const statusIndicator = document.getElementById('connectionStatus');
-    if (statusIndicator) {
-      statusIndicator.textContent = isConnected ? 'Connected' : 'Disconnected';
-      statusIndicator.classList.toggle('connected', isConnected);
-      statusIndicator.classList.toggle('disconnected', !isConnected);
+    const status = document.getElementById('appStatus');
+    if (status) {
+      status.className = 'app-status success';
+      status.textContent = message;
+      status.style.display = 'block';
+      setTimeout(() => this.hideLoading(), 3000);
     }
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  window.app = new App();
-});
+// Initialize app
+const app = new RuntimeApp();
+window.app = app;
+
+// Export for debugging
+export default app;
