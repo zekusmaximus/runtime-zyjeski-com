@@ -314,6 +314,11 @@ class StateManager {
     
     return issues;
   }
+
+  // Generic set method for compatibility with consciousness.js
+  set(key, value) {
+    this.updateState(key, value);
+  }
 }
 
 // Create global state manager instance

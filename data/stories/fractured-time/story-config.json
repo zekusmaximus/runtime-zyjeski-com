@@ -1032,101 +1032,11 @@
       }
     }
   },
-  "themes": {
-    "emotional": [
-      "grief and loss",
-      "obsession vs acceptance",
-      "love and neglect",
-      "hope in impossible circumstances",
-      "the weight of memory"
-    ],
-    "philosophical": [
-      "Can consciousness survive trauma?",
-      "Is reality subjective to the observer?",
-      "What defines identity across timelines?",
-      "The paradox of changing the past",
-      "Debugging the human condition"
-    ],
-    "technical": [
-      "Memory leaks as inability to let go",
-      "Infinite loops as obsessive behavior",
-      "Thread starvation as neglected relationships",
-      "System crashes as mental breakdowns",
-      "Debugging as therapeutic intervention"
-    ]
+  "globalNarrativeConfig": {
+    "maxTimelineDepth": 5,
+    "allowParadox": false,
+    "defaultEmotion": "grief"
   },
-  "visualTheme": {
-    "colorScheme": "dark",
-    "cssFile": "story-themes/fractured-time.css",
-    "primaryColor": "#00D4FF",
-    "accentColor": "#FF006E",
-    "font": {
-      "terminal": "JetBrains Mono",
-      "narrative": "Inter",
-      "ui": "System UI"
-    }
-  },
-  "achievements": [
-    {
-      "id": "first_stabilization",
-      "name": "Steady State",
-      "description": "Achieve system stability above 80%",
-      "condition": {
-        "type": "stability",
-        "operator": ">",
-        "value": 0.8
-      },
-      "hidden": false,
-      "points": 10
-    },
-    {
-      "id": "memory_master",
-      "name": "Memory Master",
-      "description": "Successfully defragment memory with zero data loss",
-      "condition": {
-        "type": "defrag_perfect",
-        "value": true
-      },
-      "hidden": false,
-      "points": 20
-    },
-    {
-      "id": "emily_saved",
-      "name": "Love Persists",
-      "description": "Maintain strong connection with Emily through the crisis",
-      "condition": {
-        "type": "emily_connection.strength",
-        "operator": ">",
-        "value": 0.8
-      },
-      "hidden": false,
-      "points": 30
-    },
-    {
-      "id": "all_timelines",
-      "name": "Quantum Explorer",
-      "description": "Discover fragments from all possible timelines",
-      "condition": {
-        "type": "timelines_explored",
-        "operator": "==",
-        "value": "all"
-      },
-      "hidden": true,
-      "points": 50
-    },
-    {
-      "id": "zero_errors",
-      "name": "Perfect Debugger",
-      "description": "Complete the story with zero unhandled errors",
-      "condition": {
-        "type": "unhandled_errors",
-        "operator": "==",
-        "value": 0
-      },
-      "hidden": true,
-      "points": 100
-    }
-  ],
   "metadata": {
     "author": "Team Runtime",
     "version": "1.0.0",

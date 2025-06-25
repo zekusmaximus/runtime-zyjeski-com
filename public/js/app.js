@@ -7,6 +7,7 @@ class App {
     this.isConnected = false;
     this.currentCharacter = null;
     this.isLoadingCharacter = false; // ADDED: Prevent concurrent loads
+    this.isInitializingSocketClient = false; // ADDED: Prevent concurrent socket client inits
     
     this.init();
   }
@@ -83,10 +84,12 @@ class App {
     if (window.socketClient) {
       // Subscribe to connection events
       window.socketClient.on('connected', (data) => {
+        console.log('[APP] Socket connected event received');
         this.updateConnectionStatus(true);
       });
 
       window.socketClient.on('disconnected', (data) => {
+        console.log('[APP] Socket disconnected event received');
         this.updateConnectionStatus(false);
       });
     }
@@ -105,16 +108,56 @@ class App {
     // FIXED: Character selection with duplicate prevention
     document.addEventListener('click', (e) => {
       if (e.target.closest('.character-card')) {
-        const characterCard = e.target.closest('.character-card');
-        const characterId = characterCard.dataset.characterId;
-        
-        // Prevent double-clicks and concurrent loads
-        if (this.isLoadingCharacter) {
-          logger.debug('Character loading in progress, ignoring duplicate request');
-          return;
+        // Prevent concurrent socket client initialization
+        if (!window.socketClient) {
+          if (this.isInitializingSocketClient) {
+            logger.debug('Socket client initialization in progress, ignoring click');
+            return;
+          }
+          this.isInitializingSocketClient = true;
+          import('./socket-client.js').then(module => {
+            window.socketClient = new module.default();
+            this.setupSocketConnection();
+            // Initialize monitor after socket client is available
+            import('./monitor.js').then(monitorModule => {
+              window.monitor = new monitorModule.default();
+              // Now continue with character selection
+              const characterCard = e.target.closest('.character-card');
+              const characterId = characterCard.dataset.characterId;
+              // Prevent double-clicks and concurrent loads
+              if (this.isLoadingCharacter) {
+                logger.debug('Character loading in progress, ignoring duplicate request');
+                this.isInitializingSocketClient = false;
+                return;
+              }
+              // Ensure consciousness manager is initialized on first user action
+              if (!window.consciousness) {
+                window.initConsciousnessManager();
+              }
+              this.selectCharacter(characterId);
+              this.isInitializingSocketClient = false;
+            }).catch(err => {
+              logger.error('Failed to load monitor module', err);
+              this.isInitializingSocketClient = false;
+            });
+          }).catch(err => {
+            logger.error('Failed to load socket-client module', err);
+            this.isInitializingSocketClient = false;
+          });
+        } else {
+          const characterCard = e.target.closest('.character-card');
+          const characterId = characterCard.dataset.characterId;
+          // Prevent double-clicks and concurrent loads
+          if (this.isLoadingCharacter) {
+            logger.debug('Character loading in progress, ignoring duplicate request');
+            return;
+          }
+          // Ensure consciousness manager is initialized on first user action
+          if (!window.consciousness) {
+            window.initConsciousnessManager();
+          }
+          this.selectCharacter(characterId);
         }
-        
-        this.selectCharacter(characterId);
       }
     });
   }
@@ -145,6 +188,7 @@ class App {
 
   // FIXED: Prevent duplicate character loading
   async selectCharacter(characterId) {
+    console.log(`[APP] selectCharacter called for id: ${characterId}`);
     // Prevent concurrent character loads
     if (this.isLoadingCharacter) {
       logger.debug('Character loading already in progress', { characterId });
@@ -161,19 +205,21 @@ class App {
     try {
       this.isLoadingCharacter = true;
       this.showLoading('Loading character consciousness...');
-      
+      console.log(`[APP] Fetching character profile for id: ${characterId}`);
       const response = await fetch(`/api/character/${characterId}`);
       if (!response.ok) {
         throw new Error(`Failed to load character: ${response.statusText}`);
       }
-      
       const character = await response.json();
+      console.log('[APP] Character profile loaded:', character);
 
       // Fetch initial consciousness state so required process data is available
+      console.log(`[APP] Fetching consciousness state for id: ${characterId}`);
       const stateRes = await fetch(`/api/consciousness/${characterId}/state`);
       if (stateRes.ok) {
         const state = await stateRes.json();
         character.consciousness = state.consciousness;
+        console.log('[APP] Consciousness state loaded:', state);
       }
 
       this.currentCharacter = character;
@@ -181,7 +227,10 @@ class App {
 
       // Initialize the consciousness with complete data
       if (window.consciousness) {
+        console.log('[APP] Loading character into consciousness manager');
         window.consciousness.loadCharacter(character);
+        // Start monitoring only after character is loaded, as a user-driven action
+        window.consciousness.userStartMonitoring();
       }
       
       this.hideLoading();
@@ -200,223 +249,66 @@ class App {
     document.querySelectorAll('.character-card').forEach(card => {
       card.classList.remove('selected');
     });
-    
     const selectedCard = document.querySelector(`[data-character-id="${characterId}"]`);
     if (selectedCard) {
       selectedCard.classList.add('selected');
     }
   }
 
-  startDebugging() {
-    if (!this.currentCharacter) {
-      this.showError('Please select a character first');
-      return;
+  showLoading(message) {
+    const loader = document.getElementById('loader');
+    if (loader) {
+      loader.classList.add('active');
+      loader.querySelector('.loader-message').textContent = message || 'Loading...';
     }
-
-    this.navigateToSection('terminal');
-    
-    // Start debugging session
-    if (window.terminal) {
-      window.terminal.startDebuggingSession(this.currentCharacter.id);
-    }
-  }
-
-  updateConnectionStatus(connected) {
-    this.isConnected = connected;
-    const statusElement = document.getElementById('connectionStatus');
-    if (!statusElement) return;
-    
-    const statusDot = statusElement.querySelector('.status-dot');
-    const statusText = statusElement.querySelector('.status-text');
-    
-    if (statusDot && statusText) {
-      if (connected) {
-        statusDot.classList.add('connected');
-        statusText.textContent = 'Connected';
-      } else {
-        statusDot.classList.remove('connected');
-        statusText.textContent = 'Disconnected';
-      }
-    }
-  }
-
-  showLoading(message = 'Loading...') {
-    const overlay = document.getElementById('loadingOverlay');
-    if (!overlay) return;
-    
-    const text = overlay.querySelector('.loading-text');
-    if (text) {
-      text.textContent = message;
-    }
-    overlay.classList.add('active');
   }
 
   hideLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-      overlay.classList.remove('active');
+    const loader = document.getElementById('loader');
+    if (loader) {
+      loader.classList.remove('active');
     }
   }
 
   showError(message) {
-    this.showNotification(message, 'error');
+    const errorBox = document.getElementById('errorBox');
+    if (errorBox) {
+      errorBox.textContent = message;
+      errorBox.classList.add('active');
+    }
   }
 
   showSuccess(message) {
-    this.showNotification(message, 'success');
-  }
-
-  showNotification(message, type = 'info') {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-      <div class="notification-content">
-        <span class="notification-message">${message}</span>
-        <button class="notification-close">&times;</button>
-      </div>
-    `;
-
-    // Add to DOM
-    document.body.appendChild(notification);
-
-    // Add animation styles if not already present
-    if (!document.querySelector('#notification-styles')) {
-      const styles = document.createElement('style');
-      styles.id = 'notification-styles';
-      styles.textContent = `
-        .notification {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          min-width: 300px;
-          max-width: 500px;
-          padding: 16px;
-          border-radius: 8px;
-          color: white;
-          z-index: 10000;
-          animation: slideIn 0.3s ease-out;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-        
-        .notification-info { background-color: #3498db; }
-        .notification-success { background-color: #27ae60; }
-        .notification-error { background-color: #e74c3c; }
-        .notification-warning { background-color: #f39c12; }
-        
-        .notification-content {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        
-        .notification-close {
-          background: none;
-          border: none;
-          color: white;
-          font-size: 18px;
-          cursor: pointer;
-          padding: 0;
-          margin-left: 12px;
-        }
-        
-        @keyframes slideIn {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-      `;
-      document.head.appendChild(styles);
-    }
-
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.remove();
-      }
-    }, 5000);
-
-    // Close button functionality
-    const closeBtn = notification.querySelector('.notification-close');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        notification.remove();
-      });
+    const successBox = document.getElementById('successBox');
+    if (successBox) {
+      successBox.textContent = message;
+      successBox.classList.add('active');
+      setTimeout(() => {
+        successBox.classList.remove('active');
+      }, 3000);
     }
   }
 
-  // API helper methods
-  async apiCall(endpoint, options = {}) {
-    try {
-      const response = await fetch(endpoint, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers
-        },
-        ...options
-      });
-
-      if (!response.ok) {
-        throw new Error(`API call failed: ${response.statusText}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      logger.error('API call error', { error });
-      throw error;
+  startDebugging() {
+    if (this.currentCharacter) {
+      // Directly start debugging the current character's process
+      window.debugger.startDebugging(this.currentCharacter.id);
+    } else {
+      this.showError('No character selected for debugging');
     }
   }
 
-  // Utility methods
-  formatBytes(bytes) {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  }
-
-  formatCpuUsage(usage) {
-    return `${usage.toFixed(1)}%`;
-  }
-
-  formatTimestamp(timestamp) {
-    return new Date(timestamp).toLocaleTimeString();
-  }
-
-  // Debug helper
-  getCurrentState() {
-    return {
-      currentSection: this.currentSection,
-      isConnected: this.isConnected,
-      currentCharacter: this.currentCharacter,
-      isLoadingCharacter: this.isLoadingCharacter
-    };
+  updateConnectionStatus(isConnected) {
+    this.isConnected = isConnected;
+    const statusIndicator = document.getElementById('connectionStatus');
+    if (statusIndicator) {
+      statusIndicator.textContent = isConnected ? 'Connected' : 'Disconnected';
+      statusIndicator.classList.toggle('connected', isConnected);
+      statusIndicator.classList.toggle('disconnected', !isConnected);
+    }
   }
 }
 
-// Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new App();
-});
-
-// Global error handler
-window.addEventListener('error', (event) => {
-  logger.error('Global error', { error: event.error });
-  if (window.app) {
-    window.app.showError('An unexpected error occurred');
-  }
-});
-
-// Handle unhandled promise rejections
-window.addEventListener('unhandledrejection', (event) => {
-  logger.error('Unhandled promise rejection', { error: event.reason });
-  if (window.app) {
-    window.app.showError('An unexpected error occurred');
-  }
 });

@@ -1178,88 +1178,6 @@ generateResourcesFromProcesses(processes) {
 
 }
 
-// Initialize monitor when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 DOM ready, initializing monitor...');
-  
-  // Wait a bit for other scripts to load
-  setTimeout(() => {
-    // Clear any existing monitor instance first
-    if (window.monitor) {
-      console.log('🗑️ Clearing existing monitor instance');
-      delete window.monitor;
-    }
-    
-    try {
-      window.monitor = new Monitor();
-      console.log('✅ Monitor initialized successfully');
-      
-
-      
-
-      // Auto-start monitoring if character is already selected
-      if (window.stateManager && window.stateManager.getCurrentCharacter()) {
-        console.log('🎯 Auto-starting monitoring for existing character');
-        window.monitor.startMonitoring();
-      }
-      
-    } catch (error) {
-      console.error('❌ Failed to initialize monitor:', error);
-      
-      // Fallback: create basic monitor functionality
-      window.monitor = {
-        isActive: false,
-        refreshData: function() {
-          console.log('📡 Fallback refresh data');
-          if (window.socketClient && window.socketClient.isConnected) {
-            window.socketClient.requestSystemResources();
-            window.socketClient.requestErrorLogs();
-            window.socketClient.requestMemoryAllocation();
-          }
-        },
-        togglePause: function() {
-          this.isActive = !this.isActive;
-          console.log('⏯️ Fallback toggle pause:', this.isActive ? 'resumed' : 'paused');
-        },
-        startMonitoring: function() {
-          this.isActive = true;
-          console.log('▶️ Fallback start monitoring');
-          this.refreshData();
-        }
-      };
-      
-      // Manually attach button listeners as fallback
-      const refreshBtn = document.getElementById('refreshMonitor');
-      const pauseBtn = document.getElementById('pauseMonitor');
-      
-      if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => window.monitor.refreshData());
-        console.log('✅ Fallback refresh button attached');
-      }
-      
-      if (pauseBtn) {
-        pauseBtn.addEventListener('click', () => window.monitor.togglePause());
-        console.log('✅ Fallback pause button attached');
-      }
-    }
-  }, 500);
-});
-
-// Also initialize if DOM is already loaded
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  setTimeout(() => {
-    if (!window.monitor) {
-      console.log('🚀 Late initialization of monitor...');
-      
-      try {
-        window.monitor = new Monitor();
-      } catch (error) {
-        console.error('❌ Late initialization failed:', error);
-      }
-    }
-  }, 100);
-}
-
 // Manual button fix function for console use
 window.fixMonitorButtons = function() {
   console.log('🔧 Manual button fix...');
@@ -1296,3 +1214,5 @@ window.fixMonitorButtons = function() {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = Monitor;
 }
+
+export default Monitor;

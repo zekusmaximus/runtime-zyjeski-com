@@ -5,7 +5,14 @@ class ConsciousnessManager {
     this.isMonitoring = false;
     this.updateInterval = null;
     this.isInitializing = false; // ADDED: Prevent concurrent initialization
-    
+    // Store the handler reference for proper removal
+    this._consciousnessUpdateHandler = (data) => {
+      try {
+        this.handleConsciousnessUpdate(data);
+      } catch (error) {
+        console.error('Error in consciousness update handler:', error);
+      }
+    };
     this.init();
   }
 
@@ -17,13 +24,7 @@ class ConsciousnessManager {
   setupEventListeners() {
     // Subscribe to socket events with error handling
     if (window.socketClient) {
-      window.socketClient.on('consciousness-update', (data) => {
-        try {
-          this.handleConsciousnessUpdate(data);
-        } catch (error) {
-          console.error('Error in consciousness update handler:', error);
-        }
-      });
+      window.socketClient.on('consciousness-update', this._consciousnessUpdateHandler);
     }
   }
 
@@ -31,19 +32,52 @@ class ConsciousnessManager {
     // Subscribe to state manager changes
     if (window.stateManager) {
       window.stateManager.subscribe('currentCharacter', (character) => {
-        // FIXED: Only set current character, don't initialize here
-        // App.js will handle the initialization through loadCharacter()
+        // Only set current character, don't initialize or start monitoring here
         this.currentCharacter = character;
       });
 
+      // Remove auto-start logic from monitoringActive subscription
       window.stateManager.subscribe('monitoringActive', (active) => {
         this.isMonitoring = active;
-        if (active) {
-          this.startRealTimeUpdates();
-        } else {
-          this.stopRealTimeUpdates();
-        }
+        // Do NOT auto-start or stop real-time updates here
+        // Monitoring should only be started/stopped by explicit user action
       });
+    }
+  }
+
+  // User-initiated monitoring start
+  userStartMonitoring() {
+    if (!this.currentCharacter) {
+      console.warn('No character selected for monitoring');
+      return;
+    }
+    if (this.isMonitoring) {
+      console.log('Monitoring already active');
+      return;
+    }
+    this.isMonitoring = true;
+    if (window.stateManager) {
+      window.stateManager.set('monitoringActive', true);
+    }
+    this.startRealTimeUpdates();
+    if (window.socketClient && window.socketClient.isSocketConnected()) {
+      window.socketClient.startMonitoring(this.currentCharacter.id);
+    }
+  }
+
+  // User-initiated monitoring stop
+  userStopMonitoring() {
+    if (!this.isMonitoring) {
+      console.log('Monitoring already inactive');
+      return;
+    }
+    this.isMonitoring = false;
+    if (window.stateManager) {
+      window.stateManager.set('monitoringActive', false);
+    }
+    this.stopRealTimeUpdates();
+    if (window.socketClient && window.socketClient.isSocketConnected()) {
+      window.socketClient.stopMonitoring(this.currentCharacter.id);
     }
   }
 
@@ -93,17 +127,13 @@ class ConsciousnessManager {
 
     console.log('Initializing consciousness for:', character.name);
 
-    // Update preview visualization with safe data
-    const consciousness = character.consciousness || {};
-    this.updateConsciousnessPreview(consciousness);
-
-    // Always fetch the latest state from the server so process data is available
+    // Only fetch the latest state from the server so process data is available
     this.requestConsciousnessUpdate();
 
-    // Start monitoring if socket is connected
-    if (window.socketClient && window.socketClient.isSocketConnected()) {
-      window.socketClient.startMonitoring(character.id);
-    }
+    // Do NOT auto-start monitoring here. Monitoring must be started by explicit user action only.
+    // if (window.socketClient && window.socketClient.isSocketConnected()) {
+    //   window.socketClient.startMonitoring(character.id);
+    // }
   }
 
   // Updated preview renderer with robust validation
@@ -516,16 +546,30 @@ class ConsciousnessManager {
   // Cleanup
   destroy() {
     this.stopRealTimeUpdates();
-    
     if (window.socketClient) {
-      window.socketClient.off('consciousness-update', this.handleConsciousnessUpdate);
+      window.socketClient.off('consciousness-update', this._consciousnessUpdateHandler);
     }
-
     this.currentCharacter = null;
     this.isMonitoring = false;
     this.isInitializing = false;
   }
 }
 
-// Create global consciousness manager instance
-window.consciousness = new ConsciousnessManager();
+// Export for testing and ESM environments
+export { ConsciousnessManager };
+
+// Remove auto-instantiation on page load
+// if (typeof window !== 'undefined') {
+//   window.consciousness = new ConsciousnessManager();
+// }
+
+// Instead, provide an explicit initializer for user-triggered setup
+if (typeof window !== 'undefined') {
+  window.initConsciousnessManager = function() {
+    if (!window.consciousness) {
+      window.consciousness = new ConsciousnessManager();
+    }
+    return window.consciousness;
+  };
+}
+// NOTE: Monitoring will NOT start automatically. Call window.initConsciousnessManager() from a user event (e.g., character card click), then call window.consciousness.userStartMonitoring() to begin monitoring.

@@ -1,62 +1,54 @@
-// Fix in public/js/socket-client.js - Prevent multiple connections
+// Fixed Socket Client for Runtime.zyjeski.com
+// Prevents infinite user interaction logging loop
 
 class SocketClient {
   constructor() {
-    // Prevent multiple instances
-    if (window.socketClientInstance) {
-      return window.socketClientInstance;
-    }
-    
     this.socket = null;
     this.isConnected = false;
+    this.eventHandlers = new Map();
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
-    this.lastUserInteraction = Date.now();
-    this.eventHandlers = new Map();
+    this.lastUserInteraction = 0;
     
-    this.init();
+    // CRITICAL FIX: Track which events are from user vs system
+    this.systemEvents = new Set([
+      'consciousness-update',
+      'monitoring-started', 
+      'monitoring-stopped',
+      'debug-result',
+      'intervention-applied',
+      'system-resources',
+      'error-logs',
+      'memory-allocation',
+      'connect',
+      'disconnect',
+      'error'
+    ]);
     
-    // Store instance globally
-    window.socketClientInstance = this;
+    this.initialize();
   }
 
-  init() {
-    // Only initialize if not already connected
-    if (this.socket && this.socket.connected) {
-      console.log('Socket already connected, skipping initialization');
-      return;
+  initialize() {
+    try {
+      this.socket = io({
+        transports: ['websocket', 'polling'],
+        reconnection: false, // We'll handle this manually
+        timeout: 5000
+      });
+      
+      this.setupSocketEventListeners();
+      console.log('Socket client initialized');
+    } catch (error) {
+      console.error('Failed to initialize socket client:', error);
     }
-    
-    this.setupSocket();
-    this.setupEventHandlers();
   }
 
-  setupSocket() {
-    // Disconnect existing socket if any
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
-    
-    this.socket = io({
-      transports: ['websocket', 'polling'],
-      upgrade: true,
-      rememberUpgrade: true,
-      timeout: 20000,
-      // Prevent multiple connections
-      forceNew: false,
-      multiplex: true
-    });
-  }
-
-  setupEventHandlers() {
-    if (!this.socket) return;
-
+  setupSocketEventListeners() {
     this.socket.on('connect', () => {
       console.log('Connected to server');
       this.isConnected = true;
       this.reconnectAttempts = 0;
-      this.emit('connected', { socketId: this.socket.id });
+      this.emit('connected');
     });
 
     this.socket.on('disconnect', (reason) => {
@@ -66,7 +58,6 @@ class SocketClient {
       
       // Only auto-reconnect for certain reasons
       if (reason === 'io server disconnect') {
-        // Server initiated disconnect, don't reconnect
         return;
       }
       
@@ -78,7 +69,7 @@ class SocketClient {
       this.handleReconnection();
     });
 
-    // Consciousness monitoring events
+    // Consciousness monitoring events - FIXED: No user interaction logging for system events
     this.socket.on('monitoring-started', (data) => {
       console.log('Monitoring started for character:', data.characterId);
       this.emit('monitoring-started', data);
@@ -151,6 +142,7 @@ class SocketClient {
     }
   }
 
+  // FIXED: Internal emit that doesn't trigger user interaction logging
   emit(event, data) {
     if (this.eventHandlers.has(event)) {
       this.eventHandlers.get(event).forEach(handler => {
@@ -163,33 +155,16 @@ class SocketClient {
     }
   }
 
-  // Validate consciousness data structure
-  validateConsciousnessData(data) {
-    if (!data || typeof data !== 'object') {
-      return { processes: [], memory: {}, resources: {}, system_errors: [], threads: [] };
-    }
-
-    const state = data.state || data;
-    
-    return {
-      characterId: data.characterId || state.characterId,
-      consciousness: {
-        processes: Array.isArray(state.processes) ? state.processes : [],
-        memory: state.memory && typeof state.memory === 'object' ? state.memory : {},
-        threads: Array.isArray(state.threads) ? state.threads : [],
-        system_errors: Array.isArray(state.system_errors) ? state.system_errors : [],
-        resources: state.resources && typeof state.resources === 'object' ? state.resources : {},
-        debug_hooks: Array.isArray(state.debug_hooks) ? state.debug_hooks : [],
-        timestamp: state.timestamp || new Date().toISOString()
-      },
-      timestamp: data.timestamp || new Date().toISOString()
-    };
-  }
-
-  // User interaction tracking
+  // FIXED: User interaction tracking only for actual user actions
   recordUserInteraction(action) {
-    this.lastUserInteraction = Date.now();
-    console.log(`User interaction recorded: ${action}`);
+    // Rate limit user interaction logging
+    const now = Date.now();
+    if (now - this.lastUserInteraction < 100) {
+      return; // Skip if less than 100ms since last logged interaction
+    }
+    
+    this.lastUserInteraction = now;
+    console.log(`User interaction: ${action}`);
   }
 
   // Character monitoring methods
@@ -219,14 +194,18 @@ class SocketClient {
     return true;
   }
 
-  // Send events to server
-  emit(event, data) {
+  // FIXED: Send events to server without logging every system request as user interaction
+  emitToServer(event, data) {
     if (!this.isConnected) {
       console.error('Socket not connected');
       return false;
     }
 
-    this.recordUserInteraction(`emit-${event}`);
+    // Only log as user interaction if it's truly a user-initiated action
+    if (!this.systemEvents.has(event) && !event.startsWith('get-')) {
+      this.recordUserInteraction(`emit-${event}`);
+    }
+    
     this.socket.emit(event, data);
     return true;
   }
@@ -268,6 +247,29 @@ class SocketClient {
     return true;
   }
 
+  // Validate consciousness data structure
+  validateConsciousnessData(data) {
+    if (!data || typeof data !== 'object') {
+      return { processes: [], memory: {}, resources: {}, system_errors: [], threads: [] };
+    }
+
+    const state = data.state || data;
+    
+    return {
+      characterId: data.characterId || state.characterId,
+      consciousness: {
+        processes: Array.isArray(state.processes) ? state.processes : [],
+        memory: state.memory && typeof state.memory === 'object' ? state.memory : {},
+        threads: Array.isArray(state.threads) ? state.threads : [],
+        system_errors: Array.isArray(state.system_errors) ? state.system_errors : [],
+        resources: state.resources && typeof state.resources === 'object' ? state.resources : {},
+        debug_hooks: Array.isArray(state.debug_hooks) ? state.debug_hooks : [],
+        timestamp: state.timestamp || new Date().toISOString()
+      },
+      timestamp: data.timestamp || new Date().toISOString()
+    };
+  }
+
   // Utility methods
   isSocketConnected() {
     return this.isConnected && this.socket && this.socket.connected;
@@ -277,31 +279,18 @@ class SocketClient {
     return this.socket ? this.socket.id : null;
   }
 
-  // Clean disconnect
-  disconnect() {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
-    this.isConnected = false;
-    
-    // Clear global instance
-    if (window.socketClientInstance === this) {
-      window.socketClientInstance = null;
-    }
+  // Enhanced debugging info
+  getConnectionInfo() {
+    return {
+      isConnected: this.isConnected,
+      socketId: this.getSocketId(),
+      reconnectAttempts: this.reconnectAttempts,
+      lastUserInteraction: this.lastUserInteraction,
+      connected: this.socket?.connected,
+      transport: this.socket?.io?.engine?.transport?.name
+    };
   }
 }
 
-// Initialize socket client as singleton
-if (!window.socketClient && !window.socketClientInstance) {
-  window.socketClient = new SocketClient();
-}
-
-// Clean up on page unload
-window.addEventListener('beforeunload', () => {
-  if (window.socketClient) {
-    window.socketClient.disconnect();
-  }
-});
-
+// Export for module usage
 export default SocketClient;

@@ -9,7 +9,7 @@ async function waitForModules() {
   
   // Wait for required globals to exist
   const checkModules = () => {
-    return window.stateManager && window.socketClient;
+    return window.stateManager; // Only require stateManager at startup
   };
   
   // Wait up to 10 seconds for modules to load
@@ -35,21 +35,6 @@ async function initializeApplication() {
   const modulesReady = await waitForModules();
   if (!modulesReady) return;
   
-  // Check if consciousness manager needs initialization
-  if (!window.consciousness) {
-    console.log('🧠 Creating consciousness manager...');
-    // Import and create consciousness manager if it doesn't exist
-    try {
-      const ConsciousnessModule = await import('./consciousness.js');
-      const ConsciousnessManager = ConsciousnessModule.default || ConsciousnessModule.ConsciousnessManager;
-      if (ConsciousnessManager) {
-        window.consciousness = new ConsciousnessManager();
-      }
-    } catch (error) {
-      console.error('Failed to create consciousness manager:', error);
-    }
-  }
-  
   // Check if monitor needs initialization (this often fails)
   if (!window.monitor) {
     console.log('📊 Creating monitor...');
@@ -67,25 +52,21 @@ async function initializeApplication() {
   }
   
   // Check if app controller needs initialization
-  if (!window.app) {
-    console.log('🎮 Creating app controller...');
-    try {
-      const AppModule = await import('./app.js');
-      const App = AppModule.default || AppModule.App;
-      if (App) {
-        window.app = new App();
-      }
-    } catch (error) {
-      console.error('Failed to create app controller:', error);
-    }
-  }
+  // REMOVED: App instantiation to prevent duplicate App instances
+  // if (!window.app) {
+  //   console.log('🎮 Creating app controller...');
+  //   try {
+  //     const AppModule = await import('./app.js');
+  //     const App = AppModule.default || AppModule.App;
+  //     if (App) {
+  //       window.app = new App();
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to create app controller:', error);
+  //   }
+  // }
   
   console.log('🎉 Application initialization complete');
-  
-  // Auto-load character if available
-  if (window.app && window.app.loadCharacters) {
-    window.app.loadCharacters();
-  }
 }
 
 function createFallbackMonitor() {

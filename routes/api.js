@@ -32,8 +32,8 @@ router.get('/characters', async (req, res) => {
     }
     
     res.json(characters);
-  } catch (error) {
-    error('Error loading characters', { error });
+  } catch (err) {
+    error('Error loading characters', { error: err });
     res.status(500).json({ error: 'Failed to load characters' });
   }
 });
@@ -53,8 +53,8 @@ router.get('/character/:id', async (req, res) => {
     const character = JSON.parse(data);
     
     res.json(character);
-  } catch (error) {
-    error('Error loading character', { error, characterId });
+  } catch (err) {
+    error('Error loading character', { error: err, characterId });
     res.status(404).json({ error: 'Character not found' });
   }
 });
@@ -72,8 +72,8 @@ router.post('/debug/:characterId', async (req, res) => {
       status: 'debugging_started',
       timestamp: new Date().toISOString()
     });
-  } catch (error) {
-    error('Error starting debug session', { error, characterId });
+  } catch (err) {
+    error('Error starting debug session', { error: err, characterId });
     res.status(500).json({ error: 'Failed to start debugging session' });
   }
 });
@@ -92,8 +92,8 @@ router.put('/process/:pid/kill', async (req, res) => {
       message: 'Process terminated',
       timestamp: new Date().toISOString()
     });
-  } catch (error) {
-    error('Error killing process', { error, characterId, processId });
+  } catch (err) {
+    error('Error killing process', { error: err, characterId, processId });
     res.status(500).json({ error: 'Failed to kill process' });
   }
 });
