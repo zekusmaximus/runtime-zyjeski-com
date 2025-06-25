@@ -111,7 +111,19 @@ class Monitor {
     monitorIsActive: this.isActive,
     hasCurrentCharacter: !!this.currentCharacter,
     currentCharacterID: this.currentCharacter?.id,
-    dataCharacterID: data?.characterId
+    dataCharacterID: data?.characterId,
+    // DETAILED data inspection
+    dataStructure: {
+      topLevelKeys: Object.keys(data || {}),
+      hasProcesses: !!data?.processes,
+      processesLength: data?.processes?.length || 0,
+      hasResources: !!data?.resources,
+      resourcesType: typeof data?.resources,
+      resourcesKeys: data?.resources ? Object.keys(data.resources) : 'no resources',
+      hasConsciousness: !!data?.consciousness,
+      consciousnessProcesses: data?.consciousness?.processes?.length || 0,
+      consciousnessResources: data?.consciousness?.resources ? Object.keys(data.consciousness.resources) : 'no consciousness resources'
+    }
   });
     
 
@@ -129,7 +141,11 @@ class Monitor {
       console.error('❌ MONITOR: Error processing consciousness update:', error);
     }
   } else {
-    console.log('⏭️ MONITOR: Skipping update (monitor not active or wrong character)');
+    console.log('⏭️ MONITOR: Skipping update (monitor not active or wrong character)', {
+      isActive: this.isActive,
+      hasCharacter: !!this.currentCharacter,
+      characterMatch: data?.characterId === this.currentCharacter?.id
+    });
   }
 });
 
@@ -236,7 +252,7 @@ getDebugState() {
     });
 
     window.stateManager.subscribe('resources', (resources) => {
-      if (this.isActive) {
+      if (this.isActive && !window.stateManager._processingServerUpdate) {
         this.updateResourceMeters(resources);
       }
     });
@@ -259,10 +275,10 @@ getDebugState() {
       if (window.socketClient) {
         window.socketClient.startMonitoring(this.currentCharacter.id);
         
-        // Request initial data
-        window.socketClient.emit('get-system-resources');
-        window.socketClient.emit('get-error-logs');
-        window.socketClient.emit('get-memory-allocation');
+        // Request initial data using the correct method
+        window.socketClient.emitToServer('get-system-resources');
+        window.socketClient.emitToServer('get-error-logs');
+        window.socketClient.emitToServer('get-memory-allocation');
       }
     }
   }
@@ -292,11 +308,11 @@ getDebugState() {
     // Start WebSocket monitoring
     window.socketClient.startMonitoring(character.id);
 
-    // Request initial data
+    // Request initial data using the correct method
     setTimeout(() => {
-      window.socketClient.requestSystemResources();
-      window.socketClient.requestErrorLogs();
-      window.socketClient.requestMemoryAllocation();
+      window.socketClient.emitToServer('get-system-resources');
+      window.socketClient.emitToServer('get-error-logs');
+      window.socketClient.emitToServer('get-memory-allocation');
     }, 100);
   }
 
@@ -344,13 +360,26 @@ getDebugState() {
     if (!this.currentCharacter) return;
     
     this.showStatus('Refreshing data...', 'info');
+    console.log('🔄 MONITOR: Refresh button clicked, requesting fresh data');
     
     try {
-      const response = await fetch(`/api/consciousness/${this.currentCharacter.id}/state`);
-      const state = await response.json();
-      
-      this.updateDisplays(state);
-      this.showStatus('Data refreshed', 'success');
+      // Use WebSocket if connected, fallback to API
+      if (window.socketClient && window.socketClient.isConnected) {
+        // Request fresh data via WebSocket using the correct method
+        console.log('📡 MONITOR: Requesting data via WebSocket');
+        window.socketClient.emitToServer('get-system-resources');
+        window.socketClient.emitToServer('get-error-logs');
+        window.socketClient.emitToServer('get-memory-allocation');
+        this.showStatus('Data refresh requested via WebSocket', 'success');
+      } else {
+        // Fallback to API call
+        console.log('📡 MONITOR: WebSocket not connected, falling back to API');
+        const response = await fetch(`/api/consciousness/${this.currentCharacter.id}/state`);
+        const state = await response.json();
+        
+        this.updateDisplays(state);
+        this.showStatus('Data refreshed via API', 'success');
+      }
     } catch (error) {
       console.error('Failed to refresh monitor data:', error);
       this.showStatus('Failed to refresh data', 'error');
@@ -363,6 +392,7 @@ getDebugState() {
     hasState: !!data?.state,
     hasConsciousness: !!data?.consciousness,
     hasProcesses: !!(data?.processes || data?.state?.processes || data?.consciousness?.processes),
+    hasResources: !!(data?.resources || data?.state?.resources || data?.consciousness?.resources),
     dataKeys: Object.keys(data || {})
   });
 
@@ -401,12 +431,26 @@ getDebugState() {
     hasErrors: !!consciousness.system_errors
   });
   
-  // Update all components with debugging
+  // Extract data components
   const processes = consciousness.processes || [];
-  const resources = consciousness.resources;
-  const memory = consciousness.memory;
+  const memory = consciousness.memory || data.memory || {};
   const system_errors = consciousness.system_errors || [];
   
+  // FIXED: Properly extract resources from the server data structure
+  let resources = null;
+  
+  // The server consciousness data contains resources at the top level
+  if (consciousness.resources) {
+    resources = consciousness.resources;
+    console.log('🔍 MONITOR: Found resources in consciousness.resources:', resources);
+  } else if (data.resources) {
+    resources = data.resources;
+    console.log('🔍 MONITOR: Found resources in data.resources:', resources);
+  } else {
+    console.log('🔍 MONITOR: No direct resources found, will generate from processes');
+  }
+  
+  // Update processes first
   if (processes.length > 0) {
     console.log('🔄 MONITOR: Updating process table with', processes.length, 'processes');
     this.updateProcessTable(processes);
@@ -414,15 +458,19 @@ getDebugState() {
     console.log('⚠️ MONITOR: No processes to update');
   }
   
-  if (resources) {
-    console.log('🔄 MONITOR: Updating resource meters');
+  // Update resources
+  if (resources && typeof resources === 'object' && Object.keys(resources).length > 0) {
+    console.log('🔄 MONITOR: Updating resource meters with server resources:', resources);
     this.updateResourceMeters(resources);
   } else if (processes.length > 0) {
-    console.log('🔄 MONITOR: Generating synthetic resources from processes');
+    console.log('🔄 MONITOR: Generating synthetic resources from', processes.length, 'processes');
     this.generateResourcesFromProcesses(processes);
+  } else {
+    console.warn('⚠️ MONITOR: No valid resources or processes available');
   }
   
-  if (memory) {
+  // Update other components
+  if (memory && Object.keys(memory).length > 0) {
     console.log('🔄 MONITOR: Updating memory visualization');
     this.updateMemoryVisualization(memory);
   }
@@ -498,185 +546,135 @@ getDebugState() {
   // Fix in public/js/monitor.js - updateResourceMeters method
 
 updateResourceMeters(resources) {
-  console.log('updateResourceMeters received:', resources);
-  console.trace('Call stack'); // This will show us who's calling this
+  console.log('🎯 MONITOR: updateResourceMeters called with:', {
+    resourcesType: typeof resources,
+    resourcesKeys: resources ? Object.keys(resources) : 'null/undefined',
+    resourcesValue: resources
+  });
   
   if (!this.resourceMeters) {
-    console.warn('Resource meters element not found');
+    console.warn('❌ MONITOR: Resource meters element not found');
     return;
   }
   
-  // Add a guard to prevent infinite recursion
+  // Prevent infinite recursion
   if (this._updatingResources) {
-    console.warn('Already updating resources - preventing recursion');
+    console.warn('⚠️ MONITOR: Already updating resources - preventing recursion');
     return;
   }
   this._updatingResources = true;
 
-  // Handle empty or invalid resources
-  if (!resources || typeof resources !== 'object' || Object.keys(resources).length === 0) {
-    console.warn('Invalid or empty resources data');
-    // Provide default structure
-    resources = {
-      cpu: { used: 0, total: 100, percentage: 0 },
-      memory: { used: 0, total: 1024, available: 1024, percentage: 0 },
-      threads: { used: 0, total: 16, percentage: 0 }
-    };
-  }
+  try {
+    // Remove any existing empty state
+    const emptyState = this.resourceMeters.querySelector('.empty-state');
+    if (emptyState) {
+      emptyState.remove();
+    }
 
-const emptyState = this.resourceMeters.querySelector('.empty-state');
-  if (emptyState) {
-    emptyState.remove();
-  }
-  
- // Build resource meters HTML
-  const metersHTML = `
-    <div class="resource-meter">
-      <div class="meter-label">
-        <span>CPU Usage</span>
-        <span class="meter-value">${(resources.cpu?.percentage || 0).toFixed(1)}%</span>
-      </div>
-      <div class="meter-bar">
-        <div class="meter-fill cpu-fill" style="width: ${resources.cpu?.percentage || 0}%"></div>
-      </div>
-    </div>
+    // Handle empty or invalid resources
+    if (!resources || typeof resources !== 'object' || Object.keys(resources).length === 0) {
+      console.log('⚠️ MONITOR: No valid resources - showing empty state');
+      this.resourceMeters.innerHTML = '<div class="empty-state">No resource data available</div>';
+      return;
+    }
+
+    // Extract resource data from the structure we know the server sends
+    let cpu = 0, memory = 0, memoryTotal = 1024, threads = 0, threadsTotal = 16;
     
-    <div class="resource-meter">
-      <div class="meter-label">
-        <span>Memory</span>
-        <span class="meter-value">${(resources.memory?.used || 0).toFixed(0)}MB / ${(resources.memory?.total || 1024).toFixed(0)}MB</span>
+    // The server sends resources in this format based on our debugging:
+    // { cpu: 45.7, memory: 512, threads: 3 }
+    if (typeof resources.cpu === 'number') {
+      cpu = resources.cpu;
+    }
+    if (typeof resources.memory === 'number') {
+      memory = resources.memory;
+      memoryTotal = 1024; // Default total
+    }
+    if (typeof resources.threads === 'number') {
+      threads = resources.threads;
+      threadsTotal = 16; // Default total
+    }
+
+    // Calculate percentages
+    const cpuPercent = Math.min(100, Math.max(0, cpu));
+    const memoryPercent = Math.min(100, Math.max(0, (memory / memoryTotal) * 100));
+    const threadsPercent = Math.min(100, Math.max(0, (threads / threadsTotal) * 100));
+
+    // Determine severity classes
+    const cpuSeverity = cpuPercent > 80 ? 'critical' : cpuPercent > 60 ? 'warning' : 'normal';
+    const memorySeverity = memoryPercent > 80 ? 'critical' : memoryPercent > 60 ? 'warning' : 'normal';
+    const threadsSeverity = threadsPercent > 80 ? 'critical' : threadsPercent > 60 ? 'warning' : 'normal';
+
+    // Build the HTML
+    const metersHTML = `
+      <div class="resource-meter">
+        <div class="meter-label">
+          <span>CPU Usage</span>
+          <span class="meter-value">${cpuPercent.toFixed(1)}%</span>
+        </div>
+        <div class="meter-bar">
+          <div class="meter-fill cpu-fill ${cpuSeverity}" style="width: ${cpuPercent}%"></div>
+        </div>
       </div>
-      <div class="meter-bar">
-        <div class="meter-fill memory-fill" style="width: ${resources.memory?.percentage || 0}%"></div>
+      
+      <div class="resource-meter">
+        <div class="meter-label">
+          <span>Memory</span>
+          <span class="meter-value">${memory.toFixed(0)}MB / ${memoryTotal}MB</span>
+        </div>
+        <div class="meter-bar">
+          <div class="meter-fill memory-fill ${memorySeverity}" style="width: ${memoryPercent}%"></div>
+        </div>
       </div>
-    </div>
+      
+      <div class="resource-meter">
+        <div class="meter-label">
+          <span>Threads</span>
+          <span class="meter-value">${threads} / ${threadsTotal}</span>
+        </div>
+        <div class="meter-bar">
+          <div class="meter-fill thread-fill ${threadsSeverity}" style="width: ${threadsPercent}%"></div>
+        </div>
+      </div>
+    `;
+
+    this.resourceMeters.innerHTML = metersHTML;
     
-    <div class="resource-meter">
-      <div class="meter-label">
-        <span>Threads</span>
-        <span class="meter-value">${resources.threads?.used || 0} / ${resources.threads?.total || 16}</span>
-      </div>
-      <div class="meter-bar">
-        <div class="meter-fill thread-fill" style="width: ${resources.threads?.percentage || 0}%"></div>
-      </div>
-    </div>
-  `;
+    console.log('✅ MONITOR: Resource meters updated successfully:', {
+      cpu: `${cpuPercent.toFixed(1)}%`,
+      memory: `${memory}MB/${memoryTotal}MB`,
+      threads: `${threads}/${threadsTotal}`
+    });
 
-  this.resourceMeters.innerHTML = metersHTML;
-  console.log('✅ Resource meters updated');
-
-  let html = '';
-  
-  // Handle different resource data structures
-  let cpuData = null;
-  let memoryData = null;
-  let threadsData = null;
-  
-  // Check for nested resources structure
-  if (resources.cpu !== undefined || resources.memory !== undefined || resources.threads !== undefined) {
-      cpuData = resources.cpu;
-      memoryData = resources.memory;
-      threadsData = resources.threads;
+  } catch (error) {
+    console.error('❌ MONITOR: Error updating resource meters:', error);
+    this.resourceMeters.innerHTML = '<div class="empty-state">Error displaying resources</div>';
+  } finally {
+    this._updatingResources = false;
   }
-  // Check for direct values from ProcessManager
-  else if (resources.totalCpuUsage !== undefined || resources.totalMemoryUsage !== undefined) {
-      cpuData = { 
-          used: resources.totalCpuUsage, 
-          total: 100, 
-          percentage: resources.totalCpuUsage 
-      };
-      memoryData = { 
-          used: resources.totalMemoryUsage,
-          total: resources.memoryCapacity?.total || 10000,
-          percentage: resources.memoryPercentage || (resources.totalMemoryUsage / (resources.memoryCapacity?.total || 10000)) * 100
-      };
-      threadsData = { 
-          used: resources.totalThreads, 
-          total: resources.maxThreads || 20,
-          percentage: ((resources.totalThreads || 0) / (resources.maxThreads || 20)) * 100
-      };
-  }
-  
-  // CPU Usage
-  if (cpuData) {
-      const cpuPercent = Math.min(100, Math.max(0, cpuData.percentage || cpuData.used || 0));
-      const cpuSeverity = cpuPercent > 80 ? 'critical' : cpuPercent > 60 ? 'warning' : 'normal';
-      
-      html += `
-          <div class="resource-meter">
-              <div class="meter-label">CPU USAGE</div>
-              <div class="meter-bar">
-                  <div class="meter-fill ${cpuSeverity}" style="width: ${cpuPercent}%"></div>
-              </div>
-              <div class="meter-value">${cpuPercent.toFixed(1)}%</div>
-          </div>
-      `;
-  }
-  
-  // Memory Usage
-  if (memoryData) {
-      const memPercent = Math.min(100, Math.max(0, memoryData.percentage || 0));
-      const memSeverity = memPercent > 80 ? 'critical' : memPercent > 60 ? 'warning' : 'normal';
-      const usedMB = memoryData.used || 0;
-      const totalMB = memoryData.total || 1;
-      
-      html += `
-          <div class="resource-meter">
-              <div class="meter-label">MEMORY USAGE</div>
-              <div class="meter-bar">
-                  <div class="meter-fill ${memSeverity}" style="width: ${memPercent}%"></div>
-              </div>
-              <div class="meter-value">${usedMB.toFixed(0)}MB / ${totalMB}MB</div>
-          </div>
-      `;
-  }
-  
-  // Thread Usage
-  if (threadsData) {
-      const threadPercent = Math.min(100, Math.max(0, threadsData.percentage || 0));
-      const threadSeverity = threadPercent > 80 ? 'critical' : threadPercent > 60 ? 'warning' : 'normal';
-      const usedThreads = threadsData.used || 0;
-      const totalThreads = threadsData.total || 1;
-      
-      html += `
-          <div class="resource-meter">
-              <div class="meter-label">THREADS</div>
-              <div class="meter-bar">
-                  <div class="meter-fill ${threadSeverity}" style="width: ${threadPercent}%"></div>
-              </div>
-              <div class="meter-value">${usedThreads}/${totalThreads}</div>
-          </div>
-      `;
-  }
-  
-  if (!html && resources) {
-      html = '<div class="empty-state">Resource data format not recognized</div>';
-      console.warn('Unrecognized resource data structure:', resources);
-  }
-
-   // metersElement.innerHTML = html;
-
-   this._updatingResources = false;
 }
 generateResourcesFromProcesses(processes) {
-  if (!processes || !Array.isArray(processes)) return;
+  console.log('🔧 MONITOR: Generating synthetic resources from', processes?.length || 0, 'processes');
+  
+  if (!processes || !Array.isArray(processes) || processes.length === 0) {
+    console.log('⚠️ MONITOR: No processes to generate resources from');
+    return;
+  }
   
   const totalCpu = processes.reduce((sum, p) => sum + (p.cpu_usage || p.cpuUsage || 0), 0);
   const totalMemory = processes.reduce((sum, p) => sum + (p.memory_mb || p.memoryUsage || 0), 0);
   const totalThreads = processes.reduce((sum, p) => sum + (p.thread_count || p.threadCount || 1), 0);
   
+  // Create synthetic resources in the same format the server sends
   const syntheticResources = {
-      totalCpuUsage: totalCpu,
-      totalMemoryUsage: totalMemory,
-      totalThreads: totalThreads,
-      memoryCapacity: {
-          total: 10000,
-          used: totalMemory,
-          available: 10000 - totalMemory
-      },
-      maxThreads: 20
+    cpu: totalCpu,
+    memory: totalMemory,
+    threads: totalThreads
   };
   
+  console.log('🔧 MONITOR: Generated synthetic resources:', syntheticResources);
+  
+  // Call updateResourceMeters directly without recursion risk
   this.updateResourceMeters(syntheticResources);
 }
   updateErrorLog(errors) {
@@ -826,21 +824,33 @@ generateResourcesFromProcesses(processes) {
   }
 
   updateProcessTable(processes) {
+    console.log('🔧 MONITOR: updateProcessTable called with:', {
+      processType: typeof processes,
+      isArray: Array.isArray(processes),
+      length: processes?.length || 'N/A',
+      processes: processes
+    });
+    
     if (!this.processTable) {
-      console.warn('Missing processTable element');
+      console.warn('❌ MONITOR: Missing processTable element');
       return;
     }
     
     if (!processes || !Array.isArray(processes)) {
+      console.log('⚠️ MONITOR: Invalid process data - showing empty state');
       this.processTable.innerHTML = '<div class="empty-state">No process data available</div>';
       return;
     }
     
     if (processes.length === 0) {
+      console.log('⚠️ MONITOR: Empty process array - showing empty state');
       this.processTable.innerHTML = '<div class="empty-state">No active processes</div>';
       return;
     }
     
+    console.log('✅ MONITOR: Building process table for', processes.length, 'processes:', 
+      processes.map(p => ({ pid: p.pid, name: p.name, status: p.status })));
+
     const tableHtml = `
       <table class="process-list">
         <thead>
@@ -889,8 +899,9 @@ generateResourcesFromProcesses(processes) {
     `;
     
     this.processTable.innerHTML = tableHtml;
+    console.log('✅ MONITOR: Process table HTML updated successfully');
     
-    // FIXED: Add event listeners to dynamically created buttons
+    // Add event listeners to dynamically created buttons
     this.attachProcessButtonListeners();
   }
 

@@ -267,10 +267,14 @@ class ConsciousnessManager {
     try {
       console.log('Updating consciousness state:', data);
       
+      // PREVENT FEEDBACK LOOP: Set flag to indicate we're processing server data
+      window.stateManager._processingServerUpdate = true;
+      
       // Extract and validate consciousness data
       const consciousnessData = this.extractConsciousnessData(data);
       if (!consciousnessData) {
         console.warn('No valid consciousness data found in update');
+        window.stateManager._processingServerUpdate = false;
         return;
       }
 
@@ -286,8 +290,13 @@ class ConsciousnessManager {
       
       // Notify other components
       this.notifyComponents('consciousness-updated', consciousnessData);
+      
+      // Clear the flag
+      window.stateManager._processingServerUpdate = false;
 
     } catch (error) {
+      // Always clear the flag even on error to prevent permanent lock
+      window.stateManager._processingServerUpdate = false;
       console.error('Error handling consciousness update:', error);
     }
   }

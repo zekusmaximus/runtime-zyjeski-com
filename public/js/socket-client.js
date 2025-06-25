@@ -201,6 +201,8 @@ class SocketClient {
       return false;
     }
 
+    console.log(`📤 SOCKET CLIENT: Emitting '${event}' to server`, data);
+
     // Only log as user interaction if it's truly a user-initiated action
     if (!this.systemEvents.has(event) && !event.startsWith('get-')) {
       this.recordUserInteraction(`emit-${event}`);
@@ -249,13 +251,23 @@ class SocketClient {
 
   // Validate consciousness data structure
   validateConsciousnessData(data) {
+    // DEBUG: Log what we're receiving
+    console.log('🔍 SOCKET: validateConsciousnessData received:', {
+      dataType: typeof data,
+      dataKeys: data ? Object.keys(data) : 'null',
+      hasState: !!data?.state,
+      hasResources: !!data?.resources,
+      hasConsciousness: !!data?.consciousness,
+      consciousnessKeys: data?.consciousness ? Object.keys(data.consciousness) : 'no consciousness'
+    });
+
     if (!data || typeof data !== 'object') {
       return { processes: [], memory: {}, resources: {}, system_errors: [], threads: [] };
     }
 
     const state = data.state || data;
     
-    return {
+    const result = {
       characterId: data.characterId || state.characterId,
       consciousness: {
         processes: Array.isArray(state.processes) ? state.processes : [],
@@ -268,6 +280,15 @@ class SocketClient {
       },
       timestamp: data.timestamp || new Date().toISOString()
     };
+
+    // DEBUG: Log what we're returning
+    console.log('🔍 SOCKET: validateConsciousnessData returning:', {
+      hasConsciousness: !!result.consciousness,
+      consciousnessResources: result.consciousness?.resources ? Object.keys(result.consciousness.resources) : 'no resources',
+      processCount: result.consciousness?.processes?.length || 0
+    });
+
+    return result;
   }
 
   // Utility methods
