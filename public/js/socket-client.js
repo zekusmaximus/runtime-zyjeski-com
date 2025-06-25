@@ -11,16 +11,11 @@ class SocketClient {
     this.lastUserInteraction = 0;
     
     // CRITICAL FIX: Track which events are from user vs system
+    // Only track generic system events here. Monitoring specific
+    // events are handled in the monitor modules.
     this.systemEvents = new Set([
-      'consciousness-update',
-      'monitoring-started', 
-      'monitoring-stopped',
       'debug-result',
       'intervention-applied',
-      'system-resources',
-      'error-logs',
-      'memory-allocation',
-      'refresh-monitor',
       'connect',
       'disconnect',
       'error'
@@ -70,39 +65,14 @@ class SocketClient {
       this.handleReconnection();
     });
 
-    // Consciousness monitoring events - FIXED: No user interaction logging for system events
-    this.socket.on('monitoring-started', (data) => {
-      console.log('Monitoring started for character:', data.characterId);
-      this.emit('monitoring-started', data);
-    });
-
-    this.socket.on('monitoring-stopped', (data) => {
-      console.log('Monitoring stopped for character:', data.characterId);
-      this.emit('monitoring-stopped', data);
-    });
-
-    this.socket.on('consciousness-update', (data) => {
-      this.emit('consciousness-update', this.validateConsciousnessData(data));
-    });
-
+    // Pass through debug and intervention events. Monitoring events are
+    // handled separately by monitor modules.
     this.socket.on('debug-result', (data) => {
       this.emit('debug-result', data);
     });
 
     this.socket.on('intervention-applied', (data) => {
       this.emit('intervention-applied', data);
-    });
-
-    this.socket.on('system-resources', (data) => {
-      this.emit('system-resources', data);
-    });
-
-    this.socket.on('error-logs', (data) => {
-      this.emit('error-logs', data);
-    });
-
-    this.socket.on('memory-allocation', (data) => {
-      this.emit('memory-allocation', data);
     });
 
     this.socket.on('error', (error) => {
@@ -195,16 +165,6 @@ class SocketClient {
     return true;
   }
 
-  refreshMonitor() {
-    if (!this.isConnected) {
-      console.error('Socket not connected');
-      return false;
-    }
-
-    this.recordUserInteraction('refresh-monitor');
-    this.socket.emit('refresh-monitor');
-    return true;
-  }
 
   // FIXED: Send events to server without logging every system request as user interaction
   emitToServer(event, data) {
