@@ -294,39 +294,47 @@ class ConsciousnessManager {
 
   // FIXED: Add data extraction and validation method
   extractConsciousnessData(data) {
-    if (!data || typeof data !== 'object') {
-      return null;
-    }
-
-    // Try different possible data structures
-    let consciousness = null;
-
-    // Check if data.state.consciousness exists
-    if (data.state && data.state.consciousness) {
-      consciousness = data.state.consciousness;
-    }
-    // Check if data.state is the consciousness object
-    else if (data.state && typeof data.state === 'object') {
-      consciousness = data.state;
-    }
-    // Check if data itself is the consciousness object
-    else if (data.processes || data.memory || data.resources) {
-      consciousness = data;
-    }
-
-    if (!consciousness) {
-      return null;
-    }
-
-    // Normalize the consciousness data structure
-    return {
-      processes: Array.isArray(consciousness.processes) ? consciousness.processes : [],
-      resources: consciousness.resources && typeof consciousness.resources === 'object' ? consciousness.resources : {},
-      system_errors: Array.isArray(consciousness.system_errors) ? consciousness.system_errors : [],
-      memory: consciousness.memory || null,
-      threads: Array.isArray(consciousness.threads) ? consciousness.threads : []
-    };
+  if (!data || typeof data !== 'object') {
+    return null;
   }
+
+  // Handle different data structures from various sources
+  let consciousness = null;
+
+  // Direct consciousness data (from monitor updates)
+  if (data.consciousness && typeof data.consciousness === 'object') {
+    consciousness = data.consciousness;
+  }
+  // Nested state structure
+  else if (data.state && data.state.consciousness) {
+    consciousness = data.state.consciousness;
+  }
+  // State is the consciousness object
+  else if (data.state && typeof data.state === 'object') {
+    consciousness = data.state;
+  }
+  // Data itself contains consciousness properties
+  else if (data.processes || data.memory || data.resources) {
+    consciousness = data;
+  }
+
+  if (!consciousness) {
+    return null;
+  }
+
+  // Normalize and ensure all required properties exist
+  return {
+    processes: Array.isArray(consciousness.processes) ? consciousness.processes : [],
+    resources: consciousness.resources && typeof consciousness.resources === 'object' ? consciousness.resources : {
+      cpu: { used: 0, total: 100, percentage: 0 },
+      memory: { used: 0, total: 1024, available: 1024, percentage: 0 },
+      threads: { used: 0, total: 16, percentage: 0 }
+    },
+    system_errors: Array.isArray(consciousness.system_errors) ? consciousness.system_errors : [],
+    memory: consciousness.memory || {},
+    threads: Array.isArray(consciousness.threads) ? consciousness.threads : []
+  };
+}
 
   startRealTimeUpdates() {
     if (this.updateInterval) return;

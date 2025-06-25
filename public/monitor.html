@@ -4,15 +4,22 @@
         <div class="monitor-header">
             <h2>Consciousness Monitor</h2>
             <div class="monitor-controls">
-                <div class="connection-status">Connecting...</div>
-                <select id="characterSelect" class="character-selector">
-                    <option value="">Select Character</option>
-                    <option value="alexander-kane">Alexander Kane</option>
-                </select>
-                <button class="btn btn-small" id="startMonitoring">Start</button>
-                <button class="btn btn-small" id="refreshMonitor">Refresh</button>
-                <button class="btn btn-small" id="pauseMonitor">Pause</button>
-            </div>
+    <div class="connection-status" id="connectionStatus">Disconnected</div>
+    <select id="characterSelect" class="character-selector">
+        <option value="">Select Character</option>
+        <option value="alexander-kane">Alexander Kane</option>
+    </select>
+    
+    <!-- Updated monitoring toggle button -->
+    <button class="btn btn-primary" id="toggleMonitoring" disabled>
+        <span class="btn-icon">▶</span>
+        <span class="btn-text">Start Monitoring</span>
+    </button>
+    
+    <button class="btn btn-small" id="refreshMonitor" disabled>
+        <span class="btn-icon">↻</span>
+        Refresh
+    </button>
         </div>
         <div class="monitor-grid">
             <div class="monitor-panel">
@@ -56,37 +63,145 @@
 </section>
 
 <script>
-// Initialize monitor with character selection
 document.addEventListener('DOMContentLoaded', () => {
     const characterSelect = document.getElementById('characterSelect');
-    const startBtn = document.getElementById('startMonitoring');
+    const toggleBtn = document.getElementById('toggleMonitoring');
+    const refreshBtn = document.getElementById('refreshMonitor');
+    const connectionStatus = document.getElementById('connectionStatus');
+    const monitorHeader = document.querySelector('.monitor-header');
     
-    if (characterSelect && startBtn) {
-        // Handle character selection
-        characterSelect.addEventListener('change', (e) => {
-            const characterId = e.target.value;
-            if (characterId && window.stateManager) {
-                // Load character data
-                fetch(`/api/character/${characterId}`)
-                    .then(response => response.json())
-                    .then(character => {
-                        window.stateManager.setCurrentCharacter(character);
-                        startBtn.disabled = false;
-                    })
-                    .catch(error => {
-                        console.error('Failed to load character:', error);
-                        startBtn.disabled = true;
-                    });
-            } else {
-                startBtn.disabled = true;
-            }
-        });
+    // Initialize consciousness manager if needed
+    if (!window.consciousness && window.initConsciousnessManager) {
+        window.consciousness = window.initConsciousnessManager();
+    }
+    
+    // Handle character selection
+    characterSelect.addEventListener('change', async (e) => {
+        const characterId = e.target.value;
         
-        // Handle start monitoring
-        startBtn.addEventListener('click', () => {
-            if (window.monitor && window.stateManager.getCurrentCharacter()) {
+        if (characterId) {
+            try {
+                // Stop any existing monitoring
+                if (window.consciousness && window.consciousness.isMonitoring) {
+                    window.consciousness.userStopMonitoring();
+                }
+                
+                // Load character data
+                const response = await fetch(`/api/character/${characterId}`);
+                if (!response.ok) throw new Error('Failed to load character');
+                
+                const character = await response.json();
+                
+                // Initialize consciousness with character
+                if (window.consciousness) {
+                    window.consciousness.loadCharacter(character);
+                }
+                
+                // Update state manager if available
+                if (window.stateManager) {
+                    window.stateManager.setCurrentCharacter(character);
+                }
+                
+                // Enable monitoring button
+                toggleBtn.disabled = false;
+                
+                console.log('Character loaded:', character.name);
+            } catch (error) {
+                console.error('Failed to load character:', error);
+                toggleBtn.disabled = true;
+            }
+        } else {
+            // No character selected
+            toggleBtn.disabled = true;
+            refreshBtn.disabled = true;
+            
+            // Stop monitoring if active
+            if (window.consciousness && window.consciousness.isMonitoring) {
+                window.consciousness.userStopMonitoring();
+            }
+        }
+    });
+    
+    // Handle monitoring toggle
+    toggleBtn.addEventListener('click', () => {
+        if (!window.consciousness) {
+            console.error('Consciousness manager not available');
+            return;
+        }
+        
+        if (window.consciousness.isMonitoring) {
+            // Stop monitoring
+            window.consciousness.userStopMonitoring();
+            toggleBtn.classList.remove('active');
+            toggleBtn.querySelector('.btn-text').textContent = 'Start Monitoring';
+            toggleBtn.querySelector('.btn-icon').textContent = '▶';
+            monitorHeader.classList.remove('monitoring');
+            refreshBtn.disabled = true;
+            
+            // Update monitor if available
+            if (window.monitor) {
+                window.monitor.stopMonitoring();
+            }
+        } else {
+            // Start monitoring
+            window.consciousness.userStartMonitoring();
+            toggleBtn.classList.add('active');
+            toggleBtn.querySelector('.btn-text').textContent = 'Stop Monitoring';
+            toggleBtn.querySelector('.btn-icon').textContent = '■';
+            monitorHeader.classList.add('monitoring');
+            refreshBtn.disabled = false;
+            
+            // Update monitor if available
+            if (window.monitor) {
                 window.monitor.startMonitoring();
-                startBtn.disabled = true;
+            }
+        }
+    });
+    
+    // Handle refresh
+    refreshBtn.addEventListener('click', () => {
+        if (window.monitor && window.monitor.refreshData) {
+            window.monitor.refreshData();
+        } else if (window.consciousness) {
+            window.consciousness.requestConsciousnessUpdate();
+        }
+    });
+    
+    // Update connection status
+    function updateConnectionStatus(connected) {
+        if (connected) {
+            connectionStatus.textContent = 'Connected';
+            connectionStatus.className = 'connection-status connected';
+        } else {
+            connectionStatus.textContent = 'Disconnected';
+            connectionStatus.className = 'connection-status disconnected';
+        }
+    }
+    
+    // Listen for socket connection events
+    if (window.socketClient) {
+        window.socketClient.on('connected', () => updateConnectionStatus(true));
+        window.socketClient.on('disconnected', () => updateConnectionStatus(false));
+        
+        // Check initial connection state
+        updateConnectionStatus(window.socketClient.isSocketConnected());
+    }
+    
+    // Subscribe to monitoring state changes if state manager is available
+    if (window.stateManager) {
+        window.stateManager.subscribe('monitoringActive', (active) => {
+            if (active) {
+                toggleBtn.classList.add('active');
+                toggleBtn.querySelector('.btn-text').textContent = 'Stop Monitoring';
+                toggleBtn.querySelector('.btn-icon').textContent = '■';
+                monitorHeader.classList.add('monitoring');
+                refreshBtn.disabled = false;
+            } else {
+                toggleBtn.classList.remove('active');
+                toggleBtn.querySelector('.btn-text').textContent = 'Start Monitoring';
+                toggleBtn.querySelector('.btn-icon').textContent = '▶';
+                monitorHeader.classList.remove('monitoring');
+                refreshBtn.disabled = true;
             }
         });
     }

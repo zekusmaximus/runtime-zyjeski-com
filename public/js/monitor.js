@@ -21,6 +21,9 @@ class Monitor {
     this.setupEventListeners();
     this.setupSocketListeners();
     this.subscribeToStateChanges();
+    
+    // Don't start monitoring here - wait for user action
+    console.log('Monitor initialized (inactive, waiting for user to start)');
   }
 
   setupElements() {
@@ -103,51 +106,32 @@ class Monitor {
 
   // ENHANCED Real-time consciousness updates with extensive debugging
   window.socketClient.on('consciousness-update', (data) => {
-    console.log('🧠 MONITOR: Received consciousness-update:', {
-      timestamp: new Date().toISOString(),
-      monitorIsActive: this.isActive,
-      hasCurrentCharacter: !!this.currentCharacter,
-      currentCharacterID: this.currentCharacter?.id,
-      dataCharacterID: data?.characterId,
-      dataStructure: {
-        hasState: !!data?.state,
-        hasConsciousness: !!data?.consciousness,
-        hasProcesses: !!(data?.processes || data?.state?.processes || data?.consciousness?.processes),
-        stateKeys: data?.state ? Object.keys(data.state) : null,
-        directKeys: Object.keys(data || {})
-      }
-    });
+  console.log('🧠 MONITOR: Received consciousness-update:', {
+    timestamp: new Date().toISOString(),
+    monitorIsActive: this.isActive,
+    hasCurrentCharacter: !!this.currentCharacter,
+    currentCharacterID: this.currentCharacter?.id,
+    dataCharacterID: data?.characterId
+  });
+    
 
     // CRITICAL: Process consciousness updates regardless of isActive
-    if (this.currentCharacter && data?.characterId === this.currentCharacter.id) {
-      console.log('✅ MONITOR: Processing consciousness update');
+    if (this.isActive && this.currentCharacter && data?.characterId === this.currentCharacter.id) {
+    console.log('✅ MONITOR: Processing consciousness update');
+    
+    try {
+      // The data already contains consciousness at the top level
+      this.updateDisplays(data);
+      this.updateDataHistory(data);
       
-      try {
-        this.updateDisplays(data);
-        this.updateDataHistory(data);
-        
-        // Force monitor to become active if it isn't already
-        if (!this.isActive) {
-          console.log('🔄 MONITOR: Auto-activating due to consciousness update');
-          this.isActive = true;
-          this.updateButtonStates();
-        }
-        
-        console.log('✅ MONITOR: Successfully processed consciousness update');
-        
-      } catch (error) {
-        console.error('❌ MONITOR: Error processing consciousness update:', error);
-      }
-    } else {
-      console.warn('❌ MONITOR: Skipping consciousness update:', {
-        reason: !this.currentCharacter ? 'No current character' : 
-                !data?.characterId ? 'No character ID in data' :
-                data.characterId !== this.currentCharacter.id ? 'Character ID mismatch' : 'Unknown',
-        expected: this.currentCharacter?.id,
-        received: data?.characterId
-      });
+      console.log('✅ MONITOR: Successfully processed consciousness update');
+    } catch (error) {
+      console.error('❌ MONITOR: Error processing consciousness update:', error);
     }
-  });
+  } else {
+    console.log('⏭️ MONITOR: Skipping update (monitor not active or wrong character)');
+  }
+});
 
   // Enhanced monitoring started handler
   window.socketClient.on('monitoring-started', (data) => {
@@ -514,15 +498,72 @@ getDebugState() {
   // Fix in public/js/monitor.js - updateResourceMeters method
 
 updateResourceMeters(resources) {
-  const metersElement = document.getElementById('resourceMeters');
-  if (!metersElement) return;
-
   console.log('updateResourceMeters received:', resources);
-
-  if (!resources) {
-    metersElement.innerHTML = '<div class="empty-state">No resource data available</div>';
+  console.trace('Call stack'); // This will show us who's calling this
+  
+  if (!this.resourceMeters) {
+    console.warn('Resource meters element not found');
     return;
   }
+  
+  // Add a guard to prevent infinite recursion
+  if (this._updatingResources) {
+    console.warn('Already updating resources - preventing recursion');
+    return;
+  }
+  this._updatingResources = true;
+
+  // Handle empty or invalid resources
+  if (!resources || typeof resources !== 'object' || Object.keys(resources).length === 0) {
+    console.warn('Invalid or empty resources data');
+    // Provide default structure
+    resources = {
+      cpu: { used: 0, total: 100, percentage: 0 },
+      memory: { used: 0, total: 1024, available: 1024, percentage: 0 },
+      threads: { used: 0, total: 16, percentage: 0 }
+    };
+  }
+
+const emptyState = this.resourceMeters.querySelector('.empty-state');
+  if (emptyState) {
+    emptyState.remove();
+  }
+  
+ // Build resource meters HTML
+  const metersHTML = `
+    <div class="resource-meter">
+      <div class="meter-label">
+        <span>CPU Usage</span>
+        <span class="meter-value">${(resources.cpu?.percentage || 0).toFixed(1)}%</span>
+      </div>
+      <div class="meter-bar">
+        <div class="meter-fill cpu-fill" style="width: ${resources.cpu?.percentage || 0}%"></div>
+      </div>
+    </div>
+    
+    <div class="resource-meter">
+      <div class="meter-label">
+        <span>Memory</span>
+        <span class="meter-value">${(resources.memory?.used || 0).toFixed(0)}MB / ${(resources.memory?.total || 1024).toFixed(0)}MB</span>
+      </div>
+      <div class="meter-bar">
+        <div class="meter-fill memory-fill" style="width: ${resources.memory?.percentage || 0}%"></div>
+      </div>
+    </div>
+    
+    <div class="resource-meter">
+      <div class="meter-label">
+        <span>Threads</span>
+        <span class="meter-value">${resources.threads?.used || 0} / ${resources.threads?.total || 16}</span>
+      </div>
+      <div class="meter-bar">
+        <div class="meter-fill thread-fill" style="width: ${resources.threads?.percentage || 0}%"></div>
+      </div>
+    </div>
+  `;
+
+  this.resourceMeters.innerHTML = metersHTML;
+  console.log('✅ Resource meters updated');
 
   let html = '';
   
@@ -613,7 +654,9 @@ updateResourceMeters(resources) {
       console.warn('Unrecognized resource data structure:', resources);
   }
 
-  metersElement.innerHTML = html;
+   // metersElement.innerHTML = html;
+
+   this._updatingResources = false;
 }
 generateResourcesFromProcesses(processes) {
   if (!processes || !Array.isArray(processes)) return;

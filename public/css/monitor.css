@@ -957,3 +957,57 @@
     width: 100%;
   }
 }
+
+#toggleMonitoring {
+    min-width: 140px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+#toggleMonitoring .btn-icon {
+    font-size: 0.8em;
+    transition: transform 0.3s ease;
+}
+
+#toggleMonitoring.active {
+    background: var(--error-color);
+    border-color: var(--error-color);
+}
+
+#toggleMonitoring.active .btn-icon {
+    content: "■";
+    transform: rotate(90deg);
+}
+
+#toggleMonitoring.active .btn-text::before {
+    content: "Stop ";
+}
+
+#toggleMonitoring.active .btn-text {
+    content: "Monitoring";
+}
+
+/* Disable refresh when not monitoring */
+#refreshMonitor:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Visual feedback for monitoring state */
+.monitor-header.monitoring::after {
+    content: "● LIVE";
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    color: var(--success-color);
+    font-size: 0.75rem;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}

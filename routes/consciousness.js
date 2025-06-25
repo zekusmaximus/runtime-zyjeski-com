@@ -5,13 +5,33 @@ import { validateConsciousnessData } from '../lib/validateConsciousness.js';
 
 const router = express.Router();
 
-// Ensure engine is initialized before handling requests
+// Track initialization state
+let engineInitialized = false;
+let initializationPromise = null;
+
+// Ensure engine is initialized only once
 async function ensureEngineInitialized() {
+  // If already initialized, return immediately
+  if (engineInitialized) {
+    return;
+  }
+
+  // If initialization is in progress, wait for it
+  if (initializationPromise) {
+    await initializationPromise;
+    return;
+  }
+
+  // Start initialization
   try {
-    await consciousnessEngine.initialize();
-    info('Consciousness engine initialized for API requests');
+    info('Starting consciousness engine initialization for API requests');
+    initializationPromise = consciousnessEngine.initialize();
+    await initializationPromise;
+    engineInitialized = true;
+    info('Consciousness engine initialized successfully');
   } catch (err) {
     error('Failed to initialize consciousness engine', { error: err.message });
+    initializationPromise = null; // Reset to allow retry
     throw err;
   }
 }
@@ -32,7 +52,12 @@ router.get('/:characterId/state', async (req, res) => {
   try {
     const characterId = req.params.characterId;
     await ensureEngineInitialized();
-    await consciousnessEngine.loadCharacter(characterId);
+    
+    // Check if character is already loaded to avoid reloading
+    const loadedCharacters = consciousnessEngine.instances || new Map();
+    if (!loadedCharacters.has(characterId)) {
+      await consciousnessEngine.loadCharacter(characterId);
+    }
     
     // Get the base state
     const state = await consciousnessEngine.getState(characterId);
@@ -86,8 +111,6 @@ router.get('/:characterId/state', async (req, res) => {
     };
     completeState = { ...requiredDefaults, ...completeState };
 
-    // DEBUG: Log the full object being validated
-    info('DEBUG: About to validate completeState', JSON.stringify(completeState, null, 2));
     // Validate against schema before sending
     if (!validateConsciousnessData(completeState)) {
       error('Consciousness state failed schema validation', { characterId, consciousness: completeState });
@@ -118,7 +141,13 @@ router.post('/:characterId/update', async (req, res) => {
     const characterId = req.params.characterId;
     const updates = req.body;
     await ensureEngineInitialized();
-    await consciousnessEngine.loadCharacter(characterId);
+    
+    // Check if character is already loaded
+    const loadedCharacters = consciousnessEngine.instances || new Map();
+    if (!loadedCharacters.has(characterId)) {
+      await consciousnessEngine.loadCharacter(characterId);
+    }
+    
     const newState = await consciousnessEngine.updateState(characterId, updates);
     
     // Apply the same normalization to the updated state
@@ -137,48 +166,6 @@ router.post('/:characterId/update', async (req, res) => {
   } catch (err) {
     error('Error updating consciousness state:', { error: err.message, characterId });
     res.status(500).json({ error: 'Failed to update consciousness state' });
-  }
-});
-
-// Get process list
-router.get('/:characterId/processes', async (req, res) => {
-  try {
-    const characterId = req.params.characterId;
-    await ensureEngineInitialized();
-    await consciousnessEngine.loadCharacter(characterId);
-    const processes = await consciousnessEngine.getProcesses(characterId);
-    res.json(processes);
-  } catch (err) {
-    error('Error getting processes:', { error: err.message, characterId });
-    res.status(500).json({ error: 'Failed to get processes' });
-  }
-});
-
-// Get memory allocation
-router.get('/:characterId/memory', async (req, res) => {
-  try {
-    const characterId = req.params.characterId;
-    await ensureEngineInitialized();
-    await consciousnessEngine.loadCharacter(characterId);
-    const memory = await consciousnessEngine.getMemory(characterId);
-    res.json(memory);
-  } catch (err) {
-    error('Error getting memory:', { error: err.message, characterId });
-    res.status(500).json({ error: 'Failed to get memory allocation' });
-  }
-});
-
-// Get system errors
-router.get('/:characterId/errors', async (req, res) => {
-  try {
-    const characterId = req.params.characterId;
-    await ensureEngineInitialized();
-    await consciousnessEngine.loadCharacter(characterId);
-    const errors = await consciousnessEngine.getErrors(characterId);
-    res.json(errors);
-  } catch (err) {
-    error('Error getting system errors:', { error: err.message, characterId });
-    res.status(500).json({ error: 'Failed to get system errors' });
   }
 });
 

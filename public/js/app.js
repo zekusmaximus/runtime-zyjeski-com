@@ -229,8 +229,8 @@ class App {
       if (window.consciousness) {
         console.log('[APP] Loading character into consciousness manager');
         window.consciousness.loadCharacter(character);
-        // Start monitoring only after character is loaded, as a user-driven action
-        window.consciousness.userStartMonitoring();
+        // Monitoring should be started explicitly by user action (e.g., clicking "Start Monitoring" button)
+        // NOT automatically when selecting a character
       }
       
       this.hideLoading();
