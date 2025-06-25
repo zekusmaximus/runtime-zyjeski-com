@@ -68,9 +68,7 @@ class App {
         }
         break;
       case 'monitor':
-        if (window.monitor && this.currentCharacter) {
-          window.monitor.startMonitoring();
-        }
+        // Monitoring should only start via explicit user action
         break;
       case 'debugger':
         if (window.debugger) {

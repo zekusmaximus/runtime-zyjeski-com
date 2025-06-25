@@ -59,7 +59,7 @@ class ConsciousnessManager {
     if (window.stateManager) {
       window.stateManager.set('monitoringActive', true);
     }
-    this.startRealTimeUpdates();
+    // No auto-update loop; server will send initial data
     if (window.socketClient && window.socketClient.isSocketConnected()) {
       window.socketClient.startMonitoring(this.currentCharacter.id);
     }
@@ -346,11 +346,8 @@ class ConsciousnessManager {
 }
 
   startRealTimeUpdates() {
-    if (this.updateInterval) return;
-    
-    this.updateInterval = setInterval(() => {
-      this.requestConsciousnessUpdate();
-    }, 2000);
+    // Auto-update loop disabled; updates occur on manual refresh
+    return;
   }
 
   stopRealTimeUpdates() {

@@ -365,11 +365,8 @@ getDebugState() {
     try {
       // Use WebSocket if connected, fallback to API
       if (window.socketClient && window.socketClient.isConnected) {
-        // Request fresh data via WebSocket using the correct method
         console.log('📡 MONITOR: Requesting data via WebSocket');
-        window.socketClient.emitToServer('get-system-resources');
-        window.socketClient.emitToServer('get-error-logs');
-        window.socketClient.emitToServer('get-memory-allocation');
+        window.socketClient.refreshMonitor();
         this.showStatus('Data refresh requested via WebSocket', 'success');
       } else {
         // Fallback to API call
