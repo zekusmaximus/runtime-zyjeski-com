@@ -12,6 +12,8 @@ export default class MonitorController {
   }
 
   init() {
+    console.log('[MONITOR CONTROLLER] Initializing monitor controller...');
+    
     if (window.socketClient) {
       this.socket = new MonitorSocket(window.socketClient, {
         onConsciousnessUpdate: (d) => this.handleUpdate(d),
@@ -24,20 +26,92 @@ export default class MonitorController {
       this.socket.bindEvents();
     }
     this.bindUIActions();
+    
+    // Initialize monitor in disconnected/empty state
+    this.showDisconnectedState();
+  }
+
+  displayCharacterData(characterData) {
+    if (!characterData) {
+      console.log('Monitor: No character data provided');
+      this.showDisconnectedState();
+      return;
+    }
+    
+    console.log('Monitor: Displaying character data for:', characterData.name);
+    console.log('Monitor: Character data:', characterData);
+    
+    // Extract consciousness data
+    const consciousness = characterData.consciousness || characterData;
+    
+    // Set the character in the dropdown
+    const select = document.getElementById('characterSelect');
+    if (select) {
+      select.value = characterData.id;
+      this.currentCharacter = characterData.id;
+      console.log('Monitor: Set character selection to:', characterData.id);
+    }
+    
+    console.log('Monitor: Consciousness data:', consciousness);
+    
+    // Display processes
+    if (consciousness.processes) {
+      console.log('Monitor: Found processes:', consciousness.processes);
+      this.handleUpdate({ processes: consciousness.processes });
+    }
+    
+    // Display system resources - use 'resources' not 'systemResources'
+    if (consciousness.resources) {
+      console.log('Monitor: Found resources:', consciousness.resources);
+      this.handleResources({ resources: consciousness.resources });
+    } else {
+      console.log('Monitor: No resources found');
+    }
+    
+    // Display memory data - extract from resources.memory since consciousness.memory doesn't exist
+    if (consciousness.memory) {
+      console.log('Monitor: Found consciousness.memory:', consciousness.memory);
+      this.handleMemory({ memoryData: consciousness.memory });
+    } else if (consciousness.resources && consciousness.resources.memory) {
+      console.log('Monitor: Found memory in resources:', consciousness.resources.memory);
+      console.log('Monitor: Calling handleMemory with resources.memory');
+      this.handleMemory({ memoryData: consciousness.resources.memory });
+    } else {
+      console.log('Monitor: No memory found anywhere');
+      console.log('Monitor: consciousness.resources exists:', !!consciousness.resources);
+      console.log('Monitor: consciousness.resources.memory exists:', !!(consciousness.resources && consciousness.resources.memory));
+      // Force display empty memory panel
+      this.handleMemory({ memoryData: null });
+    }
+    
+    // Display any errors
+    if (consciousness.system_errors) {
+      console.log('Monitor: Found system errors:', consciousness.system_errors);
+      this.handleErrors({ errors: consciousness.system_errors });
+    } else {
+      console.log('Monitor: No system_errors found');
+    }
+    
+    console.log('Monitor loaded character data:', characterData.name);
   }
 
   bindUIActions() {
     if (this.ui.refreshBtn) {
       this.ui.refreshBtn.addEventListener('click', () => this.refresh());
     }
+    
+    // Hide the monitoring toggle button since we don't need active monitoring
     if (this.ui.toggleBtn) {
-      this.ui.toggleBtn.addEventListener('click', () => this.toggleMonitoring());
+      this.ui.toggleBtn.style.display = 'none';
     }
+    
     const select = document.getElementById('characterSelect');
     if (select) {
       select.addEventListener('change', (e) => {
         this.currentCharacter = e.target.value || null;
-        this.ui.toggleBtn.disabled = !this.currentCharacter;
+        if (this.currentCharacter) {
+          this.loadCharacterFromAPI(this.currentCharacter);
+        }
       });
     }
     const clearBtn = document.getElementById('clearErrors');
@@ -70,7 +144,29 @@ export default class MonitorController {
   }
 
   refresh() {
-    this.socket?.refresh();
+    // Refresh by reloading current character data
+    if (this.currentCharacter) {
+      this.loadCharacterFromAPI(this.currentCharacter);
+    } else if (window.app && window.app.currentCharacter) {
+      this.displayCharacterData(window.app.currentCharacter);
+    } else {
+      console.log('No character selected to refresh');
+    }
+  }
+
+  async loadCharacterFromAPI(characterId) {
+    try {
+      const response = await fetch(`/api/consciousness/${characterId}/state`);
+      if (response.ok) {
+        const characterData = await response.json();
+        this.displayCharacterData(characterData);
+        console.log('Monitor refreshed with latest data for:', characterData.name);
+      } else {
+        console.error('Failed to refresh character data:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error refreshing character data:', error);
+    }
   }
 
   handleUpdate(data) {
@@ -95,7 +191,60 @@ export default class MonitorController {
   }
 
   handleMemory(data) {
+    console.log('Monitor: handleMemory called with:', data);
     this.state.update({ memory: data.memoryData });
+    console.log('Monitor: State updated, calling UI updateMemory with:', this.state.memory);
     this.ui.updateMemory(this.state.memory);
+    console.log('Monitor: UI updateMemory completed');
+  }
+
+  showDisconnectedState() {
+    console.log('[MONITOR CONTROLLER] Showing disconnected state');
+    
+    // Clear character selection
+    const select = document.getElementById('characterSelect');
+    if (select) {
+      select.value = '';
+    }
+    
+    // Show disconnected message in all panels
+    this.ui.updateProcesses([]);
+    this.ui.updateResources(null);
+    this.ui.updateMemory(null);
+    this.ui.updateErrors([]);
+    
+    // Update connection status
+    const connectionStatus = document.getElementById('connectionStatus');
+    if (connectionStatus) {
+      connectionStatus.textContent = 'No Consciousness Connected';
+      connectionStatus.className = 'connection-status disconnected';
+    }
+    
+    // Disable controls
+    const refreshBtn = document.getElementById('refreshMonitor');
+    const toggleBtn = document.getElementById('toggleMonitoring');
+    if (refreshBtn) refreshBtn.disabled = true;
+    if (toggleBtn) toggleBtn.disabled = true;
+    
+    this.currentCharacter = null;
+    console.log('[MONITOR CONTROLLER] Monitor reset to disconnected state');
+  }
+
+  connectToCharacter(characterData) {
+    console.log('[MONITOR CONTROLLER] Connecting to character:', characterData.name);
+    this.displayCharacterData(characterData);
+    
+    // Enable controls
+    const refreshBtn = document.getElementById('refreshMonitor');
+    const toggleBtn = document.getElementById('toggleMonitoring');
+    if (refreshBtn) refreshBtn.disabled = false;
+    if (toggleBtn) toggleBtn.disabled = false;
+    
+    // Update connection status
+    const connectionStatus = document.getElementById('connectionStatus');
+    if (connectionStatus) {
+      connectionStatus.textContent = `Connected to ${characterData.name}`;
+      connectionStatus.className = 'connection-status connected';
+    }
   }
 }

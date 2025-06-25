@@ -459,6 +459,149 @@
   padding: 1rem;
 }
 
+/* Monitor UI Enhancements */
+.resource-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.resource-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resource-item label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.meter {
+  position: relative;
+  background-color: var(--bg-tertiary);
+  border-radius: 4px;
+  height: 20px;
+  overflow: hidden;
+}
+
+.meter-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50 0%, #FF9800 70%, #F44336 100%);
+  transition: width 0.3s ease;
+}
+
+.meter span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-shadow: 0 0 3px rgba(0,0,0,0.5);
+}
+
+.process-list {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.process-list th,
+.process-list td {
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.process-list th {
+  background-color: var(--bg-tertiary);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.status {
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status.running {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.status.paused {
+  background-color: #FF9800;
+  color: white;
+}
+
+.status.stopped {
+  background-color: #F44336;
+  color: white;
+}
+
+.status.unknown {
+  background-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+.memory-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.memory-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+.memory-item label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.memory-item span {
+  color: var(--text-secondary);
+  font-family: 'Courier New', monospace;
+}
+
+.error-entry {
+  display: flex;
+  gap: 1rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  align-items: flex-start;
+}
+
+.error-time {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-family: 'Courier New', monospace;
+  min-width: 80px;
+}
+
+.error-message {
+  color: #F44336;
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 2rem;
+}
+
 /* Responsive Debugger */
 @media (max-width: 1024px) {
   .debugger-layout {

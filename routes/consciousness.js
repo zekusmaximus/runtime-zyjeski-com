@@ -130,6 +130,7 @@ router.get('/:characterId/state', async (req, res) => {
     }
     res.json(completeState);
   } catch (err) {
+    const characterId = req.params.characterId;
     error('Error getting consciousness state:', { error: err.message, characterId });
     res.status(500).json({ error: 'Failed to get consciousness state' });
   }

@@ -116,28 +116,28 @@ class App {
           import('./socket-client.js').then(module => {
             window.socketClient = new module.default();
             this.setupSocketConnection();
-            // Initialize monitor after socket client is available
-            import('./monitor.js').then(monitorModule => {
-              window.monitor = new monitorModule.default();
-              // Now continue with character selection
-              const characterCard = e.target.closest('.character-card');
-              const characterId = characterCard.dataset.characterId;
-              // Prevent double-clicks and concurrent loads
-              if (this.isLoadingCharacter) {
-                logger.debug('Character loading in progress, ignoring duplicate request');
-                this.isInitializingSocketClient = false;
-                return;
-              }
-              // Ensure consciousness manager is initialized on first user action
-              if (!window.consciousness) {
-                window.initConsciousnessManager();
-              }
-              this.selectCharacter(characterId);
+            // Monitor is already initialized by monitor.js, no need to create a new one
+            // Just ensure it has the socket client available
+            if (window.monitor && window.monitor.socket === null) {
+              // Re-initialize the socket connection for the existing monitor
+              window.monitor.init();
+            }
+            
+            // Now continue with character selection
+            const characterCard = e.target.closest('.character-card');
+            const characterId = characterCard.dataset.characterId;
+            // Prevent double-clicks and concurrent loads
+            if (this.isLoadingCharacter) {
+              logger.debug('Character loading in progress, ignoring duplicate request');
               this.isInitializingSocketClient = false;
-            }).catch(err => {
-              logger.error('Failed to load monitor module', err);
-              this.isInitializingSocketClient = false;
-            });
+              return;
+            }
+            // Ensure consciousness manager is initialized on first user action
+            if (!window.consciousness) {
+              window.initConsciousnessManager();
+            }
+            this.selectCharacter(characterId);
+            this.isInitializingSocketClient = false;
           }).catch(err => {
             logger.error('Failed to load socket-client module', err);
             this.isInitializingSocketClient = false;
@@ -227,8 +227,11 @@ class App {
       if (window.consciousness) {
         console.log('[APP] Loading character into consciousness manager');
         window.consciousness.loadCharacter(character);
-        // Monitoring should be started explicitly by user action (e.g., clicking "Start Monitoring" button)
-        // NOT automatically when selecting a character
+      }
+      
+      // Connect monitor to the loaded character data
+      if (window.monitor) {
+        window.monitor.connectToCharacter(character);
       }
       
       this.hideLoading();

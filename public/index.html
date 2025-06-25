@@ -154,8 +154,22 @@
                 <div class="monitor-header">
                     <h2>Consciousness Monitor</h2>
                     <div class="monitor-controls">
-                        <button class="btn btn-small" id="refreshMonitor">Refresh</button>
-                        <button class="btn btn-small" id="pauseMonitor">Pause</button>
+                        <div class="connection-status disconnected" id="connectionStatus">No Consciousness Connected</div>
+                        <select id="characterSelect" class="character-selector">
+                            <option value="">Select Character</option>
+                            <option value="alexander-kane">Alexander Kane</option>
+                        </select>
+                        
+                        <!-- Updated monitoring toggle button -->
+                        <button class="btn btn-primary" id="toggleMonitoring" disabled style="display: none;">
+                            <span class="btn-icon">▶</span>
+                            <span class="btn-text">Start Monitoring</span>
+                        </button>
+                        
+                        <button class="btn btn-small" id="refreshMonitor" disabled>
+                            <span class="btn-icon">↻</span>
+                            Refresh
+                        </button>
                     </div>
                 </div>
                 <div class="monitor-grid">
@@ -163,24 +177,31 @@
                         <h3>System Resources</h3>
                         <div class="resource-meters" id="resourceMeters">
                             <!-- Resource meters will be populated dynamically -->
+                            <div class="empty-state">No consciousness connected</div>
+                            <div class="empty-state-hint">Select a character profile to begin monitoring</div>
                         </div>
                     </div>
                     <div class="monitor-panel">
                         <h3>Active Processes</h3>
                         <div class="process-table" id="processTable">
                             <!-- Process table will be populated dynamically -->
+                            <div class="empty-state">No consciousness connected</div>
+                            <div class="empty-state-hint">Select a character profile to view active processes</div>
                         </div>
                     </div>
                     <div class="monitor-panel">
                         <h3>Memory Allocation</h3>
                         <div class="memory-visualization" id="memoryVisualization">
                             <!-- Memory visualization will be rendered here -->
+                            <div class="empty-state">No consciousness connected</div>
+                            <div class="empty-state-hint">Select a character profile to view memory allocation</div>
                         </div>
                     </div>
                     <div class="monitor-panel">
-                        <h3>Error Log</h3>
+                        <h3>Error Log <button id="clearErrors" class="btn btn-small">Clear</button></h3>
                         <div class="error-log" id="errorLog">
                             <!-- Error log will be populated dynamically -->
+                            <div class="empty-state">No consciousness connected</div>
                         </div>
                     </div>
                 </div>
