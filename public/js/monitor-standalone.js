@@ -1,4 +1,4 @@
-// Standalone Monitor for System Resources
+// Standalone Monitor for System Resources - GROUND STATE COMPLIANT
 class StandaloneMonitor {
   constructor() {
     this.socket = null;
@@ -11,8 +11,15 @@ class StandaloneMonitor {
   }
 
   init() {
-    // Initialize socket connection
-    this.socket = io();
+    console.log('[Ground State] Initializing standalone monitor (no auto-connect)');
+    
+    // Use shared Ground State compliant socket client - NO auto-connection
+    this.socket = window.socketClient;
+    
+    if (!this.socket) {
+      console.error('[Ground State] Shared socket client not available');
+      return;
+    }
     
     // Setup UI elements
     this.setupElements();
@@ -22,6 +29,8 @@ class StandaloneMonitor {
     
     // Setup event listeners
     this.setupEventListeners();
+    
+    console.log('[Ground State] Standalone monitor initialized (user action required for connection)');
   }
 
   setupElements() {
@@ -75,60 +84,66 @@ class StandaloneMonitor {
   }
 
   setupSocketListeners() {
+    if (!this.socket) {
+      console.error('[Ground State] No socket client available for listeners');
+      return;
+    }
+    
+    // Use the shared socket client's event system
     // Connection events
-    this.socket.on('connect', () => {
-      console.log('Connected to server');
+    this.socket.onConnect(() => {
+      console.log('[Ground State] Standalone monitor: Connected to server');
       this.isConnected = true;
       this.updateConnectionStatus(true);
     });
 
-    this.socket.on('disconnect', () => {
-      console.log('Disconnected from server');
+    this.socket.onDisconnect(() => {
+      console.log('[Ground State] Standalone monitor: Disconnected from server');
       this.isConnected = false;
       this.updateConnectionStatus(false);
     });
 
     // Monitoring events
-    this.socket.on('monitoring-started', (data) => {
-      console.log('Monitoring started:', data);
+    this.socket.onMonitoringStarted((data) => {
+      console.log('[Ground State] Standalone monitor: Monitoring started:', data);
       this.isMonitoring = true;
       this.updateButtonStates();
       // Load initial data once, then only update on events
       this.requestAllData();
     });
 
-    this.socket.on('monitoring-stopped', (data) => {
-      console.log('Monitoring stopped:', data);
+    this.socket.onMonitoringStopped((data) => {
+      console.log('[Ground State] Standalone monitor: Monitoring stopped:', data);
       this.isMonitoring = false;
       this.updateButtonStates();
       this.stopDataPolling();
     });
 
     // Data events
-    this.socket.on('system-resources', (data) => {
-      console.log('System resources:', data);
+    this.socket.onSystemResources((data) => {
+      console.log('[Ground State] Standalone monitor: System resources:', data);
       this.updateResourceDisplay(data.resources);
     });
 
-    this.socket.on('error-logs', (data) => {
-      console.log('Error logs:', data);
+    this.socket.onErrorLogs((data) => {
+      console.log('[Ground State] Standalone monitor: Error logs:', data);
       this.updateErrorDisplay(data.errors);
     });
 
-    this.socket.on('memory-allocation', (data) => {
-      console.log('Memory allocation:', data);
+    this.socket.onMemoryAllocation((data) => {
+      console.log('[Ground State] Standalone monitor: Memory allocation:', data);
       this.updateMemoryDisplay(data.memoryData);
     });
 
     // Consciousness updates
-    this.socket.on('consciousness-update', (data) => {
-      console.log('Consciousness update:', data);
+    this.socket.onConsciousnessUpdate((data) => {
+      console.log('[Ground State] Standalone monitor: Consciousness update:', data);
       this.handleConsciousnessUpdate(data);
     });
 
     // Error handling
-    this.socket.on('error', (error) => {
-      console.error('Socket error:', error);
+    this.socket.onError((error) => {
+      console.error('[Ground State] Standalone monitor: Socket error:', error);
       this.showError(error.message || 'Connection error');
     });
   }
@@ -165,14 +180,30 @@ class StandaloneMonitor {
     const characterId = this.characterSelect.value;
     if (!characterId) return;
 
-    this.currentCharacter = characterId;
-    this.socket.emit('start-monitoring', { characterId });
+    console.log('[Ground State] User initiated monitoring for character:', characterId);
+    
+    // Ensure socket is connected before starting monitoring (user action required)
+    if (!this.socket.isConnected()) {
+      console.log('[Ground State] Connecting socket for user monitoring request');
+      this.socket.connect().then(() => {
+        console.log('[Ground State] Connected, starting monitoring');
+        this.currentCharacter = characterId;
+        this.socket.emitToServer('start-monitoring', { characterId });
+      }).catch(err => {
+        console.error('[Ground State] Connection failed:', err);
+      });
+    } else {
+      console.log('[Ground State] Socket already connected, starting monitoring');
+      this.currentCharacter = characterId;
+      this.socket.emitToServer('start-monitoring', { characterId });
+    }
   }
 
   stopMonitoring() {
     if (!this.currentCharacter) return;
 
-    this.socket.emit('stop-monitoring', { characterId: this.currentCharacter });
+    console.log('[Ground State] User stopped monitoring for character:', this.currentCharacter);
+    this.socket.emitToServer('stop-monitoring', { characterId: this.currentCharacter });
     this.currentCharacter = null;
   }
 
@@ -190,10 +221,10 @@ class StandaloneMonitor {
   requestAllData() {
     if (!this.isMonitoring) return;
     
-    console.log('Requesting initial monitor data...');
-    this.socket.emit('get-system-resources');
-    this.socket.emit('get-error-logs');
-    this.socket.emit('get-memory-allocation');
+    console.log('[Ground State] Requesting initial monitor data...');
+    this.socket.emitToServer('get-system-resources');
+    this.socket.emitToServer('get-error-logs');
+    this.socket.emitToServer('get-memory-allocation');
   }
 
   updateConnectionStatus(connected) {

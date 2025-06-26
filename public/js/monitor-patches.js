@@ -168,15 +168,23 @@
       };
     };
 
-    // Patch 5: Force reconnection method
+    // Patch 5: USER ACTION - Force reconnection method
     window.monitor.forceReconnection = function() {
-      console.log('🔄 Forcing socket reconnection...');
+      console.log('🔄 USER ACTION: Forcing socket reconnection...');
       
-      if (window.socketClient) {
+      if (window.socketClient && window.socketClient.isUserConnected) {
+        // Only reconnect if user has an active session
+        const currentCharacter = window.socketClient.currentCharacter;
         window.socketClient.socket.disconnect();
         setTimeout(() => {
           window.socketClient.socket.connect();
+          // Restore monitoring session
+          if (currentCharacter) {
+            window.socketClient.socket.emit('start-monitoring', { characterId: currentCharacter });
+          }
         }, 1000);
+      } else {
+        console.log('GROUND STATE: No active user session - reconnection not needed');
       }
     };
 

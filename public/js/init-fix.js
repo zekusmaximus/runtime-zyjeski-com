@@ -99,9 +99,9 @@ function createFallbackMonitor() {
     refreshData() {
       console.log('📊 Fallback monitor: refresh data');
       if (window.socketClient?.isConnected) {
-        window.socketClient.emit('get-system-resources');
-        window.socketClient.emit('get-error-logs');
-        window.socketClient.emit('get-memory-allocation');
+        window.socketClient.emitToServer('get-system-resources');
+        window.socketClient.emitToServer('get-error-logs');
+        window.socketClient.emitToServer('get-memory-allocation');
       }
     },
     

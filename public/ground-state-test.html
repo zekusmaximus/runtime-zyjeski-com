@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ground State Compliance Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            padding: 20px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 4px;
+        }
+        .pass {
+            border-color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+        .fail {
+            border-color: #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff0000;
+        }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ground State Compliance Test</h1>
+    <p>Testing that no socket connections occur without explicit user action...</p>
+    
+    <div id="results"></div>
+    
+    <button id="runTests" style="margin-top: 20px; padding: 10px; background: #333; color: #00ff00; border: 1px solid #00ff00;">
+        Run Compliance Tests
+    </button>
+    
+    <button id="connectTest" style="margin-top: 20px; padding: 10px; background: #333; color: #0088ff; border: 1px solid #0088ff;">
+        Test Manual Connection (User Action)
+    </button>
+
+    <!-- Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- Ground State Socket Client -->
+    <script type="module" src="/js/socket-client.js"></script>
+    
+    <!-- Ground State Validator -->
+    <script type="module" src="/js/ground-state-validator.js"></script>
+    
+    <!-- Test Script -->
+    <script type="module">
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(testName, passed, message) {
+            const div = document.createElement('div');
+            div.className = `test-result ${passed ? 'pass' : 'fail'}`;
+            div.innerHTML = `
+                <strong>${testName}:</strong> ${passed ? '✅ PASS' : '❌ FAIL'}<br>
+                ${message}
+            `;
+            resultsDiv.appendChild(div);
+        }
+        
+        function runComplianceTests() {
+            resultsDiv.innerHTML = '<h2>Test Results:</h2>';
+            
+            // Test 1: Socket client exists but is not auto-connected
+            setTimeout(() => {
+                if (window.socketClient) {
+                    addResult('Socket Client Available', true, 'Socket client is globally available');
+                    
+                    if (window.socketClient.isConnected && window.socketClient.isConnected()) {
+                        addResult('No Auto-Connection', false, 'VIOLATION: Socket is auto-connected!');
+                    } else {
+                        addResult('No Auto-Connection', true, 'Socket is NOT auto-connected (Ground State compliant)');
+                    }
+                    
+                    // Test connection methods exist
+                    if (typeof window.socketClient.connect === 'function') {
+                        addResult('Manual Connection Available', true, 'Manual connection method exists');
+                    } else {
+                        addResult('Manual Connection Available', false, 'Manual connection method missing');
+                    }
+                    
+                    // Test emitToServer method exists
+                    if (typeof window.socketClient.emitToServer === 'function') {
+                        addResult('Proper API Available', true, 'emitToServer method exists');
+                    } else {
+                        addResult('Proper API Available', false, 'emitToServer method missing');
+                    }
+                } else {
+                    addResult('Socket Client Available', false, 'Socket client not found globally');
+                }
+                
+                // Test for unexpected socket instances
+                let unexpectedSockets = 0;
+                if (window.io) {
+                    // This is a basic check - count any connected sockets
+                    if (window.socketClient?.socket?.connected) {
+                        unexpectedSockets++;
+                    }
+                }
+                
+                if (unexpectedSockets === 0) {
+                    addResult('No Unexpected Connections', true, 'No auto-connected sockets detected');
+                } else {
+                    addResult('No Unexpected Connections', false, `Found ${unexpectedSockets} auto-connected sockets`);
+                }
+                
+                console.log('[Ground State Test] Compliance tests completed');
+            }, 1000);
+        }
+        
+        function testManualConnection() {
+            if (window.socketClient) {
+                console.log('[Ground State Test] Testing manual connection...');
+                
+                window.socketClient.connect().then(() => {
+                    addResult('Manual Connection Test', true, 'Successfully connected via user action');
+                    console.log('[Ground State Test] Manual connection successful');
+                    
+                    // Disconnect after test
+                    setTimeout(() => {
+                        if (window.socketClient.disconnect) {
+                            window.socketClient.disconnect();
+                            console.log('[Ground State Test] Disconnected after manual test');
+                        }
+                    }, 2000);
+                }).catch(error => {
+                    addResult('Manual Connection Test', false, `Connection failed: ${error.message}`);
+                    console.error('[Ground State Test] Manual connection failed:', error);
+                });
+            } else {
+                addResult('Manual Connection Test', false, 'Socket client not available');
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('runTests').addEventListener('click', runComplianceTests);
+        document.getElementById('connectTest').addEventListener('click', testManualConnection);
+        
+        // Auto-run basic tests on load
+        window.addEventListener('load', () => {
+            setTimeout(runComplianceTests, 1500);
+        });
+    </script>
+</body>
+</html>

@@ -468,7 +468,7 @@ class Terminal {
     this.addOutput('EMERGENCY STOP INITIATED', 'error');
     this.addOutput('Stopping all consciousness processes...', 'warning');
     
-    window.socketClient.emit('emergency-stop', {
+    window.socketClient.emitToServer('emergency-stop', {
       characterId: this.currentCharacter.id
     });
   }

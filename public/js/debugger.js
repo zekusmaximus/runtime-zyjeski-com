@@ -365,7 +365,7 @@ class DebuggerInterface {
 
   sendDebugCommand(command, args = {}) {
     if (window.socketClient && this.currentCharacter) {
-      window.socketClient.emit('debug-command', {
+      window.socketClient.emitToServer('debug-command', {
         characterId: this.currentCharacter.id,
         command: command,
         args: args

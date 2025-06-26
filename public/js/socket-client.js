@@ -5,6 +5,8 @@ class SocketClient {
   constructor() {
     this.socket = null;
     this.isConnected = false;
+    this.isUserConnected = false;
+    this.currentCharacter = null;
     this.eventHandlers = new Map();
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
@@ -21,19 +23,22 @@ class SocketClient {
       'error'
     ]);
     
-    this.initialize();
+    // GROUND STATE FIX: Only initialize socket object, don't auto-connect
+    this.initializeSocket();
   }
 
-  initialize() {
+  initializeSocket() {
     try {
+      // GROUND STATE COMPLIANCE: Create socket with autoConnect: false
       this.socket = io({
+        autoConnect: false,
         transports: ['websocket', 'polling'],
         reconnection: false, // We'll handle this manually
         timeout: 5000
       });
       
       this.setupSocketEventListeners();
-      console.log('Socket client initialized');
+      console.log('Socket client initialized (not connected) - waiting for user action');
     } catch (error) {
       console.error('Failed to initialize socket client:', error);
     }
@@ -41,7 +46,8 @@ class SocketClient {
 
   setupSocketEventListeners() {
     this.socket.on('connect', () => {
-      console.log('Connected to server');
+      console.log('🔌 SOCKET: Connected to server');
+      console.trace('Connection trace:'); // This will show us what called connect()
       this.isConnected = true;
       this.reconnectAttempts = 0;
       this.emit('connected');
@@ -156,18 +162,104 @@ class SocketClient {
     console.log(`User interaction: ${action}`);
   }
 
+  // GROUND STATE COMPLIANCE: Manual connection method for testing and explicit user actions
+  connect() {
+    return new Promise((resolve, reject) => {
+      if (this.socket.connected) {
+        console.log('Socket already connected');
+        resolve(true);
+        return;
+      }
+
+      console.log('USER ACTION: Manual socket connection requested');
+      this.recordUserInteraction('manual-connect');
+
+      const connectionTimeout = setTimeout(() => {
+        reject(new Error('Connection timeout'));
+      }, 5000);
+
+      const handleConnect = () => {
+        clearTimeout(connectionTimeout);
+        this.socket.off('connect', handleConnect);
+        this.socket.off('connect_error', handleError);
+        console.log('Manual connection successful');
+        resolve(true);
+      };
+
+      const handleError = (error) => {
+        clearTimeout(connectionTimeout);
+        this.socket.off('connect', handleConnect);
+        this.socket.off('connect_error', handleError);
+        console.error('Manual connection failed:', error);
+        reject(error);
+      };
+
+      this.socket.on('connect', handleConnect);
+      this.socket.on('connect_error', handleError);
+      
+      this.socket.connect();
+    });
+  }
+
+  // Manual disconnect method
+  disconnect() {
+    if (this.socket && this.socket.connected) {
+      console.log('USER ACTION: Manual socket disconnection requested');
+      this.recordUserInteraction('manual-disconnect');
+      this.isUserConnected = false;
+      this.currentCharacter = null;
+      this.socket.disconnect();
+      return true;
+    }
+    return false;
+  }
+
   // Character monitoring methods
   startMonitoring(characterId) {
-    if (!this.isConnected) {
-      console.error('Socket not connected');
-      return false;
+    // USER ACTION: Connect socket if not already connected
+    if (!this.socket.connected) {
+      console.log('USER ACTION: Connecting to server for monitoring session');
+      this.socket.connect();
+      
+      // Wait for connection to establish before proceeding
+      return new Promise((resolve, reject) => {
+        const connectionTimeout = setTimeout(() => {
+          reject(new Error('Connection timeout'));
+        }, 5000);
+        
+        const handleConnect = () => {
+          clearTimeout(connectionTimeout);
+          this.socket.off('connect', handleConnect);
+          this.socket.off('connect_error', handleError);
+          this.proceedWithMonitoring(characterId);
+          resolve(true);
+        };
+        
+        const handleError = (error) => {
+          clearTimeout(connectionTimeout);
+          this.socket.off('connect', handleConnect);
+          this.socket.off('connect_error', handleError);
+          console.error('Socket connection failed:', error);
+          reject(error);
+        };
+        
+        this.socket.on('connect', handleConnect);
+        this.socket.on('connect_error', handleError);
+      });
+    } else {
+      // Already connected, proceed immediately
+      this.proceedWithMonitoring(characterId);
+      return Promise.resolve(true);
     }
-
-    console.log(`Starting monitoring for character: ${characterId}`);
+  }
+  
+  proceedWithMonitoring(characterId) {
+    console.log(`USER ACTION: Starting monitoring for character: ${characterId}`);
     this.recordUserInteraction('start-monitoring');
+    this.isUserConnected = true;
+    this.currentCharacter = characterId;
     
     this.socket.emit('start-monitoring', { characterId });
-    return true;
   }
 
   stopMonitoring(characterId) {
@@ -176,10 +268,16 @@ class SocketClient {
       return false;
     }
 
-    console.log(`Stopping monitoring for character: ${characterId}`);
+    console.log(`USER ACTION: Stopping monitoring for character: ${characterId}`);
     this.recordUserInteraction('stop-monitoring');
     
     this.socket.emit('stop-monitoring', { characterId });
+    
+    // Update user session state but leave connection for user to manage
+    this.isUserConnected = false;
+    this.currentCharacter = null;
+    console.log('Monitoring stopped, connection remains for user to manually disconnect if desired');
+    
     return true;
   }
 
@@ -202,14 +300,37 @@ class SocketClient {
     return true;
   }
 
+  // GROUND STATE: Emit to server (public method for monitor compatibility)
+  emit(event, data) {
+    if (this.eventHandlers.has(event)) {
+      // This is an internal event emission to our handlers
+      this.eventHandlers.get(event).forEach(handler => {
+        try {
+          handler(data);
+        } catch (error) {
+          console.error(`Error in event handler for ${event}:`, error);
+        }
+      });
+    } else if (this.socket) {
+      // This is an emission to the server
+      return this.emitToServer(event, data);
+    }
+    return false;
+  }
+
   // Debug commands
   executeDebugCommand(characterId, command, args = {}) {
+    if (!this.isUserConnected) {
+      console.error('No active monitoring session - start monitoring first');
+      return false;
+    }
+    
     if (!this.isConnected) {
       console.error('Socket not connected');
       return false;
     }
 
-    console.log(`Executing debug command: ${command} for ${characterId}`);
+    console.log(`USER ACTION: Executing debug command: ${command} for ${characterId}`);
     this.recordUserInteraction(`debug-command-${command}`);
     
     this.socket.emit('debug-command', {
@@ -228,12 +349,17 @@ class SocketClient {
 
   // Player interventions
   applyPlayerIntervention(characterId, intervention) {
+    if (!this.isUserConnected) {
+      console.error('No active monitoring session - start monitoring first');
+      return false;
+    }
+    
     if (!this.isConnected) {
       console.error('Socket not connected');
       return false;
     }
 
-    console.log(`Applying intervention: ${intervention.type} for ${characterId}`);
+    console.log(`USER ACTION: Applying intervention: ${intervention.type} for ${characterId}`);
     this.recordUserInteraction(`intervention-${intervention.type}`);
     
     this.socket.emit('player-intervention', {
@@ -299,6 +425,8 @@ class SocketClient {
   getConnectionInfo() {
     return {
       isConnected: this.isConnected,
+      isUserConnected: this.isUserConnected,
+      currentCharacter: this.currentCharacter,
       socketId: this.getSocketId(),
       reconnectAttempts: this.reconnectAttempts,
       lastUserInteraction: this.lastUserInteraction,
@@ -311,8 +439,11 @@ class SocketClient {
 // Create and initialize socket client instance
 const socketClient = new SocketClient();
 
-// Make available globally
+// Make available globally IMMEDIATELY
 window.socketClient = socketClient;
 
 // Export for module usage
 export default SocketClient;
+
+// Also export the instance
+export { socketClient };

@@ -13,9 +13,13 @@ class MonitorController {
   }
 
   initialize() {
+    // GROUND STATE: Only initialize UI, don't auto-connect or auto-request data
     this.ui.initialize(this);
-    this.socket.connect();
-    this.socket.getCharacterList();
+    this.socket.connect(); // Connect to shared socket client (doesn't auto-connect to server)
+    
+    // GROUND STATE: Don't auto-request character list
+    // Characters will be requested when user action triggers it
+    console.log('Monitor controller initialized - waiting for user action');
   }
 
   handleSocketEvent(eventType, data) {
@@ -51,13 +55,23 @@ class MonitorController {
   connectToCharacter(character) {
     if (character && character.id) {
       this.ui.setSelectedCharacter(character.id);
-      this.startMonitoring(character.id);
+      return this.startMonitoring(character.id);
     }
+    return Promise.resolve(false);
   }
 
   startMonitoring(characterId) {
+    console.log('[Ground State] Monitor controller starting monitoring for:', characterId);
     this.state.setSelectedCharacter(characterId);
-    this.socket.startMonitoring(characterId);
+    
+    // Handle the promise returned by socket.startMonitoring
+    return this.socket.startMonitoring(characterId).then(() => {
+      console.log('[Ground State] Monitor successfully started for:', characterId);
+      return true;
+    }).catch(error => {
+      console.error('[Ground State] Failed to start monitoring:', error);
+      throw error;
+    });
   }
 
   stopMonitoring() {

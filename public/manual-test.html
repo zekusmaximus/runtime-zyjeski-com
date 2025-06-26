@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ground State Manual Test</title>
+    <style>
+        body { 
+            font-family: monospace; 
+            background: #000; 
+            color: #0f0; 
+            padding: 20px; 
+        }
+        button {
+            background: #333;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ground State Manual Test</h1>
+    <p>Open browser console to see test results.</p>
+    
+    <button onclick="runTest()">Run Ground State Test</button>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="/js/socket-client.js"></script>
+    
+    <script>
+        function runTest() {
+            // Wait for socket client to be ready
+            setTimeout(() => {
+                fetch('/manual-ground-state-test.js')
+                    .then(response => response.text())
+                    .then(code => {
+                        eval(code);
+                    });
+            }, 500);
+        }
+        
+        // Auto-run test after page loads
+        window.addEventListener('load', () => {
+            setTimeout(runTest, 1000);
+        });
+    </script>
+</body>
+</html>

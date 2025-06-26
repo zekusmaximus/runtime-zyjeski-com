@@ -32,13 +32,15 @@ class ConsciousnessManager {
     // Subscribe to state manager changes
     if (window.stateManager) {
       window.stateManager.subscribe('currentCharacter', (character) => {
-        // Only set current character, don't initialize or start monitoring here
+        // GROUND STATE: Only set current character, don't initialize or start monitoring here
         this.currentCharacter = character;
+        console.log('Character set in consciousness manager:', character?.name || 'none');
       });
 
-      // Remove auto-start logic from monitoringActive subscription
+      // GROUND STATE FIX: Remove auto-start logic from monitoringActive subscription
       window.stateManager.subscribe('monitoringActive', (active) => {
         this.isMonitoring = active;
+        console.log('Monitoring state changed:', active);
         // Do NOT auto-start or stop real-time updates here
         // Monitoring should only be started/stopped by explicit user action
       });
@@ -49,36 +51,57 @@ class ConsciousnessManager {
   userStartMonitoring() {
     if (!this.currentCharacter) {
       console.warn('No character selected for monitoring');
-      return;
+      return false;
     }
     if (this.isMonitoring) {
       console.log('Monitoring already active');
-      return;
+      return true;
     }
+    
+    console.log('USER ACTION: Starting consciousness monitoring for', this.currentCharacter.name);
     this.isMonitoring = true;
+    
     if (window.stateManager) {
       window.stateManager.set('monitoringActive', true);
     }
-    // No auto-update loop; server will send initial data
-    if (window.socketClient && window.socketClient.isSocketConnected()) {
-      window.socketClient.startMonitoring(this.currentCharacter.id);
+    
+    // Connect and start monitoring via WebSocket
+    if (window.socketClient) {
+      const success = window.socketClient.startMonitoring(this.currentCharacter.id);
+      if (!success) {
+        console.error('Failed to start WebSocket monitoring');
+        this.isMonitoring = false;
+        if (window.stateManager) {
+          window.stateManager.set('monitoringActive', false);
+        }
+        return false;
+      }
     }
+    
+    return true;
   }
 
   // User-initiated monitoring stop
   userStopMonitoring() {
     if (!this.isMonitoring) {
       console.log('Monitoring already inactive');
-      return;
+      return true;
     }
+    
+    console.log('USER ACTION: Stopping consciousness monitoring');
     this.isMonitoring = false;
+    
     if (window.stateManager) {
       window.stateManager.set('monitoringActive', false);
     }
+    
     this.stopRealTimeUpdates();
-    if (window.socketClient && window.socketClient.isSocketConnected()) {
+    
+    if (window.socketClient && this.currentCharacter) {
       window.socketClient.stopMonitoring(this.currentCharacter.id);
     }
+    
+    return true;
   }
 
   // FIXED: Main entry point that prevents double initialization

@@ -3,6 +3,7 @@ import logger from '/js/logger.js';
 import '/js/init-fix.js';
 // import '/js/modules/init-state-manager.js'; // Remove this - we'll integrate it directly
 import stateManager from '/js/modules/state-manager.js';
+import GroundStateValidator from '/js/ground-state-validator.js';
 
 // Make state manager available globally for debugging
 window.stateManager = stateManager;
@@ -11,11 +12,16 @@ class RuntimeApp {
   constructor() {
     this.currentCharacter = null;
     this.isLoadingCharacter = false;
+    this.userInteracted = false; // GROUND STATE: Track user interaction
+    this.components = new Map(); // GROUND STATE: Track component initialization
     this.initializeApp();
   }
 
   async initializeApp() {
-    logger.info('Initializing Runtime.zyjeski.com');
+    logger.info('Initializing Runtime.zyjeski.com in Ground State');
+    
+    // GROUND STATE: Validate we start in compliant state
+    GroundStateValidator.validateCompliance();
     
     // Wait for DOM to be ready
     if (document.readyState === 'loading') {
@@ -30,18 +36,20 @@ class RuntimeApp {
   }
 
   init() {
+    // GROUND STATE: Only setup character selection and basic navigation
     this.setupNavigation();
     this.setupEventListeners();
     this.loadCharacters();
-    logger.info('App initialization complete');
+    
+    logger.info('App initialization complete - Ground State maintained');
+    
+    // GROUND STATE: Validate compliance after initialization
+    setTimeout(() => GroundStateValidator.validateCompliance(), 100);
   }
 
   /**
-   * Configure UI navigation links.
-   * - If no .nav-link elements exist, exit gracefully so the rest of the app
-   *   continues to initialise.
-   * - When links are present, toggle their "active" state and show the
-   *   corresponding section whose id matches the data-section attribute.
+   * GROUND STATE: Configure UI navigation links but disable them initially.
+   * Navigation only becomes active after character selection.
    */
   setupNavigation() {
     const navLinks = document.querySelectorAll('.nav-link');
@@ -50,33 +58,24 @@ class RuntimeApp {
       return;
     }
 
+    // GROUND STATE: Disable all navigation initially
     navLinks.forEach((link) => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault(); // Prevent default anchor behavior
-        
-        // Toggle active styling
-        navLinks.forEach((l) => l.classList.remove('active'));
-        link.classList.add('active');
-
-        // Get target section from data-section attribute
-        const targetSection = link.dataset.section;
-        if (!targetSection) return;
-
-        // Hide all sections, then reveal the target
-        document
-          .querySelectorAll('.section')
-          .forEach((sec) => { sec.classList.remove('active'); });
-
-        const targetSectionElement = document.getElementById(targetSection);
-        if (targetSectionElement) {
-          targetSectionElement.classList.add('active');
-        }
-      });
+      link.classList.add('disabled');
+      
+      // Add disabled styling
+      if (!link.hasAttribute('data-ground-state-disabled')) {
+        link.style.opacity = '0.5';
+        link.style.pointerEvents = 'none';
+        link.setAttribute('data-ground-state-disabled', 'true');
+        link.setAttribute('title', 'Select a character first');
+      }
     });
+    
+    logger.debug('Navigation disabled - character selection required');
   }
 
   setupEventListeners() {
-    // Character selection
+    // GROUND STATE: Character selection (THE ONLY ALLOWED AUTO-TRIGGER)
     const characterGrid = document.getElementById('characterGrid');
     if (characterGrid) {
       characterGrid.addEventListener('click', async (e) => {
@@ -90,7 +89,10 @@ class RuntimeApp {
           return;
         }
         
-        // Ensure consciousness manager is initialized on first user action
+        // GROUND STATE: Mark this as user interaction
+        GroundStateValidator.validateUserAction('character-selection', { characterId });
+        
+        // GROUND STATE: Initialize consciousness manager only on user action
         if (!window.consciousness) {
           window.initConsciousnessManager();
         }
@@ -125,7 +127,10 @@ class RuntimeApp {
   }
 
   async selectCharacter(characterId) {
-    console.log(`[APP] selectCharacter called for id: ${characterId}`);
+    console.log(`[APP] USER ACTION: Character selection - ${characterId}`);
+    
+    // GROUND STATE: This is THE ground state transition event
+    GroundStateValidator.logGroundStateTransition('character-selection', { characterId });
     
     // Prevent concurrent character loads
     if (this.isLoadingCharacter) {
@@ -142,6 +147,8 @@ class RuntimeApp {
 
     try {
       this.isLoadingCharacter = true;
+      this.userInteracted = true; // GROUND STATE: Mark user interaction
+      
       this.showLoading('Loading character consciousness...');
       
       // Use state manager to load character
@@ -158,24 +165,39 @@ class RuntimeApp {
         
         this.updateCharacterSelection(characterId);
         
-        // Initialize the consciousness with complete data
+        // GROUND STATE: Initialize consciousness with complete data
         if (window.consciousness) {
-          console.log('[APP] Loading character into consciousness manager');
+          console.log('[APP] GROUND STATE: Loading character into consciousness manager');
           window.consciousness.loadCharacter(this.currentCharacter);
         }
         
-        // Connect monitor to the loaded character data
+        // GROUND STATE: Enable navigation after character loads
+        this.enableNavigation();
+        
+        // GROUND STATE: Connect monitor only after user loads character
         if (window.monitor && typeof window.monitor.connectToCharacter === 'function') {
-          console.log('[APP] Connecting monitor to character');
-          window.monitor.connectToCharacter(this.currentCharacter);
-        } else if (window.monitor) {
-          console.warn('[APP] Monitor exists but connectToCharacter method not available');
-        } else {
-          console.warn('[APP] Monitor not available yet');
+          console.log('[APP] GROUND STATE: Connecting monitor to character');
+          try {
+            const result = window.monitor.connectToCharacter(this.currentCharacter);
+            
+            // Handle if connectToCharacter returns a promise
+            if (result && typeof result.then === 'function') {
+              result.then(() => {
+                console.log('[APP] GROUND STATE: Monitor connected successfully');
+              }).catch(error => {
+                console.error('[APP] GROUND STATE: Monitor connection failed:', error);
+              });
+            }
+          } catch (error) {
+            console.error('[APP] GROUND STATE: Error connecting monitor:', error);
+          }
         }
         
         this.hideLoading();
         this.showSuccess(`${state.name} consciousness loaded`);
+        
+        // GROUND STATE: Validate compliance after character load
+        setTimeout(() => GroundStateValidator.validateCompliance(), 100);
       }
     } catch (error) {
       logger.error('Failed to select character', { characterId, error });
@@ -183,6 +205,102 @@ class RuntimeApp {
     } finally {
       this.isLoadingCharacter = false;
     }
+  }
+
+  // GROUND STATE: Enable navigation only after character loads
+  enableNavigation() {
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+      link.classList.remove('disabled');
+      
+      // Remove disabled styling
+      link.style.opacity = '1';
+      link.style.pointerEvents = 'auto';
+      link.removeAttribute('title');
+      
+      // Add click handler if not already present
+      if (!link.hasAttribute('data-navigation-enabled')) {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          
+          // Update navigation active state
+          navLinks.forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
+          
+          const section = link.dataset.section;
+          if (section) {
+            GroundStateValidator.validateUserAction('navigation', { section });
+            this.navigateToSection(section);
+          }
+        });
+        link.setAttribute('data-navigation-enabled', 'true');
+      }
+    });
+    
+    console.log('GROUND STATE: Navigation enabled after character load');
+  }
+
+  // GROUND STATE: Navigate to section and initialize component if needed
+  navigateToSection(sectionName) {
+    // Initialize component on first access
+    if (!this.components.has(sectionName)) {
+      this.initializeComponent(sectionName);
+    }
+    
+    // Show the section
+    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+    const targetSection = document.getElementById(sectionName);
+    if (targetSection) {
+      targetSection.classList.add('active');
+    }
+    
+    // Update navigation active state
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+    const activeLink = document.querySelector(`[data-section="${sectionName}"]`);
+    if (activeLink) {
+      activeLink.classList.add('active');
+    }
+  }
+
+  // GROUND STATE: Initialize components only when user navigates to them
+  initializeComponent(componentName) {
+    console.log(`GROUND STATE: Initializing ${componentName} component`);
+    
+    switch (componentName) {
+      case 'monitor':
+        if (window.monitor && typeof window.monitor.initialize === 'function') {
+          window.monitor.initialize();
+          
+          // GROUND STATE: Connect to character if one is loaded
+          if (this.currentCharacter && typeof window.monitor.connectToCharacter === 'function') {
+            console.log('GROUND STATE: Connecting monitor to current character:', this.currentCharacter.name);
+            const result = window.monitor.connectToCharacter(this.currentCharacter);
+            
+            // Handle promise if returned
+            if (result && typeof result.then === 'function') {
+              result.then(() => {
+                console.log('GROUND STATE: Monitor connected to character successfully');
+              }).catch(error => {
+                console.error('GROUND STATE: Failed to connect monitor to character:', error);
+              });
+            }
+          }
+        }
+        break;
+      case 'terminal':
+        // Terminal automatically subscribes to currentCharacter via state manager
+        // No manual initialization needed - it's already initialized on load
+        console.log('GROUND STATE: Terminal ready (auto-subscribes to character state)');
+        break;
+      case 'debugger':
+        if (window.debugger && typeof window.debugger.initialize === 'function') {
+          window.debugger.initialize();
+          // Debugger automatically handles current character in its initialize method
+        }
+        break;
+    }
+    
+    this.components.set(componentName, true);
   }
 
   updateCharacterSelection(characterId) {

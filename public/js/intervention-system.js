@@ -516,7 +516,7 @@ class InterventionSystem {
       
       const characterId = window.stateManager?.currentCharacter?.id || 'alexander-kane';
       
-      window.socketClient.emit('apply-intervention', {
+      window.socketClient.emitToServer('apply-intervention', {
         characterId,
         interventionId,
         intervention,
