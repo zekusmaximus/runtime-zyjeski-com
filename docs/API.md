@@ -1,11 +1,8 @@
 # API Documentation
 
-This document describes the REST API and WebSocket interface for the
-Runtime.zyjeski.com consciousness debugging platform.
-The backend uses a modular engine (`ConsciousnessEngine`) composed of
-`ActionRouter`, `TickLoop`, `EmotionStateEngine` and related helpers.
-See also: `docs/ARCHITECTURE_MONITORING.md` and `docs/DEBUGGING.md` for
-real-time monitoring details.
+This document describes the REST API and WebSocket interface for the Runtime.zyjeski.com consciousness debugging platform.
+
+**Ground State Architecture**: All endpoints serve static character data or respond to explicit user actions. No continuous polling, real-time simulation, or automatic state updates occur without user intervention.
 
 ## Base URL
 
@@ -15,8 +12,7 @@ http://localhost:3000/api
 
 ## Authentication
 
-Currently, no authentication is required. Future versions may implement user
-sessions and character ownership.
+Currently, no authentication is required. Each browser session maintains independent character consciousness state.
 
 ## Response Format
 
@@ -44,14 +40,14 @@ Error responses:
 
 ## REST API Endpoints
 
-### Characters
+### Character Selection (Ground State)
 
-#### List All Characters
+#### List Available Character Profiles
 ```http
 GET /api/characters
 ```
 
-Returns a list of all available character consciousness profiles.
+Returns character selection data for the home page. **Used only for initial character selection UI.**
 
 **Response:**
 ```javascript
@@ -60,55 +56,79 @@ Returns a list of all available character consciousness profiles.
     "id": "alexander-kane",
     "name": "Alexander Kane",
     "status": "critical",
-    "description": "Temporal physicist experiencing severe consciousness fragmentation..."
+    "description": "Temporal physicist experiencing severe consciousness fragmentation...",
+    "profileImage": "/images/alexander-kane-profile.jpg",
+    "difficulty": "advanced",
+    "storyContext": "Fractured Time"
   }
 ]
 ```
 
-#### Get Character Details
-
+#### Load Character Consciousness Profile
 ```http
 GET /api/character/:id
 ```
 
-Returns complete consciousness profile for a specific character.
+**Triggered only when user clicks character profile.** Returns complete static consciousness template that becomes the working state for the debugging session.
 
 **Parameters:**
-
 - `id` (string): Character identifier (e.g., "alexander-kane")
 
 **Response:**
-
 ```javascript
 {
   "id": "alexander-kane",
   "name": "Alexander Kane",
-  "status": "critical",
+  "version": "1.0.0",
   "description": "Temporal physicist experiencing severe consciousness fragmentation...",
-  "consciousness": {
-    "processes": [...],
-    "memory": {...},
-    "threads": [...],
-    "system_errors": [...],
-    "resources": {...},
-    "debug_hooks": [...]
+  
+  // Initial consciousness state (becomes working state)
+  "defaultState": {
+    "emotionalState": "grief",
+    "activeProcesses": [
+      "grief_processing",
+      "memory_search", 
+      "reality_check"
+    ],
+    "systemStatus": "critical",
+    "resourceUsage": {
+      "cpu": 89.7,
+      "memory": 67.8,
+      "attention": 23.4,
+      "emotional_energy": 15.7
+    },
+    "initialErrors": [
+      {
+        "type": "MEMORY_LEAK_DETECTED",
+        "process": "grief_processing",
+        "severity": "critical",
+        "message": "Grief processing consuming 847MB and growing"
+      }
+    ]
   },
+  
+  // Static templates for consciousness architecture
+  "baseProcesses": [...],     // Process definitions
+  "memoryMap": {...},         // Memory architecture
+  "emotionalStates": {...},   // Emotional configurations
+  "systemResources": {...},   // Resource limits
+  
   "metadata": {
-    "created": "2024-03-15T14:30:00Z",
-    "last_updated": "2024-06-21T12:45:33Z",
-    "version": "1.0",
-    "story_context": "Fractured Time",
-    "debug_difficulty": "advanced"
+    "storyContext": "Fractured Time",
+    "debugDifficulty": "advanced",
+    "created": "2024-03-15T14:30:00Z"
   }
 }
 ```
+
+### User Action Endpoints
 
 #### Start Debugging Session
 ```http
 POST /api/debug/:characterId
 ```
 
-Initializes a new debugging session for the specified character.
+**User action only:** Called when user runs `attach` command in terminal or navigates to debugging interface.
 
 **Parameters:**
 - `characterId` (string): Character identifier
@@ -118,445 +138,364 @@ Initializes a new debugging session for the specified character.
 {
   "sessionId": "debug_alexander-kane_1719140733000",
   "characterId": "alexander-kane",
-  "status": "debugging_started",
-  "timestamp": "2024-06-21T12:45:33Z"
+  "status": "session_started",
+  "timestamp": "2024-06-21T12:45:33Z",
+  "message": "Debugging session initialized - consciousness loaded"
 }
 ```
 
-### Consciousness Management
-
-#### Get Consciousness State
+#### Execute Debug Command
 ```http
-GET /api/consciousness/:characterId/state
+POST /api/debug/:characterId/command
 ```
 
-Returns current consciousness state including real-time simulation data.
-
-**Parameters:**
-- `characterId` (string): Character identifier
-
-**Response:**
-```javascript
-{
-  "consciousness": {
-    "processes": [
-      {
-        "pid": 1001,
-        "name": "Grief_Manager.exe",
-        "status": "error",
-        "cpu_usage": 89.7,
-        "memory_mb": 847.2,
-        "priority": -5,
-        "last_activity": "2024-06-21T12:45:33Z"
-      }
-    ],
-    "resources": {
-      "attention": {
-        "current": 23.4,
-        "max": 100.0
-      }
-    }
-  }
-}
-```
-
-#### Update Consciousness State
-```http
-POST /api/consciousness/:characterId/update
-```
-
-Applies updates to consciousness state (used for player interventions).
-
-**Parameters:**
-- `characterId` (string): Character identifier
+**User action only:** Triggered by terminal commands (`ps`, `kill`, `monitor`, etc.)
 
 **Request Body:**
 ```javascript
 {
-  "processes": [...],  // Updated process list
-  "resources": {...},  // Updated resource allocation
-  "system_errors": [...] // Updated error list
+  "command": "ps",           // Command name
+  "args": {},               // Command arguments (optional)
+  "sessionId": "debug_alexander-kane_1719140733000"
 }
 ```
-
-#### Get Process List
-```http
-GET /api/consciousness/:characterId/processes
-```
-
-Returns list of currently running mental processes.
-
-**Response:**
-```javascript
-[
-  {
-    "pid": 1001,
-    "name": "Grief_Manager.exe",
-    "status": "error",
-    "cpu_usage": 89.7,
-    "memory_mb": 847.2,
-    "priority": -5,
-    "start_time": "2024-03-15T14:30:00Z",
-    "last_activity": "2024-06-21T12:45:33Z",
-    "description": "Primary grief processing system - experiencing severe memory leak",
-    "error_message": "MEMORY_LEAK: Emotional attachment to Leo consuming increasing resources"
-  }
-]
-```
-
-#### Get Memory Allocation
-```http
-GET /api/consciousness/:characterId/memory
-```
-
-Returns current memory allocation map with emotional attachments.
 
 **Response:**
 ```javascript
 {
-  "0x7FF8A1B2C000": {
-    "type": "relationship",
-    "size": 2048576,
-    "description": "Leo Kane - Son, age 8, lost in temporal experiment",
-    "access_count": 15847,
-    "last_accessed": "2024-06-21T12:45:33Z",
-    "fragmented": true,
-    "protected": true
-  }
-}
-```
-
-#### Get System Errors
-```http
-GET /api/consciousness/:characterId/errors
-```
-
-Returns list of current system errors and consciousness malfunctions.
-
-**Response:**
-```javascript
-[
-  {
-    "type": "MEMORY_LEAK_DETECTED",
-    "message": "Grief_Manager.exe consuming excessive memory - 847MB and growing",
-    "timestamp": "2024-06-21T12:45:33Z",
-    "severity": "critical",
-    "related_process": 1001,
-    "stack_trace": [
-      "grief_manager.cpp:line 234 - emotional_attachment_loop()",
-      "memory_allocator.cpp:line 89 - allocate_emotional_memory()"
-    ],
-    "recovery_suggestion": "Implement grief processing limits or restart Grief_Manager.exe"
-  }
-]
-```
-
-### Process Control
-
-#### Terminate Process
-```http
-PUT /api/process/:pid/kill
-```
-
-Terminates a specific mental process.
-
-**Parameters:**
-- `pid` (integer): Process identifier
-
-**Response:**
-```javascript
-{
-  "pid": 1001,
-  "status": "terminated",
+  "command": "ps",
+  "result": {
+    "processes": [
+      {
+        "pid": 1001,
+        "name": "grief_processing",
+        "status": "running",
+        "cpu_usage": 89.3,
+        "memory_mb": 847,
+        "start_time": "2024-03-15T14:30:00Z"
+      }
+    ]
+  },
+  "stateChanges": null,      // Only present if command modified consciousness
+  "narrativeTrigger": null,  // Only present if action triggered story progression
   "timestamp": "2024-06-21T12:45:33Z"
 }
 ```
 
-### Monitoring
-
-#### Get Real-time Monitoring Data
+#### Apply Player Intervention
 ```http
-GET /api/monitor/:characterId
+POST /api/intervention/:characterId
 ```
 
-Returns current monitoring snapshot for dashboard display.
+**User action only:** Debugger interface optimizations, process modifications, memory management.
+
+**Request Body:**
+```javascript
+{
+  "type": "memory_optimization",
+  "target": "grief_processing",
+  "parameters": {
+    "memory_limit": 500,
+    "processing_efficiency": 0.8
+  },
+  "sessionId": "debug_alexander-kane_1719140733000"
+}
+```
+
+**Response:**
+```javascript
+{
+  "intervention": {
+    "type": "memory_optimization",
+    "target": "grief_processing",
+    "result": "success"
+  },
+  "stateChanges": {
+    "processes": "grief_processing_memory_reduced_to_200MB",
+    "resources": "freed_647MB_memory",
+    "emotional_states": "grief_intensity_reduced_to_0.4"
+  },
+  "narrativeTrigger": {
+    "fragmentId": "healthy_grief_processing_breakthrough",
+    "consequence": "emily_reconnection_opportunity"
+  },
+  "timestamp": "2024-06-21T12:45:33Z"
+}
+```
+
+### Current State Queries
+
+#### Get Current Consciousness State
+```http
+GET /api/consciousness/:characterId/state
+```
+
+**Returns current working consciousness state** (modified by user actions during session). Not real-time - shows state as of last user action.
 
 **Response:**
 ```javascript
 {
   "characterId": "alexander-kane",
-  "timestamp": "2024-06-21T12:45:33Z",
-  "cpu_usage": 89.7,
-  "memory_usage": 847.2,
-  "active_processes": 7,
-  "errors": 5,
-  "attention_level": 23.4,
-  "emotional_energy": 15.7
+  "sessionId": "debug_alexander-kane_1719140733000",
+  "lastModified": "2024-06-21T12:45:33Z",
+  "consciousness": {
+    "processes": [...],      // Current process list (may be modified by user)
+    "memory": {...},         // Current memory state
+    "resources": {...},      // Current resource usage
+    "system_errors": [...],  // Current error list
+    "emotional_state": "grief"
+  },
+  "storyProgress": {
+    "milestones": ["grief_processing_optimized"],
+    "endingPath": null,
+    "availableActions": ["optimize_memory_search", "debug_temporal_sync"]
+  }
 }
 ```
 
-## WebSocket Events
+## WebSocket Events - User Action Driven Only
 
-Real-time communication uses Socket.io for live consciousness updates and interactive debugging.
+WebSocket connections handle user commands and state updates **triggered only by user actions**.
 
 ### Client → Server Events
 
-#### Start Monitoring
+#### Start Monitoring Session
 ```javascript
+// User action: Navigate to Monitor page with character loaded
 socket.emit('start-monitoring', {
-  characterId: 'alexander-kane'
+  characterId: 'alexander-kane',
+  sessionId: 'debug_alexander-kane_1719140733000'
 });
 ```
 
-Begin real-time monitoring of character consciousness state.
+Begin monitoring session. **No automatic updates** - server only sends data when user actions change consciousness state.
 
-#### Stop Monitoring
+#### Execute Debug Command
 ```javascript
-socket.emit('stop-monitoring', {
-  characterId: 'alexander-kane'
-});
-```
-
-End monitoring session for specified character.
-
-#### Debug Command
-```javascript
+// User action: Terminal command entered
 socket.emit('debug-command', {
   characterId: 'alexander-kane',
   command: 'ps',
-  args: {}
+  args: {},
+  sessionId: 'debug_alexander-kane_1719140733000'
 });
 ```
 
-Execute debugging command (ps, top, kill, monitor, etc.).
-
 **Available Commands:**
-- `ps` - List running processes
-- `top` - Show resource usage and top processes
-- `kill` - Terminate process (requires `args.pid`)
-- `monitor` - Get memory and error information
-- `step_into` - Step into function call (debugger)
-- `step_over` - Execute current line (debugger)
-- `continue` - Resume execution (debugger)
-- `break_all` - Pause all processes (debugger)
+- `ps` - Show current processes (reads current state)
+- `kill <pid>` - Terminate process (modifies state + potential narrative trigger)
+- `monitor` - Show resources and errors (reads current state)
+- `optimize <process>` - Optimize process memory (modifies state)
+- `mem` - Show memory allocation (reads current state)
+- `restart <process>` - Restart crashed process (modifies state)
 
-#### Player Intervention
+#### Apply Player Intervention
 ```javascript
+// User action: Debugger interface interaction
 socket.emit('player-intervention', {
   characterId: 'alexander-kane',
   intervention: {
     type: 'process_optimization',
-    target: 'Grief_Manager.exe',
-    parameters: {
-      memory_limit: 500
-    }
-  }
+    target: 'grief_processing',
+    parameters: { memory_limit: 500 }
+  },
+  sessionId: 'debug_alexander-kane_1719140733000'
 });
 ```
 
-Apply player intervention to character consciousness.
+#### Manual Refresh Request
+```javascript
+// User action: Explicit refresh button clicked
+socket.emit('refresh-monitor', {
+  characterId: 'alexander-kane',
+  sessionId: 'debug_alexander-kane_1719140733000'
+});
+```
 
 ### Server → Client Events
 
-#### Consciousness Update
-```javascript
-socket.on('consciousness-update', (data) => {
-  console.log('Consciousness state updated:', data);
-});
-```
-
-**Data Structure:**
-```javascript
-{
-  characterId: 'alexander-kane',
-  state: {
-    consciousness: {
-      processes: [...],
-      memory: {...},
-      resources: {...},
-      system_errors: [...]
-    }
-  },
-  intervention: false, // true if caused by player intervention
-  timestamp: '2024-06-21T12:45:33Z'
-}
-```
-
-#### Debug Result
+#### Debug Command Result
 ```javascript
 socket.on('debug-result', (data) => {
-  console.log('Debug command result:', data);
+  console.log('Command executed:', data);
 });
 ```
 
 **Data Structure:**
 ```javascript
 {
-  characterId: 'alexander-kane',
-  command: 'ps',
-  result: {
-    processes: [...],
-    // or error: 'Error message'
+  "characterId": "alexander-kane",
+  "command": "ps",
+  "result": {
+    "processes": [...],
+    "success": true
   },
-  timestamp: '2024-06-21T12:45:33Z'
+  "stateChanges": null,     // Only if command modified consciousness
+  "narrativeTrigger": null, // Only if action triggered story
+  "timestamp": "2024-06-21T12:45:33Z"
 }
 ```
 
-#### Intervention Applied
+#### Consciousness State Update
 ```javascript
-socket.on('intervention-applied', (data) => {
-  console.log('Player intervention applied:', data);
+socket.on('consciousness-update', (data) => {
+  console.log('State changed by user action:', data);
 });
 ```
 
-#### Monitoring Started/Stopped
+**Only sent when user actions modify consciousness state.** Never sent automatically.
+
+**Data Structure:**
+```javascript
+{
+  "characterId": "alexander-kane",
+  "state": {
+    "processes": [...],      // Updated process list
+    "memory": {...},         // Updated memory allocation
+    "resources": {...},      // Updated resource usage
+    "system_errors": [...]   // Updated error list
+  },
+  "trigger": "user_command", // What caused the update
+  "command": "kill 1001",    // Specific user action
+  "timestamp": "2024-06-21T12:45:33Z"
+}
+```
+
+#### Player Intervention Applied
+```javascript
+socket.on('intervention-applied', (data) => {
+  console.log('Intervention successful:', data);
+});
+```
+
+#### Narrative Fragment Unlocked
+```javascript
+socket.on('narrative-unlock', (data) => {
+  console.log('Story progression triggered:', data);
+});
+```
+
+**Data Structure:**
+```javascript
+{
+  "characterId": "alexander-kane",
+  "trigger": "grief_processing_optimized",
+  "fragment": {
+    "id": "memory_breakthrough_sequence",
+    "title": "Suppressed Memory: The Accident",
+    "content": "As the grief processing stabilizes, a protected memory surface...",
+    "type": "revelation"
+  },
+  "storyImpact": {
+    "endingPath": null,        // Still all paths available
+    "newActions": ["access_temporal_lab_memory"],
+    "lockedActions": []
+  }
+}
+```
+
+#### Session Management
 ```javascript
 socket.on('monitoring-started', (data) => {
-  console.log('Monitoring started for:', data.characterId);
+  console.log('Monitoring session active:', data.characterId);
 });
 
 socket.on('monitoring-stopped', (data) => {
-  console.log('Monitoring stopped for:', data.characterId);
+  console.log('Monitoring session ended:', data.characterId);
 });
 ```
 
 #### Error Handling
 ```javascript
 socket.on('error', (error) => {
-  console.error('Socket error:', error);
+  console.error('API error:', error);
 });
 ```
 
-## Error Codes
-
-| HTTP Status | Description |
-|-------------|-------------|
-| 200 | Success |
-| 400 | Bad Request - Invalid parameters |
-| 404 | Not Found - Character or resource not found |
-| 500 | Internal Server Error - Server-side error |
-
-## Rate Limiting
-
-Currently no rate limiting is implemented. Future versions may include:
-- 100 requests per minute per IP for REST API
-- Connection limits for WebSocket sessions
-
 ## Data Types
 
-### Process Object
+### Process Object (Current State)
 ```javascript
 {
-  "pid": 1001,                              // integer
-  "name": "Grief_Manager.exe",              // string
-  "status": "error",                        // enum: running|sleeping|stopped|zombie|error
-  "cpu_usage": 89.7,                       // float (0-100)
-  "memory_mb": 847.2,                      // float
-  "priority": -5,                          // integer (-20 to 19)
-  "start_time": "2024-03-15T14:30:00Z",   // ISO datetime
-  "last_activity": "2024-06-21T12:45:33Z", // ISO datetime
-  "description": "Process description",     // string
-  "error_message": "Error details"         // string (optional)
+  "pid": 1001,
+  "name": "grief_processing",
+  "status": "running",          // running|stopped|crashed|optimized|zombified
+  "cpu_usage": 89.3,            // Current usage (affected by user interventions)
+  "memory_mb": 847,             // Current memory (can be optimized by user)
+  "priority": 10,               // Can be modified by user
+  "start_time": "2024-03-15T14:30:00Z",
+  "last_modified": "2024-06-21T12:45:33Z",  // When user last affected this process
+  "user_modifications": [       // History of user changes
+    {
+      "action": "memory_optimization",
+      "timestamp": "2024-06-21T12:40:00Z",
+      "result": "memory_reduced_from_847MB_to_200MB"
+    }
+  ]
 }
 ```
 
-### Memory Block Object
+### Memory Region Object
 ```javascript
 {
-  "type": "relationship",                   // enum: emotion|relationship|trauma|skill|knowledge|system
-  "size": 2048576,                         // integer (bytes)
-  "description": "Memory content description", // string
-  "access_count": 15847,                   // integer
-  "last_accessed": "2024-06-21T12:45:33Z", // ISO datetime
-  "fragmented": true,                      // boolean
-  "protected": true                        // boolean
+  "address": "0x1000000000000000",
+  "type": "episodic",
+  "label": "Leo's Memories",
+  "size": 2048,                 // Current size (may change with user actions)
+  "protected": true,            // Cannot be deleted directly
+  "fragmented": false,          // May become fragmented by user actions
+  "accessCount": 15847,         // Increases when user accesses
+  "lastAccessed": "2024-06-21T12:45:33Z",
+  "userAccessible": false,      // Whether user can read content
+  "unlockCondition": "grief_processing_stabilized"
 }
 ```
 
 ### System Error Object
 ```javascript
 {
-  "type": "MEMORY_LEAK_DETECTED",          // enum
-  "message": "Error description",          // string
-  "timestamp": "2024-06-21T12:45:33Z",    // ISO datetime
-  "severity": "critical",                  // enum: info|warning|error|critical
-  "related_process": 1001,                 // integer (optional)
-  "stack_trace": ["trace line 1", "..."], // array of strings (optional)
-  "recovery_suggestion": "Fix suggestion" // string (optional)
-}
-```
-
-### Resource Object
-```javascript
-{
-  "current": 23.4,                        // float (0-100)
-  "max": 100.0,                          // float
-  "allocation": {                         // object (optional)
-    "Leo_Search": 67.2,
-    "Grief_Processing": 22.5
-  },
-  "regeneration_rate": 2.3               // float (optional)
-}
-```
-
-## Example Usage
-
-### Basic Character Loading
-```javascript
-// Load character list
-const response = await fetch('/api/characters');
-const characters = await response.json();
-
-// Load specific character
-const character = await fetch('/api/character/alexander-kane');
-const alexData = await character.json();
-
-// Start debugging session
-const session = await fetch('/api/debug/alexander-kane', { method: 'POST' });
-const sessionData = await session.json();
-```
-
-### Real-time Monitoring
-```javascript
-const socket = io();
-
-// Start monitoring
-socket.emit('start-monitoring', { characterId: 'alexander-kane' });
-
-// Listen for updates
-socket.on('consciousness-update', (data) => {
-  updateDashboard(data.state);
-});
-
-// Execute debugging commands
-socket.emit('debug-command', {
-  characterId: 'alexander-kane',
-  command: 'ps'
-});
-
-socket.on('debug-result', (data) => {
-  displayProcessList(data.result.processes);
-});
-```
-
-### Player Interventions
-```javascript
-// Apply memory optimization intervention
-socket.emit('player-intervention', {
-  characterId: 'alexander-kane',
-  intervention: {
-    type: 'memory_optimization',
-    target: 'Grief_Manager.exe',
-    parameters: {
-      memory_limit: 500,
-      processing_efficiency: 0.8
+  "type": "MEMORY_LEAK_DETECTED",
+  "message": "Grief processing consuming excessive memory",
+  "severity": "critical",       // info|warning|error|critical
+  "process": "grief_processing",
+  "timestamp": "2024-06-21T12:45:33Z",
+  "userTriggered": false,       // Was this error caused by user action?
+  "recoverySuggestions": [
+    {
+      "action": "optimize_process_memory",
+      "description": "Reduce memory allocation for grief processing",
+      "risk": "low"
+    },
+    {
+      "action": "kill_process",
+      "description": "Terminate grief processing entirely",
+      "risk": "high",
+      "consequence": "May cause emotional numbness"
     }
-  }
-});
-
-socket.on('intervention-applied', (data) => {
-  console.log('Intervention successful:', data.intervention);
-});
+  ]
+}
 ```
 
-This API enables rich, real-time interaction with character consciousness states, supporting both REST-based data retrieval and WebSocket-based live debugging sessions.
+## No Polling Architecture
+
+**Critical Design Principle**: This API supports **zero polling** and **zero automatic updates**.
+
+### What Happens When:
+- **Character loads**: Static data loaded once, becomes working state
+- **User runs command**: State potentially changes, displays update
+- **User navigates pages**: Current state persists, no refresh unless user requests
+- **Browser idles**: Nothing happens, no background processes
+- **WebSocket disconnects**: State preserved locally, reconnect resumes session
+
+### Client-Side State Management:
+- Load character consciousness once on user selection
+- Modify state only through user debugging actions
+- Persist state in browser session until reload
+- Display always shows current state (no refresh needed unless user acts)
+
+### Story Progression:
+- Narrative fragments unlock based on cumulative user debugging choices
+- Three ending paths lock/unlock based on debugging patterns
+- All story progression client-side tracked through local state changes
+
+This API serves the ground state vision of **user-driven consciousness debugging** where every change is meaningful and directly tied to player choice.

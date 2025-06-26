@@ -1,299 +1,176 @@
-# Runtime.zyjeski.com - Debug Consciousness as Code
+# Runtime.zyjeski.com
 
-An interactive fiction platform where readers debug consciousness as executable code.
-Experience the story of Alexander Kane, a temporal physicist whose consciousness
-fragments after losing his son in a time experiment gone wrong.
+**Interactive fiction platform where readers debug consciousness as executable code**
 
-![VS Code Dark Theme](https://img.shields.io/badge/Theme-VS%20Code%20Dark-1e1e1e?style=flat-square)
-![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js)
-![Socket.io](https://img.shields.io/badge/Socket.io-4.8+-010101?style=flat-square&logo=socket.io)
+Experience "Fractured Time" through the lens of Alexander Kane's failing mental processes. Debug grief-induced memory leaks, resolve infinite search loops, and restore cognitive stability through hands-on consciousness debugging.
 
 ## 🧠 Core Concept
 
-**Consciousness as Operating System**: The human mind operates like a computer with
-processes, memory allocation, and system resources. Psychological trauma manifests
-as technical problems that can be debugged and resolved:
+Stories become live programs with observable mental processes. Players actively diagnose and resolve character consciousness malfunctions rather than passively reading narrative. Every debugging choice drives the story toward one of three possible endings:
 
-- **Memory Leaks** → Emotional attachments consuming increasing mental resources
-- **Infinite Loops** → Anxiety and obsessive thoughts trapping consciousness
-- **Thread Starvation** → Neglected relationships lacking processing time
-- **CPU Spikes** → Overwhelming emotions consuming all mental capacity
-- **I/O Errors** → Difficulty processing reality and sensory input
+- **Complete Debug**: Successfully heal Alexander's consciousness and restore his relationship with Emily
+- **Complete Fracture**: Allow critical system failures to destroy his mental stability permanently  
+- **Continual Flux**: Maintain unstable equilibrium between hope and despair indefinitely
 
-## 🚀 Quick Start
+## 🎮 Ground State Experience
+
+**The application starts completely empty** - no consciousness loaded, no processes running, no data displayed.
+
+1. **Character Selection**: Click Alexander Kane's profile to load his consciousness data
+2. **Debugging Interface**: Navigate between Terminal, Monitor, and Debugger to interact with his mental processes
+3. **Story Progression**: Narrative fragments unlock automatically based on debugging progress and choices
+4. **Persistent State**: All changes persist throughout the session as you progress through the storyline
+
+**No polling. No auto-updates. Pure user-driven interaction.**
+
+## 🖥️ Interface Overview
+
+### Home Page
+Character selection with Alexander Kane as the sole available consciousness profile. All other interfaces remain empty until character selection.
+
+### Terminal Interface
+Command-line debugging console for direct consciousness interaction:
+```bash
+> attach alexander-kane
+[Consciousness loaded: Alexander Kane - Status: CRITICAL]
+
+> ps
+PID   COMMAND              STATUS    CPU    MEMORY
+1001  grief_processing     running   89.3%  847MB
+1002  memory_search        running   45.7%  234MB  
+1003  reality_check        running   12.1%  89MB
+
+> kill 1001
+[WARNING: Terminating grief_processing may cause emotional instability]
+> y
+[Process 1001 terminated - Memory freed: 847MB]
+```
+
+### Monitor Dashboard
+**Passive display only** - shows current consciousness state without automatic updates:
+
+- **System Resources**: CPU usage, memory allocation, attention levels
+- **Process Table**: Running mental processes with resource consumption
+- **Memory Map**: Emotional and episodic memory allocation
+- **Error Log**: System malfunctions and psychological conflicts
+
+Updates only when user actions modify the consciousness state.
+
+### Interactive Debugger
+VS Code-inspired interface for consciousness analysis:
+
+- **Code Editor**: View Alexander's consciousness as debuggable C++ code
+- **Breakpoints**: Set intervention points in mental processes
+- **Call Stack**: Current emotional process execution
+- **Variables**: Inspect memory contents and emotional states
+
+Generated dynamically from actual consciousness state - no static code.
+
+## 📖 Narrative Integration: "Fractured Time"
+
+### Alexander Kane: System Profile
+
+**Status**: CRITICAL SYSTEM FAILURE
+
+**Background**: Temporal physicist whose consciousness fragments after losing his 8-year-old son Leo in a time experiment. His mind runs in endless loops, consuming resources searching for a timeline where Leo survived.
+
+**Active Processes**:
+- `grief_processing.exe` - Memory leak consuming 847MB, growing exponentially
+- `search_protocol.exe` - Infinite loop scanning timelines for Leo
+- `temporal_sync.dll` - Reality processing errors causing perception instability
+- `relationship_handler.exe` - Thread starvation affecting connection with wife Emily
+
+### Story Progression Through Debugging
+
+**Narrative fragments reveal automatically based on user debugging actions:**
+
+- **Memory optimization** → Unlock suppressed memories of the accident
+- **Process termination** → Trigger emotional breakthroughs or setbacks
+- **Error resolution** → Reveal Leo's final moments and Alexander's guilt
+- **Resource reallocation** → Show Emily's perspective and marriage strain
+
+**The story unfolds through technical discovery** - each debugging choice reveals character psychology and drives toward one of three possible endings.
+
+## 🛠️ Technical Architecture
+
+### Stack
+- **Node.js/Express** - Consciousness simulation engine
+- **Socket.io** - User action communication (no polling)
+- **Vanilla JavaScript** - Client-side state management
+- **JSON data** - Static character consciousness profiles
+
+### Data Flow
+1. **Ground State**: No data loaded, all interfaces empty
+2. **Character Load**: User clicks profile → Static data loads → Interfaces populate
+3. **User Actions**: Terminal commands, debugger interactions → State changes
+4. **Display Updates**: Only after user actions modify consciousness state
+5. **Story Progression**: Narrative triggers based on debugging choices
+
+### Key Principles
+- **No automatic updates** - System only changes when user acts
+- **Client-side state** - All consciousness data persists in browser session
+- **Event-driven narrative** - Story responds to debugging progress
+- **Technical authenticity** - Real process management concepts applied to consciousness
+
+## 🎯 Learning Through Story
+
+### Programming Concepts
+- **Process Management**: PIDs, CPU usage, memory allocation through emotional processing
+- **Debugging Techniques**: Breakpoints, call stacks, variable inspection in mental context
+- **System Resources**: Resource allocation and capacity management for attention and memory
+- **Error Handling**: Systematic problem identification and resolution for psychological conflicts
+
+### Psychological Insights
+- **Grief Processing**: How loss affects mental resource allocation and cognitive function
+- **Memory Management**: Emotional attachment as memory leaks requiring optimization
+- **Attention Threading**: Parallel processing of trauma, relationships, and daily function
+- **System Stability**: Mental health as maintaining process balance and resource efficiency
+
+### Narrative Engagement
+- **Active Problem-Solving**: Replace passive reading with collaborative consciousness healing
+- **Technical Empathy**: Understand character psychology through system diagnostics
+- **Meaningful Choices**: Debugging decisions drive story outcomes and character development
+- **Replayable Paths**: Multiple debugging approaches reveal different narrative layers
+
+## 🚀 Getting Started
 
 ```bash
-# Clone and setup
-git clone <repository-url>
+# Clone and install
+git clone https://github.com/yourusername/runtime-zyjeski
 cd runtime-zyjeski
 npm install
 
-# Development server with auto-reload
+# Start local development
 npm run dev
 
-# Production server
-npm start
+# Open browser
+open http://localhost:3000
 ```
 
-Open `http://localhost:3000` to begin debugging consciousness.
-
-## 🎮 User Experience
-
-### 1. Terminal Interface
-Unix-like debugging console with commands:
-```bash
-ps                  # List running mental processes
-top                 # Show resource usage and top processes
-kill <pid>          # Terminate a mental process
-monitor             # Display consciousness health report
-attach <character>  # Connect to character consciousness
-debug               # Start interactive debugging session
-```
-
-### 2. Process Monitor
-
-Real-time dashboard displaying:
-
-- **Resource Meters**: Attention, emotional energy, processing capacity
-- **Process Table**: Running mental processes with CPU/memory usage
-- **Memory Visualization**: Emotional memory allocation map
-- **Error Log**: System errors and consciousness malfunctions
-
-### 3. Interactive Debugger
-
-VS Code-inspired interface featuring:
-
-- **Breakpoints**: Set intervention points in consciousness processes
-- **Call Stack**: Current mental process execution stack
-- **Variables**: Inspect emotional state and memory contents
-- **Code Editor**: View consciousness as debuggable C++ code
-
-## 📊 Character: Alexander Kane
-
-**Background**: Temporal physicist whose consciousness critically fragments after
-losing his 8-year-old son Leo in a time experiment.
-
-**System Status**: CRITICAL
-
-- `Grief_Manager.exe` - Memory leak consuming 847MB and growing
-- `Search_Protocol.exe` - Infinite loop searching for Leo across timelines
-- `Temporal_Sync.dll` - Desynchronization causing reality parsing errors
-- `Relationship_Handler.exe` - Thread starvation affecting family connections
-
-**Debug Scenarios**:
-
-1. **Memory Leak Crisis** - Fix grief processing memory consumption
-2. **Infinite Search Loop** - Break the endless search for Leo
-3. **Relationship Starvation** - Restore attention to family relationships
-4. **Temporal Desync** - Repair reality perception systems
-
-## 🏗️ Architecture
-
-### Backend (Node.js + Express + Socket.io)
-```
-server.js                     # Express entry point
-├── routes/
-│   ├── api.js               # REST endpoints
-│   └── consciousness.js     # Engine-driven actions
-├── lib/
-│   ├── consciousness-engine.js      # Orchestrates instances and stories
-│   ├── consciousness-instance.js    # Individual character instance
-│   ├── engine/
-│   │   ├── tick-loop.js           # Global tick scheduler
-│   │   ├── character-loader.js    # Character loading utilities
-│   │   └── monitor-responder.js   # Monitoring and broadcasting
-│   ├── instance/
-│   │   ├── action-router.js       # Maps debug actions to subsystems
-│   │   ├── emotional-state.js     # EmotionStateEngine wrapper
-│   │   └── memory-state.js        # Memory manager facade
-│   └── ws-bootstrap.js            # WebSocket initialization and routing
-└── data/
-    ├── characters/                # Character profiles
-    └── stories/                   # Story definitions
-```
-
-### Frontend (Vanilla JavaScript)
-```
-public/
-├── js/
-│   ├── app.js                   # Bootstraps client
-│   ├── connection-manager.js    # WebSocket connection wrapper
-│   ├── state-manager.js         # Shared state store
-│   ├── modules/
-│   │   └── monitor/             # Modular monitoring UI
-│   ├── terminal.js              # Terminal interface
-│   ├── debugger.js              # Interactive debugger
-│   └── consciousness.js         # Consciousness manager
-├── css/                         # VS Code dark theme styling
-└── index.html                  # Single-page application
-```
-
-### Data Schema
-
-Consciousness profiles use comprehensive JSON schema:
-
-- **Processes**: Mental processes with PID, CPU usage, memory allocation
-- **Memory**: Emotional attachments mapped to memory addresses
-- **Threads**: Parallel thought processes and background activities
-- **System Errors**: Psychological issues as debuggable system errors
-- **Resources**: Attention, emotional energy, processing capacity
-- **Debug Hooks**: Player intervention points and debugging capabilities
-
-### Scenario Engine
-
-The `ScenarioEngine` loads JSON files from `data/scenarios/` and tracks player
-progress across branching debugging challenges. It listens to
-`consciousness-engine` events and emits real-time updates over WebSockets.
-
-```javascript
-import { consciousnessEngine } from './lib/websocket-handlers.js';
-import ScenarioEngine from './lib/scenario-engine.js';
-
-const scenarioEngine = new ScenarioEngine();
-await scenarioEngine.initialize();
-scenarioEngine.attach(consciousnessEngine);
-```
-
-## 🛠️ Development
-
-### Prerequisites
-- Node.js 18+
-- Modern web browser with WebSocket support
-
-### Development Workflow
-```bash
-npm run dev     # Start development server with auto-reload
-npm start       # Start production server
-```
-
-### Adding New Characters
-
-1. Create character JSON file in `data/characters/`
-2. Follow consciousness schema in `data/characters/schema.json`
-3. Define processes, memory, threads, errors, and resources
-4. Add debug hooks for player intervention points
-
-### Key APIs
-
-#### REST Endpoints
-
-```javascript
-GET  /api/characters                    # List available characters
-GET  /api/character/:id                 # Get character consciousness state
-POST /api/debug/:characterId            # Start debugging session
-GET  /api/consciousness/:id/state       # Get consciousness state
-GET  /api/consciousness/:id/processes   # Get process list
-```
-
-#### WebSocket Events
-
-```javascript
-// Client → Server
-socket.emit('start-monitoring', { characterId })
-socket.emit('debug-command', { characterId, command, args })
-socket.emit('player-intervention', { characterId, intervention })
-
-// Server → Client
-socket.on('consciousness-update', (data) => { /* Real-time updates */ })
-socket.on('debug-result', (data) => { /* Command results */ })
-```
-
-## 🎯 Learning Objectives
-
-### Programming Concepts
-
-- **Process Management**: Understanding PIDs, CPU usage, memory allocation
-- **Debugging Techniques**: Breakpoints, call stacks, variable inspection
-- **System Resources**: Resource allocation and capacity management
-- **Error Handling**: Systematic problem identification and resolution
-
-### Psychological Themes
-
-- **Grief Processing**: How loss affects mental resource allocation
-- **Attention Management**: Balancing competing emotional and social needs
-- **Trauma Response**: How psychological trauma manifests as system errors
-- **Healing Process**: Debugging consciousness as metaphor for therapy
-
-## 📚 Educational Applications
-
-### Computer Science Education
-
-- Systems programming and process management
-- Debugging methodologies and error handling
-- Real-time systems and WebSocket communication
-- Human-computer interaction design
-
-### Psychology and Mental Health
-
-- Understanding trauma through technical metaphors
-- Therapeutic approaches to emotional regulation
-- Mindfulness and self-awareness practices
-- Mental health destigmatization through gamification
-
-### Interactive Storytelling
-
-- Procedural narrative generation
-- Player agency in emotional stories
-- Technical storytelling techniques
-- Empathy building through system understanding
-
-## 🎨 Design Philosophy
-
-### Visual Design
-
-- **VS Code Dark Theme**: Professional development environment aesthetic
-- **Monospace Typography**: Code-like appearance for consciousness data
-- **Syntax Highlighting**: Color-coded consciousness processes and data
-- **Terminal Interface**: Authentic command-line debugging experience
-
-### Interaction Design
-
-- **Progressive Disclosure**: Start simple, reveal complexity gradually
-- **Real-time Feedback**: Immediate visual response to player actions
-- **Contextual Help**: Integrated guidance and command suggestions
-- **Error Recovery**: Graceful handling of debugging mistakes
-
-### Narrative Integration
-
-- **Show, Don't Tell**: Consciousness state reveals character psychology
-- **Interactive Storytelling**: Player actions affect story progression
-- **Technical Metaphors**: Programming concepts illuminate emotional themes
-- **Meaningful Choices**: Debugging decisions have narrative consequences
-
-## 🚀 Future Enhancements
-
-### Technical Features
-
-- Advanced visualization with Canvas/WebGL
-- Machine learning for dynamic consciousness simulation
-- Mobile-responsive debugging interfaces
-- Collaborative debugging sessions
-
-### Content Expansion
-
-- Additional character consciousness profiles
-- Branching narrative paths based on debugging choices
-- Community-generated debugging scenarios
-- Integration with mental health resources
-
-### Educational Tools
-
-- Curriculum guides for educators
-- Assessment and progress tracking
-- Certification programs for debugging mastery
-- Research tools for consciousness studies
-
-## 📄 License
-
-MIT License - See LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-Built with modern web technologies to explore the intersection of consciousness,
-technology, and storytelling. Created to foster understanding of both technical
-debugging skills and emotional intelligence through the unified metaphor of
-mind-as-program.
-
----
-
-**Runtime.zyjeski.com** - Where consciousness meets code, and debugging becomes healing.
+**First Experience**:
+1. **Home page loads empty** - no consciousness data visible
+2. **Click Alexander Kane profile** - consciousness loads, interfaces populate  
+3. **Navigate to Terminal** - run `attach alexander-kane` then `ps` to see his mental processes
+4. **Switch to Monitor** - observe system resources and error states
+5. **Try Debugger** - view his consciousness as executable code
+6. **Begin debugging** - start resolving his psychological conflicts through technical intervention
+
+## 📚 Documentation
+
+- `docs/CONSCIOUSNESS-SCHEMA.md` - Character consciousness data structure
+- `docs/API.md` - REST endpoints and WebSocket events
+- `docs/DEBUGGING.md` - Debug command reference and intervention types
+- `docs/NARRATIVE_INTEGRATION.md` - Story progression and trigger system
+
+## 🎭 Story Themes
+
+**Technical metaphors for human experience:**
+- Memory leaks as inability to let go of loss
+- Infinite loops as obsessive thought patterns  
+- Thread starvation as neglected relationships
+- Resource exhaustion as emotional overwhelm
+- System optimization as psychological healing
+
+**Runtime.zyjeski.com transforms debugging from technical skill into emotional intelligence** - every optimization teaches both programming concepts and deeper understanding of grief, love, and human resilience.
+
+The question isn't whether you can fix Alexander Kane's consciousness - it's whether you can help him choose to heal.
