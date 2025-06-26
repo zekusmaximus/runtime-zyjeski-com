@@ -19,6 +19,7 @@ class MonitorUI {
 
   initialize(controller) {
     this.controller = controller;
+    
     this.elements.toggleMonitoring.addEventListener('click', () => {
       const characterId = this.elements.characterSelect.value;
       if (characterId) {
@@ -173,24 +174,52 @@ class MonitorUI {
   }
 
   updateMemoryVisualization(memoryMap) {
-    if (!memoryMap || !memoryMap.regions || memoryMap.regions.length === 0) {
-        this.elements.memoryVisualization.innerHTML = '<div class="empty-state">No memory regions defined.</div>';
-        return;
+    // Handle both old and new memory data structures
+    let regions = [];
+    
+    if (memoryMap && memoryMap.regions && memoryMap.regions.length > 0) {
+      regions = memoryMap.regions;
+    } else if (memoryMap && Array.isArray(memoryMap)) {
+      regions = memoryMap;
+    } else if (memoryMap && memoryMap.pools) {
+      // Convert pools to regions format for display
+      regions = Object.entries(memoryMap.pools).map(([name, data]) => ({
+        name: name,
+        type: name.toLowerCase(),
+        size: data.size || data.used || data.count || 0,
+        address: data.address || `0x${Math.random().toString(16).substr(2, 8)}`
+      }));
+    }
+
+    if (!regions || regions.length === 0) {
+      this.elements.memoryVisualization.innerHTML = '<div class="empty-state">No memory regions detected.</div>';
+      return;
     }
 
     let html = '<div class="memory-blocks">';
     const template = document.getElementById('memoryBlockTemplate');
 
-    for (const region of memoryMap.regions) {
-        const block = template.content.cloneNode(true);
-        block.querySelector('.memory-block').classList.add(region.type);
-        block.querySelector('.memory-block-id').textContent = region.name;
-        block.querySelector('.memory-block-size').textContent = `${region.size} KB`;
-        html += block.firstElementChild.outerHTML;
+    if (!template) {
+      console.error('Memory block template not found');
+      this.elements.memoryVisualization.innerHTML = '<div class="empty-state">Template error.</div>';
+      return;
     }
 
-    html += '</div>';
-    this.elements.memoryVisualization.innerHTML = html;
+    try {
+      for (const region of regions) {
+        const block = template.content.cloneNode(true);
+        block.querySelector('.memory-block').classList.add(region.type || 'unknown');
+        block.querySelector('.memory-block-id').textContent = region.name || region.label || 'Unknown';
+        block.querySelector('.memory-block-size').textContent = `${region.size || 0} KB`;
+        html += block.firstElementChild.outerHTML;
+      }
+
+      html += '</div>';
+      this.elements.memoryVisualization.innerHTML = html;
+    } catch (error) {
+      console.error('Error updating memory visualization:', error);
+      this.elements.memoryVisualization.innerHTML = '<div class="empty-state">Error displaying memory.</div>';
+    }
   }
 
   updateErrorLog(errors) {

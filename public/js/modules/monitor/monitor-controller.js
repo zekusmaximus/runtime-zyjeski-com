@@ -1,4 +1,3 @@
-
 import MonitorSocket from './monitor-socket.js';
 import MonitorUI from './monitor-ui.js';
 import MonitorState from './monitor-state.js';
@@ -36,12 +35,16 @@ class MonitorController {
         this.ui.updateConnectionStatus(this.state.connectionStatus);
         break;
       case 'consciousness-update':
-        this.state.update(data.state);
+        // Handle different data structures for consciousness updates
+        let consciousnessData = data.state || data.consciousness || data;
+        this.state.update(consciousnessData);
         this.ui.updateAll(this.state.consciousnessData);
         break;
       case 'monitoring-started':
         this.state.setMonitoringStatus(true);
-        this.state.update(data.initialState);
+        // Handle different data structures for initial state
+        let initialState = data.initialState || data.state || data.consciousness || data;
+        this.state.update(initialState);
         this.ui.updateAll(this.state.consciousnessData);
         this.ui.setMonitoringButtonState(true);
         break;
@@ -54,8 +57,34 @@ class MonitorController {
 
   connectToCharacter(character) {
     if (character && character.id) {
-      this.ui.setSelectedCharacter(character.id);
-      return this.startMonitoring(character.id);
+      console.log('[Ground State] Monitor connecting to character:', character.name);
+      
+      // First ensure we have the character in the dropdown
+      this.ui.populateCharacterList([character]);
+      
+      // First ensure socket is connected
+      if (this.socket && this.socket.socket && !this.socket.socket.isSocketConnected()) {
+        console.log('[Ground State] Connecting socket for character monitoring');
+        return this.socket.socket.connect().then(() => {
+          console.log('[Ground State] Socket connected, setting up monitoring');
+          this.ui.setSelectedCharacter(character.id);
+          this.state.setConnectionStatus('connected');
+          this.ui.updateConnectionStatus(this.state.connectionStatus);
+          return this.startMonitoring(character.id);
+        }).catch(error => {
+          console.error('[Ground State] Failed to connect socket for monitoring:', error);
+          this.state.setConnectionStatus('error');
+          this.ui.updateConnectionStatus(this.state.connectionStatus);
+          return false;
+        });
+      } else {
+        // Socket already connected
+        console.log('[Ground State] Socket already connected, setting up monitoring');
+        this.ui.setSelectedCharacter(character.id);
+        this.state.setConnectionStatus('connected');
+        this.ui.updateConnectionStatus(this.state.connectionStatus);
+        return this.startMonitoring(character.id);
+      }
     }
     return Promise.resolve(false);
   }
