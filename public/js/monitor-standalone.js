@@ -93,7 +93,8 @@ class StandaloneMonitor {
       console.log('Monitoring started:', data);
       this.isMonitoring = true;
       this.updateButtonStates();
-      this.startDataPolling();
+      // Load initial data once, then only update on events
+      this.requestAllData();
     });
 
     this.socket.on('monitoring-stopped', (data) => {
@@ -143,14 +144,6 @@ class StandaloneMonitor {
     this.characterSelect.addEventListener('change', handleSelectionChange);
     this.characterSelect.addEventListener('input', handleSelectionChange);
     
-    // Also check periodically for changes (fallback)
-    setInterval(() => {
-      if (this.characterSelect.value !== this.lastKnownValue) {
-        this.lastKnownValue = this.characterSelect.value;
-        handleSelectionChange();
-      }
-    }, 500);
-    
     this.lastKnownValue = this.characterSelect.value;
 
     // Start monitoring
@@ -163,8 +156,8 @@ class StandaloneMonitor {
       this.stopMonitoring();
     });
     
-    // Set Alexander Kane as default
-    this.characterSelect.value = 'alexander-kane';
+    // Start with no character selected - user must explicitly choose
+    this.characterSelect.value = '';
     handleSelectionChange();
   }
 
@@ -184,25 +177,20 @@ class StandaloneMonitor {
   }
 
   startDataPolling() {
-    // Request data immediately
+    // Load initial data once when monitoring starts
     this.requestAllData();
-    
-    // Then poll every 2 seconds
-    this.updateInterval = setInterval(() => {
-      this.requestAllData();
-    }, 2000);
+    // Note: No polling interval - updates will come from server events
   }
 
   stopDataPolling() {
-    if (this.updateInterval) {
-      clearInterval(this.updateInterval);
-      this.updateInterval = null;
-    }
+    // No interval to clear since we're event-driven
+    console.log('Data polling stopped (event-driven mode)');
   }
 
   requestAllData() {
     if (!this.isMonitoring) return;
     
+    console.log('Requesting initial monitor data...');
     this.socket.emit('get-system-resources');
     this.socket.emit('get-error-logs');
     this.socket.emit('get-memory-allocation');

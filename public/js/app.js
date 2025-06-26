@@ -165,8 +165,13 @@ class RuntimeApp {
         }
         
         // Connect monitor to the loaded character data
-        if (window.monitor) {
+        if (window.monitor && typeof window.monitor.connectToCharacter === 'function') {
+          console.log('[APP] Connecting monitor to character');
           window.monitor.connectToCharacter(this.currentCharacter);
+        } else if (window.monitor) {
+          console.warn('[APP] Monitor exists but connectToCharacter method not available');
+        } else {
+          console.warn('[APP] Monitor not available yet');
         }
         
         this.hideLoading();

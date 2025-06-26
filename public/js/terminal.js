@@ -240,8 +240,9 @@ class Terminal {
     }
 
     this.addOutput('Querying consciousness processes...', 'info');
+    // Don't set isProcessingCommand to false here - let the response handler do it
     
-    // Send real command to backend
+    // Send real command to backend  
     window.socketClient.sendDebugCommand(this.currentCharacter.id, 'ps', { args });
   }
 
@@ -253,6 +254,7 @@ class Terminal {
     }
 
     this.addOutput('Retrieving resource usage...', 'info');
+    // Don't set isProcessingCommand to false here - let the response handler do it
     window.socketClient.sendDebugCommand(this.currentCharacter.id, 'top', { args });
   }
 
@@ -278,6 +280,7 @@ class Terminal {
     }
 
     this.addOutput(`Terminating process ${pid}...`, 'warning');
+    // Don't set isProcessingCommand to false here - let the response handler do it
     window.socketClient.sendDebugCommand(this.currentCharacter.id, 'kill', { pid });
   }
 
@@ -331,13 +334,37 @@ class Terminal {
     const characterId = args[0];
     this.addOutput(`Attaching to ${characterId}...`, 'info');
     
-    // Load character through app
+    // Load character through app first
     if (window.app) {
-      window.app.selectCharacter(characterId);
+      window.app.selectCharacter(characterId).then(() => {
+        // Character loaded, now start monitoring
+        this.addOutput(`✓ Character ${characterId} loaded`, 'success');
+        this.addOutput(`✓ Starting consciousness monitoring...`, 'info');
+        
+        // Start monitoring the consciousness
+        window.socketClient.emitToServer('monitor:start', { characterId });
+        
+        // Update current character for terminal commands
+        this.currentCharacter = { id: characterId, name: characterId };
+        this.updatePrompt();
+        
+        // Send initial ps command to show processes
+        setTimeout(() => {
+          this.addOutput(`✓ Attached to ${characterId} consciousness`, 'success');
+          this.addOutput('', 'output');
+          this.addOutput('Running initial process scan...', 'info');
+          window.socketClient.sendDebugCommand(characterId, 'ps', {});
+        }, 500);
+        
+        this.isProcessingCommand = false;
+      }).catch((error) => {
+        this.addOutput(`✗ Failed to attach to ${characterId}: ${error.message}`, 'error');
+        this.isProcessingCommand = false;
+      });
+    } else {
+      this.addOutput(`✗ Application context not available`, 'error');
+      this.isProcessingCommand = false;
     }
-
-    // Send attach command
-    window.socketClient.sendDebugCommand(characterId, 'attach', { characterId });
   }
 
   debugCommand(args) {
@@ -610,7 +637,11 @@ class Terminal {
         break;
         
       case 'kill':
-        this.addOutput(`Process terminated: ${result.name} (PID: ${result.pid})`, 'success');
+        if (result.success) {
+          this.addOutput(`✓ Process ${result.pid} terminated successfully`, 'success');
+        } else if (result.error) {
+          this.addOutput(`✗ ${result.error}`, 'error');
+        }
         break;
         
       case 'monitor':

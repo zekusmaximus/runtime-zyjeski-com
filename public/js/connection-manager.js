@@ -17,7 +17,7 @@
 
     waitForDependencies() {
       const checkReady = () => {
-        if (document.readyState === 'complete' && window.socketClient) {
+        if (document.readyState === 'complete' && window.socketClient && window.socketClient.isSocketConnected) {
           this.initialize();
         } else {
           setTimeout(checkReady, 100);

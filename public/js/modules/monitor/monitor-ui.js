@@ -42,6 +42,32 @@ class MonitorUI {
     this.elements.toggleMonitoring.disabled = !characterId;
   }
 
+  populateCharacterList(characters) {
+    if (!this.elements.characterSelect) {
+      console.error('Character select element not found');
+      return;
+    }
+
+    // Clear existing options except the default one
+    this.elements.characterSelect.innerHTML = '<option value="">Select a character...</option>';
+
+    if (!characters || characters.length === 0) {
+      console.warn('No characters available');
+      return;
+    }
+
+    // Populate with available characters
+    characters.forEach(character => {
+      const option = document.createElement('option');
+      option.value = character.id;
+      option.textContent = character.name || character.id;
+      this.elements.characterSelect.appendChild(option);
+    });
+
+    // Enable/disable monitoring button based on selection
+    this.elements.toggleMonitoring.disabled = !this.elements.characterSelect.value;
+  }
+
   updateAll(data) {
     if (!data) return;
     this.updateResourceMeters(data.systemResources);
@@ -68,27 +94,48 @@ class MonitorUI {
   }
 
   updateResourceMeters(resources) {
-    if (!resources) {
-        this.elements.resourceMeters.innerHTML = '<div class="empty-state">No resource data available.</div>';
+    if (!resources || !this.elements.resourceMeters) {
+        console.warn('No resources data or element available for resource meters');
+        if (this.elements.resourceMeters) {
+          this.elements.resourceMeters.innerHTML = '<div class="empty-state">No resource data available.</div>';
+        }
         return;
     }
 
     let html = '';
     const template = document.getElementById('resourceMeterTemplate');
+    
+    if (!template) {
+        console.error('Resource meter template not found');
+        this.elements.resourceMeters.innerHTML = '<div class="empty-state">Template error.</div>';
+        return;
+    }
 
-    const cpuMeter = template.content.cloneNode(true);
-    cpuMeter.querySelector('.meter-name').textContent = 'CPU';
-    cpuMeter.querySelector('.meter-value').textContent = `${(resources.cpu.currentLoad * 100).toFixed(1)}%`;
-    cpuMeter.querySelector('.meter-fill').style.width = `${resources.cpu.currentLoad * 100}%`;
-    html += cpuMeter.firstElementChild.outerHTML;
+    try {
+      // CPU Meter
+      if (resources.cpu) {
+        const cpuMeter = template.content.cloneNode(true);
+        cpuMeter.querySelector('.meter-name').textContent = 'CPU';
+        cpuMeter.querySelector('.meter-value').textContent = `${(resources.cpu.currentLoad * 100).toFixed(1)}%`;
+        cpuMeter.querySelector('.meter-fill').style.width = `${resources.cpu.currentLoad * 100}%`;
+        html += cpuMeter.firstElementChild.outerHTML;
+      }
 
-    const memoryMeter = template.content.cloneNode(true);
-    memoryMeter.querySelector('.meter-name').textContent = 'Memory';
-    memoryMeter.querySelector('.meter-value').textContent = `${(resources.memory.used / resources.memory.total * 100).toFixed(1)}%`;
-    memoryMeter.querySelector('.meter-fill').style.width = `${(resources.memory.used / resources.memory.total * 100)}%`;
-    html += memoryMeter.firstElementChild.outerHTML;
+      // Memory Meter  
+      if (resources.memory && resources.memory.total > 0) {
+        const memoryMeter = template.content.cloneNode(true);
+        memoryMeter.querySelector('.meter-name').textContent = 'Memory';
+        const memoryPercent = (resources.memory.used / resources.memory.total * 100).toFixed(1);
+        memoryMeter.querySelector('.meter-value').textContent = `${memoryPercent}%`;
+        memoryMeter.querySelector('.meter-fill').style.width = `${memoryPercent}%`;
+        html += memoryMeter.firstElementChild.outerHTML;
+      }
 
-    this.elements.resourceMeters.innerHTML = html;
+      this.elements.resourceMeters.innerHTML = html;
+    } catch (error) {
+      console.error('Error updating resource meters:', error);
+      this.elements.resourceMeters.innerHTML = '<div class="empty-state">Error displaying resources.</div>';
+    }
   }
 
   updateProcessTable(processes) {
@@ -97,21 +144,32 @@ class MonitorUI {
         return;
     }
 
-    let html = '<table class="process-list"><tr><th>PID</th><th>Name</th><th>Status</th><th>CPU</th><th>Memory</th><th>Actions</th></tr>';
     const template = document.getElementById('processRowTemplate');
-
-    for (const process of processes) {
-        const row = template.content.cloneNode(true);
-        row.querySelector('.process-pid').textContent = process.pid;
-        row.querySelector('.process-name').textContent = process.name;
-        row.querySelector('.process-status').textContent = process.status;
-        row.querySelector('.process-cpu').textContent = `${(process.cpuUsage * 100).toFixed(2)}%`;
-        row.querySelector('.process-memory').textContent = `${(process.memoryUsage / 1024).toFixed(2)} KB`;
-        html += row.firstElementChild.outerHTML;
+    if (!template) {
+        console.error('Process row template not found');
+        this.elements.processTable.innerHTML = '<div class="empty-state">Template error.</div>';
+        return;
     }
 
-    html += '</table>';
-    this.elements.processTable.innerHTML = html;
+    try {
+      let html = '<table class="process-list"><tr><th>PID</th><th>Name</th><th>Status</th><th>CPU</th><th>Memory</th><th>Actions</th></tr>';
+
+      for (const process of processes) {
+          const row = template.content.cloneNode(true);
+          row.querySelector('.process-pid').textContent = process.pid || 'N/A';
+          row.querySelector('.process-name').textContent = process.name || 'Unknown';
+          row.querySelector('.process-status').textContent = process.status || 'unknown';
+          row.querySelector('.process-cpu').textContent = `${((process.cpuUsage || 0) * 100).toFixed(2)}%`;
+          row.querySelector('.process-memory').textContent = `${((process.memoryUsage || 0) / 1024).toFixed(2)} KB`;
+          html += row.firstElementChild.outerHTML;
+      }
+
+      html += '</table>';
+      this.elements.processTable.innerHTML = html;
+    } catch (error) {
+      console.error('Error updating process table:', error);
+      this.elements.processTable.innerHTML = '<div class="empty-state">Error displaying processes.</div>';
+    }
   }
 
   updateMemoryVisualization(memoryMap) {
@@ -161,10 +219,20 @@ class MonitorUI {
   }
 
   updateFooter(data) {
-    this.elements.processCount.textContent = `${data.processes?.length || 0} processes`;
-    this.elements.errorCount.textContent = `${data.system_errors?.length || 0} errors`;
-    const memoryPercentage = data.systemResources ? (data.systemResources.memory.used / data.systemResources.memory.total * 100).toFixed(1) : 0;
-    this.elements.memoryUsage.textContent = `${memoryPercentage}% memory`;
+    // Safely update footer elements if they exist
+    if (this.elements.processCount) {
+      this.elements.processCount.textContent = `${data.processes?.length || 0}`;
+    }
+    if (this.elements.errorCount) {
+      this.elements.errorCount.textContent = `${data.system_errors?.length || 0}`;
+    }
+    if (this.elements.memoryUsage) {
+      const memoryPercentage = data.systemResources ? (data.systemResources.memory.used / data.systemResources.memory.total * 100).toFixed(1) : 0;
+      this.elements.memoryUsage.textContent = `${memoryPercentage}%`;
+    }
+    if (this.elements.lastUpdateTime) {
+      this.elements.lastUpdateTime.textContent = new Date().toLocaleTimeString();
+    }
   }
 }
 

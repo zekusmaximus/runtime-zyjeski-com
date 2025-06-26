@@ -3,6 +3,7 @@ class DebuggerInterface {
   constructor() {
     this.isActive = false;
     this.currentCharacter = null;
+    this.consciousnessState = null;  // Store real consciousness state
     this.breakpoints = new Map();
     this.callStack = [];
     this.variables = {};
@@ -152,6 +153,12 @@ class DebuggerInterface {
     
     this.currentCharacter = character;
     
+    // Request current consciousness state if character is attached
+    if (character.id && window.socketClient && window.socketClient.isSocketConnected()) {
+      // Request fresh consciousness state for the debugger
+      window.socketClient.emitToServer('refresh-monitor');
+    }
+    
     // Update call stack and variables
     this.updateCallStackFromCharacter(character);
     this.updateVariablesFromCharacter(character);
@@ -159,6 +166,9 @@ class DebuggerInterface {
     // Refresh displays
     this.updateCallStack();
     this.updateVariablesView();
+    
+    // Regenerate code (will use static code until consciousness state arrives)
+    this.generateConsciousnessCode();
     this.renderCodeEditor();
     
     console.log('Debugger updated for character:', character.name);
@@ -166,8 +176,23 @@ class DebuggerInterface {
 
   // Generate consciousness code representation
   generateConsciousnessCode() {
+    // Generate code based on actual consciousness state if available
+    if (this.currentCharacter && this.consciousnessState) {
+      this.generateDynamicCode();
+    } else {
+      this.generateStaticCode();
+    }
+  }
+
+  generateDynamicCode() {
+    const state = this.consciousnessState;
+    const processes = state.consciousness?.processes || [];
+    const resources = state.consciousness?.resources || {};
+    const errors = state.consciousness?.system_errors || [];
+    
     this.codeLines = [
-      '// Consciousness Runtime - Alexander Kane',
+      `// Consciousness Runtime - ${this.currentCharacter.name}`,
+      `// Generated at ${new Date().toISOString()}`,
       '#include <consciousness.h>',
       '#include <memory_manager.h>',
       '#include <process_scheduler.h>',
@@ -176,34 +201,85 @@ class DebuggerInterface {
       '    ConsciousnessRuntime runtime;',
       '    runtime.initialize();',
       '    ',
-      '    // Memory allocation',
+      '    // System Resources',
+      `    // CPU: ${resources.cpu?.percentage?.toFixed(1) || 0}% | Memory: ${resources.memory?.percentage?.toFixed(1) || 0}% | Threads: ${resources.threads?.used || 0}/${resources.threads?.total || 0}`,
       '    MemoryAllocator* memory = runtime.getMemoryAllocator();',
       '    ProcessManager* processes = runtime.getProcessManager();',
       '    ',
-      '    // Core processes',
-      '    Process* grief_mgr = processes->spawn("Grief_Manager.exe");',
-      '    Process* search_proto = processes->spawn("Search_Protocol.exe");',
-      '    Process* temporal_sync = processes->spawn("Temporal_Sync.dll");',
-      '    Process* rel_handler = processes->spawn("Relationship_Handler.exe");',
+      '    // Active Processes'
+    ];
+
+    // Add process spawning based on actual running processes
+    processes.forEach(proc => {
+      const memoryMB = Math.round((proc.memoryUsage || 0) / 1024 / 1024);
+      this.codeLines.push(`    Process* ${proc.name.toLowerCase().replace(/[^a-z0-9]/g, '_')} = processes->spawn("${proc.name}"); // ${proc.status}, ${memoryMB}MB, ${(proc.cpuUsage || 0).toFixed(1)}% CPU`);
+    });
+
+    this.codeLines.push(
       '    ',
       '    // Main execution loop',
       '    while (runtime.isRunning()) {',
-      '        try {',
-      '            grief_mgr->execute();',
-      '            search_proto->execute();',
-      '            temporal_sync->execute();',
-      '            rel_handler->execute();',
+      '        try {'
+    );
+
+    // Add process execution calls
+    processes.forEach(proc => {
+      if (proc.status === 'running') {
+        const procVar = proc.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        this.codeLines.push(`            ${procVar}->execute(); // PID: ${proc.pid}, Priority: ${proc.priority || 'normal'}`);
+      }
+    });
+
+    this.codeLines.push(
       '            ',
       '            runtime.processEvents();',
       '            runtime.garbageCollect();',
-      '            ',
-      '        } catch (MemoryLeakException& e) {',
-      '            runtime.handleError(e);',
-      '        } catch (InfiniteLoopException& e) {',
-      '            runtime.handleError(e);',
-      '        } catch (ThreadStarvationException& e) {',
-      '            runtime.handleError(e);',
+      '            '
+    );
+
+    // Add error handling based on actual system errors
+    if (errors.length > 0) {
+      errors.forEach(error => {
+        this.codeLines.push(`        } catch (${error.type || 'RuntimeException'}& e) {`);
+        this.codeLines.push(`            // ${error.message || error.toString()}`);
+        this.codeLines.push('            runtime.handleError(e);');
+      });
+    } else {
+      this.codeLines.push(
+        '        } catch (MemoryLeakException& e) {',
+        '            runtime.handleError(e);',
+        '        } catch (ProcessException& e) {',
+        '            runtime.handleError(e);'
+      );
+    }
+
+    this.codeLines.push(
       '        }',
+      '    }',
+      '    ',
+      '    return runtime.shutdown();',
+      '}'
+    );
+  }
+
+  generateStaticCode() {
+    // Fallback to static code when no consciousness state available
+    this.codeLines = [
+      '// Consciousness Runtime - No Character Attached',
+      '// Use terminal command: attach alexander-kane',
+      '#include <consciousness.h>',
+      '#include <memory_manager.h>',
+      '#include <process_scheduler.h>',
+      '',
+      'int main() {',
+      '    ConsciousnessRuntime runtime;',
+      '    runtime.initialize();',
+      '    ',
+      '    // No consciousness instance loaded',
+      '    runtime.log("Waiting for character attachment...");',
+      '    ',
+      '    while (!runtime.hasActiveConsciousness()) {',
+      '        runtime.idle();',
       '    }',
       '    ',
       '    return runtime.shutdown();',
@@ -548,11 +624,52 @@ class DebuggerInterface {
   }
 
   handleConsciousnessUpdate(data) {
+    console.log('🔄 Debugger received consciousness update:', data);
+    
     if (this.isActive && data.characterId === this.currentCharacter?.id) {
-      this.updateVariablesFromCharacter({ consciousness: data.state.consciousness });
+      // Store the consciousness state
+      this.consciousnessState = data;
+      
+      // Update debugger displays with real data
+      this.updateFromCharacter(data);
+      
+      // Regenerate code with new state
+      this.generateConsciousnessCode();
+      this.renderCodeEditor();
+      
+      // Update variables view with real consciousness data
+      this.updateVariablesFromCharacter({ consciousness: data.state?.consciousness || data.consciousness });
       this.updateVariablesView();
       this.updateCallStack();
+      
+      console.log('✅ Debugger interface updated with real consciousness state');
     }
+  }
+
+  // New method to update debugger from consciousness data
+  updateFromCharacter(consciousnessData) {
+    if (!consciousnessData) return;
+    
+    const state = consciousnessData.state?.consciousness || consciousnessData.consciousness;
+    if (!state) return;
+    
+    // Update execution state based on consciousness status
+    if (state.processes && state.processes.length > 0) {
+      const hasRunningProcesses = state.processes.some(p => p.status === 'running');
+      this.executionState = hasRunningProcesses ? 'running' : 'paused';
+    } else {
+      this.executionState = 'stopped';
+    }
+    
+    // Update current line based on any active debugging info
+    if (state.debug_hooks && state.debug_hooks.length > 0) {
+      const activeHook = state.debug_hooks.find(h => h.active);
+      if (activeHook && activeHook.line) {
+        this.currentLine = activeHook.line;
+      }
+    }
+    
+    this.updateExecutionState();
   }
 
   handleInterventionApplied(data) {

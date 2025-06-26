@@ -22,6 +22,49 @@
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Templates for monitor interface -->
+    <template id="resourceMeterTemplate">
+        <div class="resource-meter">
+            <div class="meter-label">
+                <span class="meter-name"></span>
+                <span class="meter-value"></span>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill"></div>
+            </div>
+        </div>
+    </template>
+
+    <template id="processRowTemplate">
+        <tr class="process-row">
+            <td class="process-pid"></td>
+            <td class="process-name"></td>
+            <td class="process-status"></td>
+            <td class="process-cpu"></td>
+            <td class="process-memory"></td>
+            <td>
+                <button class="action-btn kill-btn">Kill</button>
+            </td>
+        </tr>
+    </template>
+
+    <template id="memoryBlockTemplate">
+        <div class="memory-block">
+            <div class="memory-block-id"></div>
+            <div class="memory-block-size"></div>
+        </div>
+    </template>
+
+    <template id="errorEntryTemplate">
+        <div class="error-entry">
+            <div class="error-header">
+                <span class="error-timestamp"></span>
+                <span class="error-severity"></span>
+            </div>
+            <div class="error-description"></div>
+        </div>
+    </template>
+
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
@@ -183,7 +226,7 @@
                     </div>
                     <div class="monitor-panel">
                         <h3>Active Processes</h3>
-                        <div class="process-table" id="processTable">
+                        <div class="process-table-container" id="processTable">
                             <!-- Process table will be populated dynamically -->
                             <div class="empty-state">No consciousness connected</div>
                             <div class="empty-state-hint">Select a character profile to view active processes</div>
@@ -203,6 +246,28 @@
                             <!-- Error log will be populated dynamically -->
                             <div class="empty-state">No consciousness connected</div>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- Monitor Footer with Stats -->
+                <div class="monitor-footer">
+                    <div class="footer-stats">
+                        <span class="footer-stat">
+                            <span class="stat-label">Processes:</span>
+                            <span class="stat-value" id="processCount">0</span>
+                        </span>
+                        <span class="footer-stat">
+                            <span class="stat-label">Errors:</span>
+                            <span class="stat-value" id="errorCount">0</span>
+                        </span>
+                        <span class="footer-stat">
+                            <span class="stat-label">Memory:</span>
+                            <span class="stat-value" id="memoryUsage">0%</span>
+                        </span>
+                        <span class="footer-stat">
+                            <span class="stat-label">Last Update:</span>
+                            <span class="stat-value last-update-time">Never</span>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -286,7 +351,7 @@
     
     <!-- Core modules in dependency order -->
     <script type="module" src="/js/state-manager.js"></script>
-    <script type="module" src="/js/socket-client.js"></script>
+    <script type="module" src="/js/modules/socket-client.js"></script>
     <script type="module" src="/js/consciousness.js"></script>
     <script type="module" src="/js/monitor.js"></script>
     <script type="module" src="/js/app.js"></script>

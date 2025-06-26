@@ -27,16 +27,17 @@ class MonitorController {
       case 'character-list':
         this.ui.populateCharacterList(data);
         break;
+      case 'disconnect':
         this.state.setConnectionStatus('disconnected');
         this.ui.updateConnectionStatus(this.state.connectionStatus);
         break;
       case 'consciousness-update':
-        this.state.updateConsciousnessData(data.state);
+        this.state.update(data.state);
         this.ui.updateAll(this.state.consciousnessData);
         break;
       case 'monitoring-started':
         this.state.setMonitoringStatus(true);
-        this.state.updateConsciousnessData(data.initialState);
+        this.state.update(data.initialState);
         this.ui.updateAll(this.state.consciousnessData);
         this.ui.setMonitoringButtonState(true);
         break;

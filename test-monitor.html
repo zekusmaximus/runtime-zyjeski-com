@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Test</title>
+</head>
+<body>
+    <h1>Monitor Test</h1>
+    
+    <!-- Basic elements that monitor needs -->
+    <div id="connectionStatus">Disconnected</div>
+    <select id="characterSelect">
+        <option value="">Select a character...</option>
+    </select>
+    <button id="toggleMonitoring" disabled>Start Monitoring</button>
+    <button id="refreshMonitor">Refresh</button>
+    
+    <!-- Resource section -->
+    <div id="resourceMeters">
+        <div class="resource-meter">
+            <div class="meter-label">CPU</div>
+            <div class="meter-bar">
+                <div class="meter-fill"></div>
+            </div>
+            <span class="meter-value">0%</span>
+        </div>
+    </div>
+    
+    <!-- Process table -->
+    <div id="processTable">
+        <table>
+            <thead>
+                <tr>
+                    <th>PID</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>CPU</th>
+                    <th>Memory</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    
+    <!-- Memory visualization -->
+    <div id="memoryVisualization">
+        <div class="memory-block"></div>
+    </div>
+    
+    <!-- Error log -->
+    <div id="errorLog">
+        <div class="error-list"></div>
+    </div>
+    <button id="clearErrors">Clear Errors</button>
+    
+    <!-- Footer elements -->
+    <div class="last-update-time">Never</div>
+    <div id="processCount">0</div>
+    <div id="errorCount">0</div>
+    <div id="memoryUsage">0%</div>
+    
+    <!-- Templates -->
+    <template id="resourceMeterTemplate">
+        <div class="resource-meter">
+            <div class="meter-label"></div>
+            <div class="meter-bar">
+                <div class="meter-fill"></div>
+            </div>
+            <span class="meter-value"></span>
+        </div>
+    </template>
+
+    <template id="processRowTemplate">
+        <tr class="process-row">
+            <td class="process-pid"></td>
+            <td class="process-name"></td>
+            <td class="process-status"></td>
+            <td class="process-cpu"></td>
+            <td class="process-memory"></td>
+            <td class="process-actions">
+                <button class="kill-process-btn" data-pid="">Kill</button>
+            </td>
+        </tr>
+    </template>
+
+    <template id="memoryBlockTemplate">
+        <div class="memory-block">
+            <div class="memory-content"></div>
+            <span class="memory-address"></span>
+        </div>
+    </template>
+
+    <template id="errorLogTemplate">
+        <div class="error-entry">
+            <span class="error-timestamp"></span>
+            <span class="error-level"></span>
+            <span class="error-message"></span>
+        </div>
+    </template>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/socket-client.js"></script>
+    <script src="/js/modules/monitor/monitor-state.js"></script>
+    <script src="/js/modules/monitor/monitor-ui.js"></script>
+    <script src="/js/modules/monitor/monitor-socket.js"></script>
+    <script src="/js/modules/monitor/monitor-controller.js"></script>
+    
+    <script>
+        console.log('Starting monitor test...');
+        
+        // Initialize the monitor
+        try {
+            const monitor = new MonitorController();
+            console.log('Monitor controller created:', monitor);
+            
+            // Test socket connection
+            window.socketClient.on('connect', () => {
+                console.log('Socket connected for test');
+            });
+            
+            // Test character list population
+            setTimeout(() => {
+                console.log('Testing character list population...');
+                monitor.ui.populateCharacterList([
+                    { id: 'alexander-kane', name: 'Alexander Kane' }
+                ]);
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Error initializing monitor:', error);
+        }
+    </script>
+</body>
+</html>

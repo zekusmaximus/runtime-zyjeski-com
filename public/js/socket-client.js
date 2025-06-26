@@ -75,6 +75,24 @@ class SocketClient {
       this.emit('intervention-applied', data);
     });
 
+    // Pass through consciousness updates for debugger integration
+    this.socket.on('consciousness-update', (data) => {
+      this.emit('consciousness-update', data);
+    });
+
+    // Pass through monitor-specific events
+    this.socket.on('character-list', (data) => {
+      this.emit('character-list', data);
+    });
+
+    this.socket.on('monitoring-started', (data) => {
+      this.emit('monitoring-started', data);
+    });
+
+    this.socket.on('monitoring-stopped', (data) => {
+      this.emit('monitoring-stopped', data);
+    });
+
     this.socket.on('error', (error) => {
       console.error('Socket error:', error);
       this.emit('error', error);
@@ -203,6 +221,11 @@ class SocketClient {
     return true;
   }
 
+  // Alias for backward compatibility - terminal.js expects this method name
+  sendDebugCommand(characterId, command, args = {}) {
+    return this.executeDebugCommand(characterId, command, args);
+  }
+
   // Player interventions
   applyPlayerIntervention(characterId, intervention) {
     if (!this.isConnected) {
@@ -284,6 +307,12 @@ class SocketClient {
     };
   }
 }
+
+// Create and initialize socket client instance
+const socketClient = new SocketClient();
+
+// Make available globally
+window.socketClient = socketClient;
 
 // Export for module usage
 export default SocketClient;
