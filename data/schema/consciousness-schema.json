@@ -23,141 +23,106 @@
       "type": "string",
       "description": "Brief character background"
     },
+    "storyContext": {
+      "type": "string",
+      "description": "Story this character belongs to"
+    },
+    "debugDifficulty": {
+      "type": "string",
+      "enum": ["beginner", "intermediate", "advanced", "expert"],
+      "description": "Debugging difficulty level"
+    },
     "baseProcesses": {
       "type": "array",
       "description": "Core processes that define consciousness functionality",
       "items": {
         "type": "object",
-        "required": ["name", "type", "baseLoad", "stability"],
+        "required": ["pid", "name", "status"],
         "properties": {
+          "pid": {
+            "type": "integer",
+            "description": "Process ID"
+          },
           "name": {
             "type": "string",
             "description": "Process identifier"
           },
-          "displayName": {
+          "command": {
             "type": "string",
-            "description": "Human-readable process name"
+            "description": "Process command path"
           },
-          "type": {
+          "status": {
             "type": "string",
-            "enum": ["emotional", "cognitive", "memory", "social", "executive", "sensory"],
-            "description": "Process category"
+            "enum": ["running", "sleeping", "stopped", "zombie", "error", "starved", "struggling"],
+            "description": "Process status"
           },
-          "baseLoad": {
-            "type": "object",
-            "required": ["cpu", "memory", "threads"],
-            "properties": {
-              "cpu": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 100,
-                "description": "Base CPU usage percentage"
-              },
-              "memory": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "Base memory allocation in MB"
-              },
-              "threads": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 16,
-                "description": "Number of threads used"
-              }
-            }
+          "priority": {
+            "type": "integer",
+            "description": "Process priority"
           },
-          "stability": {
+          "nice": {
+            "type": "integer",
+            "description": "Process nice value"
+          },
+          "cpu_usage": {
             "type": "number",
             "minimum": 0,
-            "maximum": 1,
-            "description": "Process stability (0 = unstable, 1 = stable)"
+            "maximum": 100,
+            "description": "CPU usage percentage"
           },
-          "dependencies": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Other processes this depends on"
+          "memory_mb": {
+            "type": "number",
+            "description": "Memory usage in MB"
           },
-          "triggers": {
-            "type": "array",
-            "description": "Conditions that modify process behavior",
-            "items": {
-              "type": "object",
-              "required": ["condition", "effect"],
-              "properties": {
-                "condition": {
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "enum": ["memory_access", "cpu_threshold", "emotional_state", "time_based", "event"]
-                    },
-                    "target": {
-                      "type": "string"
-                    },
-                    "operator": {
-                      "type": "string",
-                      "enum": [">", "<", ">=", "<=", "==", "!=", "contains", "matches"]
-                    },
-                    "value": {
-                      "oneOf": [
-                        { "type": "string" },
-                        { "type": "number" },
-                        { "type": "boolean" }
-                      ]
-                    }
-                  }
-                },
-                "effect": {
-                  "type": "object",
-                  "properties": {
-                    "action": {
-                      "type": "string",
-                      "enum": ["increase_load", "decrease_load", "spawn_thread", "kill_thread", "trigger_error", "allocate_memory"]
-                    },
-                    "magnitude": {
-                      "type": "number"
-                    },
-                    "target": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
+          "start_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Process start time"
           },
-          "errors": {
-            "type": "array",
-            "description": "Possible errors this process can generate",
-            "items": {
-              "type": "object",
-              "required": ["code", "type", "message"],
-              "properties": {
-                "code": {
-                  "type": "string",
-                  "pattern": "^[A-Z_]+$"
-                },
-                "type": {
-                  "type": "string",
-                  "enum": ["segfault", "overflow", "deadlock", "race_condition", "memory_leak", "null_reference", "infinite_loop"]
-                },
-                "message": {
-                  "type": "string"
-                },
-                "severity": {
-                  "type": "string",
-                  "enum": ["low", "medium", "high", "critical"],
-                  "default": "medium"
-                },
-                "probability": {
-                  "type": "number",
-                  "minimum": 0,
-                  "maximum": 1,
-                  "description": "Likelihood of error occurring"
-                }
-              }
-            }
+          "threads": {
+            "type": "integer",
+            "description": "Number of threads"
+          },
+          "state": {
+            "type": "string",
+            "description": "Process state code"
+          },
+          "wchan": {
+            "type": "string",
+            "description": "Wait channel"
+          },
+          "memory_leak": {
+            "type": "boolean",
+            "description": "Has memory leak"
+          },
+          "leak_rate_mb_per_hour": {
+            "type": "number",
+            "description": "Memory leak rate"
+          },
+          "infinite_loop": {
+            "type": "boolean",
+            "description": "Stuck in infinite loop"
+          },
+          "iterations": {
+            "type": "integer",
+            "description": "Loop iteration count"
+          },
+          "error_count": {
+            "type": "integer",
+            "description": "Number of errors"
+          },
+          "error_rate": {
+            "type": "number",
+            "description": "Error rate"
+          },
+          "last_active": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last active time"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description"
           }
         }
       }
@@ -184,7 +149,7 @@
             "properties": {
               "address": {
                 "type": "string",
-                "pattern": "^0x[0-9A-F]{8,16}$",
+                "pattern": "^0x[0-9A-Fa-f]+$",
                 "description": "Memory start address"
               },
               "size": {
@@ -200,29 +165,25 @@
                 "type": "string",
                 "description": "Human-readable region name"
               },
-              "protected": {
-                "type": "boolean",
-                "default": false,
-                "description": "Whether region is write-protected"
+              "description": {
+                "type": "string",
+                "description": "Detailed description"
               },
-              "fragmentable": {
-                "type": "boolean",
-                "default": true,
-                "description": "Can be accessed in fragments"
+              "access_pattern": {
+                "type": "string",
+                "description": "How memory is accessed"
               },
-              "volatility": {
+              "fragmentation": {
                 "type": "number",
                 "minimum": 0,
                 "maximum": 1,
-                "default": 0.5,
-                "description": "How quickly memories decay"
+                "description": "Fragmentation level"
               },
-              "corruptionRisk": {
+              "corruption": {
                 "type": "number",
                 "minimum": 0,
                 "maximum": 1,
-                "default": 0.1,
-                "description": "Likelihood of memory corruption"
+                "description": "Corruption level"
               }
             }
           }
@@ -234,62 +195,36 @@
       "description": "Emotional state definitions and their system impacts",
       "additionalProperties": {
         "type": "object",
-        "required": ["baseIntensity", "processes", "memoryRegions"],
+        "required": ["intensity"],
         "properties": {
-          "baseIntensity": {
+          "intensity": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
-            "description": "Default emotional intensity"
+            "description": "Current emotional intensity"
           },
-          "processes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Processes affected by this emotion"
-          },
-          "memoryRegions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Memory regions accessed by this emotion"
-          },
-          "systemImpact": {
-            "type": "object",
-            "properties": {
-              "cpuModifier": {
-                "type": "number",
-                "default": 1,
-                "description": "Multiplier for CPU usage"
-              },
-              "memoryModifier": {
-                "type": "number",
-                "default": 1,
-                "description": "Multiplier for memory usage"
-              },
-              "stabilityModifier": {
-                "type": "number",
-                "default": 1,
-                "description": "Multiplier for system stability"
-              }
-            }
+          "stability": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Emotional stability"
           },
           "triggers": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": ["memory", "time", "process", "external"]
-                },
-                "condition": {
+                "action": {
                   "type": "string"
                 },
-                "intensityModifier": {
+                "target": {
+                  "type": "string"
+                },
+                "intensityChange": {
                   "type": "number"
+                },
+                "storyConsequence": {
+                  "type": "string"
                 }
               }
             }
@@ -299,134 +234,66 @@
     },
     "systemResources": {
       "type": "object",
-      "description": "Overall system resource constraints",
+      "description": "System resource configuration",
       "required": ["cpu", "memory", "threads"],
       "properties": {
         "cpu": {
           "type": "object",
-          "required": ["cores", "baseFrequency"],
           "properties": {
-            "cores": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 16
-            },
-            "baseFrequency": {
-              "type": "number",
-              "description": "Base clock speed in GHz"
-            },
-            "turboFrequency": {
-              "type": "number",
-              "description": "Max turbo frequency in GHz"
-            }
+            "cores": {"type": "integer"},
+            "baseFrequency": {"type": "number"},
+            "turboFrequency": {"type": "number"},
+            "maxUsage": {"type": "number"}
           }
         },
         "memory": {
           "type": "object",
-          "required": ["total", "available"],
           "properties": {
-            "total": {
-              "type": "integer",
-              "description": "Total system memory in MB"
-            },
-            "available": {
-              "type": "integer",
-              "description": "Available memory at start in MB"
-            },
-            "swapSize": {
-              "type": "integer",
-              "default": 0,
-              "description": "Swap space in MB"
-            }
+            "total": {"type": "integer"},
+            "available": {"type": "integer"},
+            "pageSize": {"type": "integer"}
           }
         },
         "threads": {
           "type": "object",
-          "required": ["max", "reserved"],
           "properties": {
-            "max": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 256
-            },
-            "reserved": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "Threads reserved for system"
-            }
-          }
-        }
-      }
-    },
-    "debugInterface": {
-      "type": "object",
-      "description": "Debugging interface configuration",
-      "properties": {
-        "commands": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["command", "description", "category"],
-            "properties": {
-              "command": {
-                "type": "string"
-              },
-              "description": {
-                "type": "string"
-              },
-              "category": {
-                "type": "string",
-                "enum": ["process", "memory", "diagnostic", "intervention", "system"]
-              },
-              "requiresAuth": {
-                "type": "boolean",
-                "default": false
-              },
-              "riskLevel": {
-                "type": "string",
-                "enum": ["safe", "caution", "dangerous"],
-                "default": "safe"
-              }
-            }
+            "max": {"type": "integer"},
+            "reserved": {"type": "integer"}
           }
         },
-        "monitors": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": ["cpu", "memory", "threads", "errors", "emotional", "stability"]
+        "attention": {
+          "type": "object",
+          "properties": {
+            "total": {"type": "number"},
+            "focused": {"type": "number"},
+            "diffuse": {"type": "number"}
+          }
+        },
+        "emotionalEnergy": {
+          "type": "object",
+          "properties": {
+            "total": {"type": "number"},
+            "current": {"type": "number"},
+            "regenerationRate": {"type": "number"}
           }
         }
       }
     },
     "defaultState": {
       "type": "object",
-      "description": "Initial consciousness state",
-      "properties": {
-        "emotionalState": {
-          "type": "string"
-        },
-        "activeProcesses": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "memoryFragments": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "address": {
-                "type": "string"
-              },
-              "content": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
+      "description": "Initial consciousness state"
+    },
+    "narrativeHooks": {
+      "type": "object",
+      "description": "Story progression triggers"
+    },
+    "debugHooks": {
+      "type": "array",
+      "description": "Debug intervention points"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata"
     }
   }
 }
