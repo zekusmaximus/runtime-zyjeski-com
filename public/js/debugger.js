@@ -626,7 +626,16 @@ class DebuggerInterface {
   handleConsciousnessUpdate(data) {
     console.log('🔄 Debugger received consciousness update:', data);
     
-    if (this.isActive && data.characterId === this.currentCharacter?.id) {
+    /* ------------------------------------------------------------------
+     * Accept updates that either explicitly reference the current
+     * characterId OR contain no characterId (legacy notifyComponents
+     * call).  This ensures the debugger still refreshes when the top-level
+     * consciousness manager broadcasts an object without metadata.
+     * ------------------------------------------------------------------ */
+    if (data.characterId && data.characterId !== this.currentCharacter?.id) {
+      // Ignore updates for other characters
+      return;
+    }
       // Store the consciousness state
       this.consciousnessState = data;
       
@@ -644,7 +653,6 @@ class DebuggerInterface {
       
       console.log('✅ Debugger interface updated with real consciousness state');
     }
-  }
 
   // New method to update debugger from consciousness data
   updateFromCharacter(consciousnessData) {

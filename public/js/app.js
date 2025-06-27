@@ -164,6 +164,17 @@ class RuntimeApp {
         };
         
         this.updateCharacterSelection(characterId);
+
+        // Start socket monitoring for the selected character
+if (window.socketClient && typeof window.socketClient.startMonitoring === 'function') {
+  window.socketClient.startMonitoring(this.currentCharacter.id)
+    .then(() => {
+      console.log('[APP] Socket monitoring started for', this.currentCharacter.id);
+    })
+    .catch((err) => {
+      console.error('[APP] Failed to start socket monitoring:', err);
+    });
+}
         
         // GROUND STATE: Initialize consciousness with complete data
         if (window.consciousness) {

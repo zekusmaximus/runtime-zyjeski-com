@@ -253,3 +253,17 @@ User Debugging Success → Consciousness State Change → Narrative Engine Check
 - Advanced debugging tools for complex consciousness interventions
 
 The monitoring architecture serves as the **passive observation layer** for the consciousness debugging experience, ensuring that all mental process monitoring occurs in response to explicit user debugging actions while maintaining the ground state principle throughout the entire application lifecycle.
+## vNext Consolidation (June 2025)
+
+The modular monitor under `public/js/modules/monitor/` is now the **canonical implementation**.  
+Legacy, duplicate, or patch-only files have been removed:
+
+* `public/js/monitor-patches.js` – ad-hoc runtime patch file  
+* `public/js/monitor-standalone.js` – older monolithic build  
+* `public/js/modules/monitor/monitor-socket.js` – unused socket wrapper  
+* `public/test-monitor.html` – standalone test harness  
+* `tests/legacy/test-monitor.js` – obsolete Jest test
+
+All required visual and UX tweaks (flash highlight, CSS, etc.) were migrated into  
+`public/js/modules/monitor/monitor-ui.js`.  
+Only `public/js/monitor.js` should be referenced by HTML pages going forward.

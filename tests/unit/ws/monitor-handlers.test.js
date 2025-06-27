@@ -14,6 +14,10 @@ describe('monitor-handlers', () => {
 
     socket.emit('monitor:start', { characterId: 'c1' });
 
+    /* The handler uses multiple awaits; flush the micro-task queue twice */
+    await Promise.resolve();
+    await Promise.resolve();
+
     expect(engine.loadCharacter).toHaveBeenCalledWith('c1');
     expect(engine.startMonitoring).toHaveBeenCalledWith('c1', 's1');
     expect(handlers.connectedSockets.get('s1').isMonitoring).toBe(true);

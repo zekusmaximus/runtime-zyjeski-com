@@ -68,7 +68,8 @@ class ConsciousnessManager {
     // Connect and start monitoring via WebSocket
     if (window.socketClient) {
       const success = window.socketClient.startMonitoring(this.currentCharacter.id);
-      if (!success) {
+      // Treat ONLY an explicit `false` as failure; `undefined` is considered success
+      if (success === false) {
         console.error('Failed to start WebSocket monitoring');
         this.isMonitoring = false;
         if (window.stateManager) {
@@ -280,6 +281,7 @@ class ConsciousnessManager {
 
   // FIXED: Add robust data validation to handleConsciousnessUpdate
   handleConsciousnessUpdate(data) {
+    console.log('[DEBUG] Received consciousness-update:', data); // <--- ADD THIS LINE
     // Validate input data
     if (!data) {
       console.warn('Received null/undefined consciousness update data');

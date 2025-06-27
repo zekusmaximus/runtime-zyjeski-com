@@ -53,6 +53,13 @@ class MonitorState {
     // Transform consciousness data to format expected by monitor UI
     const resources = consciousness.resources || {};
     
+    // Store simple fields expected by legacy unit tests -----------------
+    this.resources = resources;
+    this.processes = processes;
+    this.memory = consciousness.memory || rawData.memory || {};
+    this.errors = consciousness.system_errors || rawData.errors || [];
+    this.lastUpdate = Date.now();
+    
     this.consciousnessData = {
       // Transform resource data from consciousness format to monitor UI format
       systemResources: {

@@ -3,153 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ground State Compliance Test</title>
+    <title>Ground State Data Test</title>
     <style>
         body {
-            font-family: monospace;
-            background: #0a0a0a;
-            color: #00ff00;
+            background: #0d1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             padding: 20px;
         }
-        .test-result {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #333;
-            border-radius: 4px;
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            background: #238636;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
         }
-        .pass {
-            border-color: #00ff00;
-            background: rgba(0, 255, 0, 0.1);
+        button:hover {
+            background: #2ea043;
         }
-        .fail {
-            border-color: #ff0000;
-            background: rgba(255, 0, 0, 0.1);
-            color: #ff0000;
+        pre {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 20px;
+            overflow: auto;
         }
-        #results {
-            margin-top: 20px;
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #161b22;
+            border-radius: 6px;
         }
+        .error { color: #f85149; }
+        .success { color: #3fb950; }
     </style>
 </head>
 <body>
-    <h1>Ground State Compliance Test</h1>
-    <p>Testing that no socket connections occur without explicit user action...</p>
+    <h1>Ground State Data Test</h1>
     
-    <div id="results"></div>
+    <div class="section">
+        <h2>Test Ground State Data Access</h2>
+        <button onclick="checkStateManager()">Check State Manager</button>
+        <button onclick="loadCharacter()">Load Alexander Kane</button>
+        <button onclick="checkCharacterData()">Check Character Data</button>
+        <button onclick="getProcesses()">Get Processes</button>
+        <button onclick="getResources()">Get Resources</button>
+        <button onclick="getMemory()">Get Memory</button>
+        <button onclick="getErrors()">Get Errors</button>
+    </div>
     
-    <button id="runTests" style="margin-top: 20px; padding: 10px; background: #333; color: #00ff00; border: 1px solid #00ff00;">
-        Run Compliance Tests
-    </button>
-    
-    <button id="connectTest" style="margin-top: 20px; padding: 10px; background: #333; color: #0088ff; border: 1px solid #0088ff;">
-        Test Manual Connection (User Action)
-    </button>
+    <div class="section">
+        <h2>Output</h2>
+        <pre id="output">Click buttons to test Ground State data access...</pre>
+    </div>
 
-    <!-- Socket.io -->
-    <script src="/socket.io/socket.io.js"></script>
-    
-    <!-- Ground State Socket Client -->
-    <script type="module" src="/js/socket-client.js"></script>
-    
-    <!-- Ground State Validator -->
-    <script type="module" src="/js/ground-state-validator.js"></script>
-    
-    <!-- Test Script -->
-    <script type="module">
-        const resultsDiv = document.getElementById('results');
-        
-        function addResult(testName, passed, message) {
-            const div = document.createElement('div');
-            div.className = `test-result ${passed ? 'pass' : 'fail'}`;
-            div.innerHTML = `
-                <strong>${testName}:</strong> ${passed ? '✅ PASS' : '❌ FAIL'}<br>
-                ${message}
-            `;
-            resultsDiv.appendChild(div);
+    <script>
+        function log(message, data = null) {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            let content = `[${timestamp}] ${message}\n`;
+            if (data) {
+                content += JSON.stringify(data, null, 2) + '\n';
+            }
+            output.textContent += content + '\n';
         }
-        
-        function runComplianceTests() {
-            resultsDiv.innerHTML = '<h2>Test Results:</h2>';
+
+        function checkStateManager() {
+            log('Checking state manager...');
             
-            // Test 1: Socket client exists but is not auto-connected
-            setTimeout(() => {
-                if (window.socketClient) {
-                    addResult('Socket Client Available', true, 'Socket client is globally available');
-                    
-                    if (window.socketClient.isConnected && window.socketClient.isConnected()) {
-                        addResult('No Auto-Connection', false, 'VIOLATION: Socket is auto-connected!');
-                    } else {
-                        addResult('No Auto-Connection', true, 'Socket is NOT auto-connected (Ground State compliant)');
-                    }
-                    
-                    // Test connection methods exist
-                    if (typeof window.socketClient.connect === 'function') {
-                        addResult('Manual Connection Available', true, 'Manual connection method exists');
-                    } else {
-                        addResult('Manual Connection Available', false, 'Manual connection method missing');
-                    }
-                    
-                    // Test emitToServer method exists
-                    if (typeof window.socketClient.emitToServer === 'function') {
-                        addResult('Proper API Available', true, 'emitToServer method exists');
-                    } else {
-                        addResult('Proper API Available', false, 'emitToServer method missing');
-                    }
-                } else {
-                    addResult('Socket Client Available', false, 'Socket client not found globally');
-                }
-                
-                // Test for unexpected socket instances
-                let unexpectedSockets = 0;
-                if (window.io) {
-                    // This is a basic check - count any connected sockets
-                    if (window.socketClient?.socket?.connected) {
-                        unexpectedSockets++;
-                    }
-                }
-                
-                if (unexpectedSockets === 0) {
-                    addResult('No Unexpected Connections', true, 'No auto-connected sockets detected');
-                } else {
-                    addResult('No Unexpected Connections', false, `Found ${unexpectedSockets} auto-connected sockets`);
-                }
-                
-                console.log('[Ground State Test] Compliance tests completed');
-            }, 1000);
-        }
-        
-        function testManualConnection() {
-            if (window.socketClient) {
-                console.log('[Ground State Test] Testing manual connection...');
-                
-                window.socketClient.connect().then(() => {
-                    addResult('Manual Connection Test', true, 'Successfully connected via user action');
-                    console.log('[Ground State Test] Manual connection successful');
-                    
-                    // Disconnect after test
-                    setTimeout(() => {
-                        if (window.socketClient.disconnect) {
-                            window.socketClient.disconnect();
-                            console.log('[Ground State Test] Disconnected after manual test');
-                        }
-                    }, 2000);
-                }).catch(error => {
-                    addResult('Manual Connection Test', false, `Connection failed: ${error.message}`);
-                    console.error('[Ground State Test] Manual connection failed:', error);
+            if (window.stateManager) {
+                log('✓ State manager found', {
+                    hasCharacter: !!window.stateManager.getCurrentCharacter(),
+                    hasState: !!window.stateManager.getState(),
+                    isLoading: window.stateManager.isLoadingCharacter()
                 });
             } else {
-                addResult('Manual Connection Test', false, 'Socket client not available');
+                log('✗ State manager NOT found');
             }
         }
-        
-        // Event listeners
-        document.getElementById('runTests').addEventListener('click', runComplianceTests);
-        document.getElementById('connectTest').addEventListener('click', testManualConnection);
-        
-        // Auto-run basic tests on load
-        window.addEventListener('load', () => {
-            setTimeout(runComplianceTests, 1500);
-        });
+
+        async function loadCharacter() {
+            log('Loading Alexander Kane...');
+            
+            if (!window.stateManager) {
+                log('✗ Cannot load - state manager not found');
+                return;
+            }
+
+            try {
+                await window.stateManager.loadCharacter('alexander-kane');
+                log('✓ Character loaded successfully');
+            } catch (error) {
+                log('✗ Failed to load character', { error: error.message });
+            }
+        }
+
+        function checkCharacterData() {
+            log('Checking character data...');
+            
+            if (!window.stateManager) {
+                log('✗ State manager not found');
+                return;
+            }
+
+            const character = window.stateManager.getCurrentCharacter();
+            const state = window.stateManager.getState();
+            
+            if (character) {
+                log('✓ Character found', {
+                    id: character.id,
+                    name: character.name,
+                    hasConsciousness: !!state?.consciousness
+                });
+            } else {
+                log('✗ No character loaded');
+            }
+            
+            if (state) {
+                log('✓ State found', {
+                    hasProcesses: !!state.processes,
+                    processCount: state.processes?.length || 0,
+                    hasMemory: !!state.consciousness?.memory,
+                    hasResources: !!state.consciousness?.resources,
+                    errorCount: state.system_errors?.length || 0
+                });
+            }
+        }
+
+        function getProcesses() {
+            log('Getting processes...');
+            
+            if (!window.stateManager) {
+                log('✗ State manager not found');
+                return;
+            }
+
+            const processes = window.stateManager.getProcesses();
+            if (processes && processes.length > 0) {
+                log('✓ Processes found', {
+                    count: processes.length,
+                    processes: processes.map(p => ({
+                        pid: p.pid,
+                        name: p.name,
+                        status: p.status,
+                        cpu: p.cpu_usage,
+                        memory: p.memory_usage
+                    }))
+                });
+            } else {
+                log('✗ No processes found');
+            }
+        }
+
+        function getResources() {
+            log('Getting resources...');
+            
+            if (!window.stateManager) {
+                log('✗ State manager not found');
+                return;
+            }
+
+            const resources = window.stateManager.getResources();
+            if (resources) {
+                log('✓ Resources found', resources);
+            } else {
+                log('✗ No resources found');
+            }
+        }
+
+        function getMemory() {
+            log('Getting memory...');
+            
+            if (!window.stateManager) {
+                log('✗ State manager not found');
+                return;
+            }
+
+            const memory = window.stateManager.getMemory();
+            if (memory) {
+                log('✓ Memory found', memory);
+            } else {
+                log('✗ No memory data found');
+            }
+        }
+
+        function getErrors() {
+            log('Getting errors...');
+            
+            if (!window.stateManager) {
+                log('✗ State manager not found');
+                return;
+            }
+
+            const errors = window.stateManager.getErrors();
+            log('Errors:', {
+                count: errors?.length || 0,
+                errors: errors || []
+            });
+        }
+
+        // Initial check
+        setTimeout(() => {
+            log('=== Initial State Check ===');
+            checkStateManager();
+        }, 1000);
     </script>
 </body>
 </html>

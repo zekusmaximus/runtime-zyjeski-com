@@ -96,6 +96,11 @@
     updateDisplay() {
       if (!this.connectionStatus) return;
 
+      /* Ensure element is visible once manager has control */
+      if (this.connectionStatus.style.display === 'none') {
+        this.connectionStatus.style.display = 'inline-flex';
+      }
+
       const isConnected = this.lastKnownConnectionState;
       const isMonitoring = !!this.monitoringCharacterId;
 

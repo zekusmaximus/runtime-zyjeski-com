@@ -1,4 +1,6 @@
-import MonitorSocket from './monitor-socket.js';
+// public/js/modules/monitor/monitor-controller.js
+// Ground State Compliant Implementation - Uses local state, not server data
+
 import MonitorUI from './monitor-ui.js';
 import MonitorState from './monitor-state.js';
 
@@ -6,117 +8,150 @@ class MonitorController {
   constructor() {
     this.state = new MonitorState();
     this.ui = new MonitorUI();
-    this.socket = new MonitorSocket(this.handleSocketEvent.bind(this));
-
-    this.initialize();
+    this.stateUpdateHandler = null;
   }
 
   initialize() {
-    // GROUND STATE: Only initialize UI, don't auto-connect or auto-request data
-    this.ui.initialize(this);
-    this.socket.connect(); // Connect to shared socket client (doesn't auto-connect to server)
+    console.log('[GROUND STATE] Monitor initializing - will use local state manager data');
     
-    // GROUND STATE: Don't auto-request character list
-    // Characters will be requested when user action triggers it
-    console.log('Monitor controller initialized - waiting for user action');
-  }
+    // Initialize UI
+    this.ui.initialize(this);
+    
+    // Subscribe to state manager updates
+    this.subscribeToStateManager();
 
-  handleSocketEvent(eventType, data) {
-    switch (eventType) {
-      case 'connect':
-        this.state.setConnectionStatus('connected');
-        this.ui.updateConnectionStatus(this.state.connectionStatus);
-        break;
-      case 'character-list':
-        this.ui.populateCharacterList(data);
-        break;
-      case 'disconnect':
-        this.state.setConnectionStatus('disconnected');
-        this.ui.updateConnectionStatus(this.state.connectionStatus);
-        break;
-      case 'consciousness-update':
-        // Handle different data structures for consciousness updates
-        let consciousnessData = data.state || data.consciousness || data;
-        this.state.update(consciousnessData);
+    // Listen for real-time socket updates if a connection is present.
+    // This keeps the UI live once monitoring starts (Task C).
+    if (window.socketClient) {
+      window.socketClient.on('resources-update', ({ cpu, threads, memTotal }) => {
+        const payload = {
+          consciousness: {
+            resources: { cpu, threads, memory: memTotal },
+            memory:   this.state.memory || {},
+            system_errors: this.state.errors || []
+          },
+          processes: this.state.processes || []
+        };
+        this.state.update(payload);
         this.ui.updateAll(this.state.consciousnessData);
-        break;
-      case 'monitoring-started':
-        this.state.setMonitoringStatus(true);
-        // Handle different data structures for initial state
-        let initialState = data.initialState || data.state || data.consciousness || data;
-        this.state.update(initialState);
+      });
+
+      window.socketClient.on('memory-update', ({ allocationByProcess }) => {
+        const payload = {
+          consciousness: {
+            memory: { pools: allocationByProcess },
+            resources: this.state.resources || {},
+            system_errors: this.state.errors || []
+          },
+          processes: this.state.processes || []
+        };
+        this.state.update(payload);
         this.ui.updateAll(this.state.consciousnessData);
-        this.ui.setMonitoringButtonState(true);
-        break;
-      case 'monitoring-stopped':
-        this.state.setMonitoringStatus(false);
-        this.ui.setMonitoringButtonState(false);
-        break;
+      });
+
+      window.socketClient.on('errors-update', ({ list }) => {
+        const payload = {
+          consciousness: {
+            system_errors: list,
+            resources: this.state.resources || {},
+            memory: this.state.memory || {}
+          },
+          processes: this.state.processes || []
+        };
+        this.state.update(payload);
+        this.ui.updateAll(this.state.consciousnessData);
+      });
     }
+    
+    // Load current character data if available
+    this.loadCurrentCharacterData();
   }
 
-  connectToCharacter(character) {
-    if (character && character.id) {
-      console.log('[Ground State] Monitor connecting to character:', character.name);
-      
-      // First ensure we have the character in the dropdown
-      this.ui.populateCharacterList([character]);
-      
-      // First ensure socket is connected
-      if (this.socket && this.socket.socket && !this.socket.socket.isSocketConnected()) {
-        console.log('[Ground State] Connecting socket for character monitoring');
-        return this.socket.socket.connect().then(() => {
-          console.log('[Ground State] Socket connected, setting up monitoring');
-          this.ui.setSelectedCharacter(character.id);
-          this.state.setConnectionStatus('connected');
-          this.ui.updateConnectionStatus(this.state.connectionStatus);
-          return this.startMonitoring(character.id);
-        }).catch(error => {
-          console.error('[Ground State] Failed to connect socket for monitoring:', error);
-          this.state.setConnectionStatus('error');
-          this.ui.updateConnectionStatus(this.state.connectionStatus);
-          return false;
-        });
-      } else {
-        // Socket already connected
-        console.log('[Ground State] Socket already connected, setting up monitoring');
-        this.ui.setSelectedCharacter(character.id);
-        this.state.setConnectionStatus('connected');
-        this.ui.updateConnectionStatus(this.state.connectionStatus);
-        return this.startMonitoring(character.id);
+  subscribeToStateManager() {
+    if (!window.stateManager) {
+      console.error('[GROUND STATE] State manager not available');
+      return;
+    }
+
+    // Subscribe to state changes
+    this.stateUpdateHandler = (newState) => {
+      console.log('[GROUND STATE] Monitor received state update from state manager');
+      this.handleStateUpdate(newState);
+    };
+
+    // Listen for state changes
+    window.stateManager.on('stateChanged', this.stateUpdateHandler);
+    window.stateManager.on('characterLoaded', () => this.loadCurrentCharacterData());
+  }
+
+  loadCurrentCharacterData() {
+    // Get current character from state manager
+    const character = window.stateManager.getCurrentCharacter();
+    const state = window.stateManager.getState();
+    
+    if (!character || !state) {
+      console.log('[GROUND STATE] No character loaded yet');
+      return;
+    }
+
+    console.log('[GROUND STATE] Loading character data from state manager:', character.name);
+    
+    // Update UI with character info
+    this.ui.populateCharacterList([character]);
+    this.ui.setSelectedCharacter(character.id);
+    
+    // Update state and displays
+    this.state.setSelectedCharacter(character.id);
+    this.state.update(state);
+    this.ui.updateAll(this.state.consciousnessData);
+  }
+
+  handleStateUpdate(newState) {
+    if (!newState) return;
+    
+    console.log('[GROUND STATE] Updating monitor displays with new state');
+    this.state.update(newState);
+    this.ui.updateAll(this.state.consciousnessData);
+  }
+
+  // User action: Manually refresh display
+  refreshData() {
+    console.log('[GROUND STATE] User requested refresh - reloading from state manager');
+    this.loadCurrentCharacterData();
+  }
+
+  // User action: Clear errors
+  clearErrors() {
+    console.log('[GROUND STATE] User clearing errors');
+    this.ui.clearErrorLog();
+    
+    // Also clear errors in state manager
+    if (window.stateManager) {
+      const currentErrors = window.stateManager.getErrors();
+      if (currentErrors && currentErrors.length > 0) {
+        // This would typically trigger a server action to clear errors
+        // For now, just clear the display
+        window.stateManager.setErrors([]);
       }
     }
-    return Promise.resolve(false);
   }
 
-  startMonitoring(characterId) {
-    console.log('[Ground State] Monitor controller starting monitoring for:', characterId);
-    this.state.setSelectedCharacter(characterId);
+  // Called when user navigates to character (from app.js)
+  connectToCharacter(character) {
+    console.log('[GROUND STATE] Connecting monitor to character:', character.name);
     
-    // Handle the promise returned by socket.startMonitoring
-    return this.socket.startMonitoring(characterId).then(() => {
-      console.log('[Ground State] Monitor successfully started for:', characterId);
-      return true;
-    }).catch(error => {
-      console.error('[Ground State] Failed to start monitoring:', error);
-      throw error;
-    });
+    // Just load the data from state manager
+    this.loadCurrentCharacterData();
+    
+    // No WebSocket connection needed - we use local state!
+    return Promise.resolve(true);
   }
 
-  stopMonitoring() {
-    this.socket.stopMonitoring(this.state.selectedCharacter);
-  }
-
-  refreshData() {
-    if (this.state.isMonitoring) {
-      this.socket.getFreshState(this.state.selectedCharacter);
-    }
-  }
-  
-  clearErrors() {
-    this.ui.clearErrorLog();
-    if (this.state.isMonitoring) {
-        this.socket.clearErrors(this.state.selectedCharacter);
+  // Cleanup
+  destroy() {
+    if (this.stateUpdateHandler && window.stateManager) {
+      window.stateManager.off('stateChanged', this.stateUpdateHandler);
+      window.stateManager.off('characterLoaded', this.stateUpdateHandler);
     }
   }
 }
