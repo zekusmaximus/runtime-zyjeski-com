@@ -409,6 +409,8 @@ class SocketClient {
     
     const result = {
       characterId: data.characterId || state.characterId,
+      // IMPORTANT: Preserve memoryMap at top level (this contains regions!)
+      memoryMap: state.memoryMap || data.memoryMap || {},
       consciousness: {
         processes: Array.isArray(state.processes) ? state.processes : [],
         memory: state.memory && typeof state.memory === 'object' ? state.memory : {},
@@ -425,7 +427,9 @@ class SocketClient {
     console.log('🔍 SOCKET: validateConsciousnessData returning:', {
       hasConsciousness: !!result.consciousness,
       consciousnessResources: result.consciousness?.resources ? Object.keys(result.consciousness.resources) : 'no resources',
-      processCount: result.consciousness?.processes?.length || 0
+      processCount: result.consciousness?.processes?.length || 0,
+      hasMemoryMap: !!result.memoryMap,
+      memoryMapRegions: result.memoryMap?.regions?.length || 0
     });
 
     return result;

@@ -19,10 +19,15 @@ class MonitorState {
   }
 
   update(data) {
+    console.log('🔧 Monitor state update received raw data:', data);
+    
     // Validate and normalize consciousness data structure
     let rawData;
     if (window.socketClient && window.socketClient.validateConsciousnessData) {
       rawData = window.socketClient.validateConsciousnessData(data);
+      console.log('🔧 After socketClient validation:', rawData);
+      console.log('🔧 rawData.memoryMap:', rawData.memoryMap);
+      console.log('🔧 rawData.memoryMap?.regions:', rawData.memoryMap?.regions);
     } else {
       // Enhanced fallback validation
       rawData = data || { 
@@ -92,10 +97,15 @@ class MonitorState {
       })),
       // Enhanced memory map handling with proper regions support
       memoryMap: {
-        regions: consciousness.memory?.regions || consciousness.memoryMap?.regions || [],
-        pools: consciousness.memory?.pools || {},
+        // Get regions from top-level memoryMap first, then consciousness memory
+        regions: rawData.memoryMap?.regions || consciousness.memory?.regions || consciousness.memoryMap?.regions || [],
+        // Get pools from consciousness memory
+        pools: consciousness.memory?.pools || rawData.memoryMap?.pools || {},
+        // Get capacity info from consciousness memory
+        capacity: consciousness.memory?.capacity || {},
         stats: consciousness.memory?.stats || {},
-        totalSize: consciousness.memory?.totalSize || consciousness.memoryMap?.totalSize || 0
+        totalSize: consciousness.memory?.capacity?.total || consciousness.memory?.totalSize || rawData.memoryMap?.totalSize || 0,
+        fragmentationLevel: consciousness.memory?.fragmentationLevel || 0
       },
       // Pass through errors from multiple possible locations
       system_errors: consciousness.system_errors || consciousness.errors || rawData.system_errors || [],

@@ -21,15 +21,52 @@ class MonitorUI {
   }
 
   cacheElements() {
+    console.log('🔍 MonitorUI: Caching elements...');
+    
     // Main containers
     this.elements.connectionStatus = document.querySelector('.connection-status');
     this.elements.monitorContainer = document.querySelector('.monitor-container');
+    
+    // Monitor section elements - ensure monitor section is accessible
+    const monitorSection = document.getElementById('monitor');
+    const wasActive = monitorSection?.classList.contains('active');
+    
+    // Temporarily activate monitor section if needed to cache elements properly
+    if (monitorSection && !wasActive) {
+      console.log('🔍 Temporarily activating monitor section for element caching...');
+      monitorSection.classList.add('active');
+    }
     
     // Resource displays
     this.elements.resourceMeters = document.getElementById('resourceMeters');
     this.elements.processTable = document.getElementById('processTable');
     this.elements.memoryVisualization = document.getElementById('memoryVisualization');
     this.elements.errorLog = document.getElementById('errorLog');
+    
+    // Restore section state
+    if (monitorSection && !wasActive) {
+      monitorSection.classList.remove('active');
+    }
+    
+    // Log what was found
+    console.log('🔍 Element cache results:', {
+      connectionStatus: !!this.elements.connectionStatus,
+      monitorContainer: !!this.elements.monitorContainer,
+      resourceMeters: !!this.elements.resourceMeters,
+      processTable: !!this.elements.processTable,
+      memoryVisualization: !!this.elements.memoryVisualization,
+      errorLog: !!this.elements.errorLog
+    });
+    
+    // Specifically check memory visualization
+    if (!this.elements.memoryVisualization) {
+      console.error('❌ memoryVisualization element not found!');
+      console.log('Available elements with memory in ID:', 
+        Array.from(document.querySelectorAll('[id*="memory"]')).map(el => el.id)
+      );
+    } else {
+      console.log('✅ memoryVisualization element found:', this.elements.memoryVisualization);
+    }
     
     // Controls
     this.elements.characterSelect = document.getElementById('characterSelect');
@@ -47,8 +84,12 @@ class MonitorUI {
 
   setupEventListeners() {
     if (this.elements.characterSelect) {
-      this.elements.characterSelect.addEventListener('change', (e) => {
-        this.controller.connectToCharacter({ id: e.target.value, name: e.target.options[e.target.selectedIndex].text });
+      this.elements.characterSelect.addEventListener('change', async (e) => {
+        const characterId = e.target.value;
+        if (characterId) {
+          console.log('[MONITOR UI] Character selected:', characterId);
+          await this.controller.selectCharacter(characterId);
+        }
       });
     }
     
@@ -133,8 +174,8 @@ class MonitorUI {
       this.updateProcessTable(data.processes);
     }
     
-    if (data.memoryData || data.memory) {
-      this.updateMemoryVisualization(data.memoryData || data.memory);
+    if (data.memoryData || data.memory || data.memoryMap) {
+      this.updateMemoryVisualization(data.memoryData || data.memory || data.memoryMap);
     }
     
     if (data.system_errors) {
@@ -151,7 +192,8 @@ class MonitorUI {
     if (!this.elements.resourceMeters || !resources) return;
     
     // Handle both formats: direct resources or nested in data
-    const cpu = resources.cpu || { percentage: 0, used: 0, total: 100 };
+    const cpu = resources.cpu || { currentLoad: 0, percentage: 0, used: 0, total: 100 };
+    const cpuPercentage = cpu.percentage || (cpu.currentLoad * 100) || 0;
     const memory = resources.memory || { percentage: 0, used: 0, total: 10000 };
     const threads = resources.threads || { percentage: 0, used: 0, total: 32 };
     
@@ -159,9 +201,9 @@ class MonitorUI {
       <div class="resource-meter">
         <div class="resource-label">CPU Usage</div>
         <div class="resource-bar">
-          <div class="resource-fill" style="width: ${cpu.percentage || 0}%"></div>
-        </div>
-        <div class="resource-value">${cpu.percentage || 0}%</div>
+          <div class="resource-fill" style="width: ${cpuPercentage}%"></div>
+</div>
+<div class="resource-value">${cpuPercentage.toFixed(1)}%</div>
       </div>
       <div class="resource-meter">
         <div class="resource-label">Memory</div>
@@ -227,45 +269,133 @@ class MonitorUI {
 
   updateMemoryVisualization(memoryData) {
     console.log('🧠 Updating memory visualization:', memoryData);
+    console.log('🧠 Memory data type:', typeof memoryData);
+    console.log('🧠 Memory data keys:', memoryData ? Object.keys(memoryData) : 'none');
     
-    if (!this.elements.memoryVisualization || !memoryData) {
-      if (this.elements.memoryVisualization) {
-        this.elements.memoryVisualization.innerHTML = '<div class="empty-state">No memory data available.</div>';
+    // Ensure monitor section is active before trying to access elements
+    const monitorSection = document.getElementById('monitor');
+    if (monitorSection && !monitorSection.classList.contains('active')) {
+      console.log('🧠 Monitor section not active, making it active...');
+      monitorSection.classList.add('active');
+    }
+    
+    if (!this.elements.memoryVisualization) {
+      console.log('🧠 Memory visualization element not found in cache, re-caching...');
+      // Re-cache all elements as monitor section might have become active
+      this.cacheElements();
+      
+      if (!this.elements.memoryVisualization) {
+        console.error('❌ Memory visualization element still not found!');
+        console.log('Current page URL:', window.location.href);
+        console.log('Monitor section active:', monitorSection?.classList.contains('active'));
+        console.log('Available elements with "memory" in ID or class:');
+        const memoryElements = document.querySelectorAll('[id*="memory"], [class*="memory"]');
+        memoryElements.forEach(el => {
+          console.log(`  - ${el.tagName} id="${el.id}" class="${el.className}"`);
+        });
+        return;
       }
+    }
+
+    if (!memoryData) {
+      console.log('No memory data provided');
+      this.elements.memoryVisualization.innerHTML = '<div class="empty-state">No consciousness connected<br><small>Select a character to view memory allocation</small></div>';
       return;
     }
 
     // Handle the memory structure from the server
     let html = '<div class="memory-blocks">';
+    let hasData = false;
     
-    // Show memory pools if available
-    if (memoryData.pools) {
-      for (const [poolName, count] of Object.entries(memoryData.pools)) {
+    // Show memory regions (detailed memory blocks)
+    if (memoryData.regions && Array.isArray(memoryData.regions) && memoryData.regions.length > 0) {
+      hasData = true;
+      console.log('🧠 Found memory regions:', memoryData.regions.length);
+      
+      for (const region of memoryData.regions) {
+        const fragPercent = ((region.fragmentation || 0) * 100).toFixed(1);
+        const corruptPercent = ((region.corruption || 0) * 100).toFixed(1);
+        
         html += `
-          <div class="memory-block ${poolName.toLowerCase()}">
+          <div class="memory-block ${region.type || 'unknown'}">
             <div class="memory-block-header">
-              <span class="memory-block-id">${poolName}</span>
-              <span class="memory-block-size">${count} memories</span>
+              <span class="memory-block-id">${region.label || region.type || 'Unknown'}</span>
+              <span class="memory-block-size">${region.size || 0} MB</span>
+            </div>
+            <div class="memory-block-details">
+              <div class="memory-address">${region.address || 'N/A'}</div>
+              <div class="memory-description">${region.description || ''}</div>
+              <div class="memory-stats">
+                <span class="memory-frag">Frag: ${fragPercent}%</span>
+                <span class="memory-corrupt">Corrupt: ${corruptPercent}%</span>
+                <span class="memory-access">${region.access_pattern || 'unknown'}</span>
+              </div>
             </div>
           </div>
         `;
       }
     }
     
+    // Show memory pools if available
+    if (memoryData.pools && typeof memoryData.pools === 'object') {
+      hasData = true;
+      console.log('🧠 Found memory pools:', memoryData.pools);
+      
+      html += '<div class="memory-pools">';
+      for (const [poolName, count] of Object.entries(memoryData.pools)) {
+        html += `
+          <div class="memory-pool ${poolName.toLowerCase()}">
+            <div class="memory-pool-header">
+              <span class="memory-pool-name">${poolName}</span>
+              <span class="memory-pool-count">${count} memories</span>
+            </div>
+          </div>
+        `;
+      }
+      html += '</div>';
+    }
+    
     // Show capacity info
-    if (memoryData.capacity) {
+    if (memoryData.capacity && typeof memoryData.capacity === 'object') {
+      hasData = true;
+      const capacity = memoryData.capacity;
+      const usedPercent = capacity.total ? ((capacity.allocated || 0) / capacity.total * 100).toFixed(1) : 0;
+      
       html += `
         <div class="memory-stats">
-          <div>Total: ${memoryData.capacity.total} MB</div>
-          <div>Used: ${memoryData.capacity.allocated} MB</div>
-          <div>Available: ${memoryData.capacity.available} MB</div>
-          <div>Fragmentation: ${(memoryData.fragmentationLevel || 0) * 100}%</div>
+          <div class="memory-capacity">
+            <div>Total: ${capacity.total || 0} MB</div>
+            <div>Used: ${capacity.allocated || 0} MB (${usedPercent}%)</div>
+            <div>Available: ${capacity.available || 0} MB</div>
+            <div>Reserved: ${capacity.reserved || 0} MB</div>
+          </div>
+          <div class="memory-fragmentation">
+            <div>Fragmentation: ${((memoryData.fragmentationLevel || 0) * 100).toFixed(1)}%</div>
+            <div>Total Memories: ${memoryData.totalMemories || 'Unknown'}</div>
+          </div>
         </div>
       `;
     }
+
+    // If no expected structure, try to show something useful
+    if (!hasData) {
+      console.log('Memory data structure not recognized, showing debug info');
+      html += `
+        <div class="memory-debug">
+          <div>Memory Data Structure:</div>
+          <pre>${JSON.stringify(memoryData, null, 2)}</pre>
+        </div>
+      `;
+      hasData = true;
+    }
     
     html += '</div>';
-    this.elements.memoryVisualization.innerHTML = html;
+    
+    if (hasData) {
+      this.elements.memoryVisualization.innerHTML = html;
+    } else {
+      this.elements.memoryVisualization.innerHTML = '<div class="empty-state">No memory data available.</div>';
+    }
   }
 
   updateErrorLog(errors) {

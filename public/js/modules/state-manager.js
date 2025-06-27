@@ -46,6 +46,16 @@ export class ConsciousnessStateManager {
     }
   }
 
+  // Alias for subscribe to match common event emitter patterns
+  on(eventType, callback) {
+    return this.subscribe(eventType, callback);
+  }
+
+  // Alias for unsubscribe to match common event emitter patterns
+  off(eventType, callback) {
+    return this.unsubscribe(eventType, callback);
+  }
+
   // Load character and fetch initial state
   async loadCharacter(characterId) {
     console.log('[STATE MANAGER] Loading character:', characterId);
@@ -216,26 +226,9 @@ export class ConsciousnessStateManager {
     return this.currentCharacter;
   }
 
-  // Get loading status
-  isLoadingCharacter() {
-    return this.isLoading;
-  }
-
-  // Get specific state data
-  getProcesses() {
-    return this.state?.processes || [];
-  }
-
-  getMemory() {
-    return this.state?.consciousness?.memory || null;
-  }
-
-  getErrors() {
-    return this.state?.system_errors || [];
-  }
-
-  getResources() {
-    return this.state?.consciousness?.resources || null;
+  // Get current character ID
+  getCurrentCharacterId() {
+    return this.currentCharacter ? this.currentCharacter.id : null;
   }
 
   // Update consciousness data from server response

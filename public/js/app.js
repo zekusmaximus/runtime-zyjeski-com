@@ -8,6 +8,48 @@ import GroundStateValidator from '/js/ground-state-validator.js';
 // Make state manager available globally for debugging
 window.stateManager = stateManager;
 
+// Set up socket → state manager connection
+function setupSocketStateSync() {
+  if (window.socketClient && window.stateManager) {
+    // Remove any existing listener to prevent duplicates
+    window.socketClient.off('consciousness-update');
+    
+    // Add the sync handler with enhanced logging
+    window.socketClient.on('consciousness-update', (data) => {
+      console.group('🔄 Socket → State Manager Sync');
+      console.log('Raw socket data:', data);
+      console.log('Character ID:', data.characterId);
+      console.log('Trigger:', data.trigger || 'unknown');
+      console.log('Has state property:', !!data.state);
+      
+      // Extract consciousness state from the wrapper
+      // Server sends: { characterId, state, trigger, timestamp }
+      // We need: the 'state' property
+      const consciousnessState = data.state || data;
+      console.log('Consciousness state to sync:', consciousnessState);
+      
+      if (window.stateManager) {
+        // Update state manager (this will trigger 'stateChanged' event)
+        window.stateManager.updateConsciousnessData(consciousnessState);
+        console.log('✅ State manager updated');
+        
+        // Optional: Track what triggered the update
+        if (data.trigger) {
+          console.log(`Update triggered by: ${data.trigger}`);
+        }
+      } else {
+        console.error('❌ State manager not available!');
+      }
+      console.groupEnd();
+    });
+    
+    console.log('✅ Socket → State Manager sync established');
+  } else {
+    console.warn('Socket or State Manager not ready, retrying...');
+    setTimeout(setupSocketStateSync, 500);
+  }
+}
+
 class RuntimeApp {
   constructor() {
     this.currentCharacter = null;
@@ -153,6 +195,29 @@ class RuntimeApp {
       
       // Use state manager to load character
       await stateManager.loadCharacter(characterId);
+      
+      // NEW: Also load consciousness state into state manager
+      console.log('Loading consciousness state for character...');
+      try {
+        const stateResponse = await fetch(`/api/consciousness/${characterId}/state`);
+        if (stateResponse.ok) {
+          const consciousnessData = await stateResponse.json();
+          console.log('Consciousness data loaded successfully');
+          
+          // Update state manager with consciousness data
+          if (window.stateManager) {
+            window.stateManager.updateConsciousnessData(consciousnessData);
+            console.log('State manager updated with initial consciousness data');
+          } else {
+            console.error('State manager not available');
+          }
+        } else {
+          console.error('Failed to load consciousness state:', stateResponse.status);
+        }
+      } catch (error) {
+        console.error('Error loading consciousness state:', error);
+        // Don't fail the entire character load if consciousness fails
+      }
       
       // Get the loaded character from state manager
       const state = stateManager.getState();
@@ -367,6 +432,14 @@ if (window.socketClient && typeof window.socketClient.startMonitoring === 'funct
 // Initialize app
 const app = new RuntimeApp();
 window.app = app;
+
+// Initialize socket-state sync when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  // Small delay to ensure all modules are loaded
+  setTimeout(() => {
+    setupSocketStateSync();
+  }, 100);
+});
 
 // Export for debugging
 export default app;

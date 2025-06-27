@@ -20,6 +20,9 @@ class MonitorController {
     // Subscribe to state manager updates
     this.subscribeToStateManager();
 
+    // Load available characters for selection
+    this.loadAvailableCharacters();
+
     // Listen for real-time socket updates if a connection is present.
     // This keeps the UI live once monitoring starts (Task C).
     if (window.socketClient) {
@@ -35,6 +38,8 @@ class MonitorController {
         this.state.update(payload);
         this.ui.updateAll(this.state.consciousnessData);
       });
+
+      
 
       window.socketClient.on('memory-update', ({ allocationByProcess }) => {
         const payload = {
@@ -62,9 +67,64 @@ class MonitorController {
         this.ui.updateAll(this.state.consciousnessData);
       });
     }
-    
+
     // Load current character data if available
     this.loadCurrentCharacterData();
+  }
+
+  async loadAvailableCharacters() {
+    try {
+      console.log('[MONITOR] Loading available characters...');
+      const response = await fetch('/api/characters');
+      if (!response.ok) {
+        throw new Error('Failed to load characters');
+      }
+      
+      const characters = await response.json();
+      console.log('[MONITOR] Characters loaded:', characters);
+      
+      // Populate the character dropdown
+      this.ui.populateCharacterList(characters);
+      
+      // If there's a character already in state manager, select it
+      const currentCharacter = window.stateManager?.getCurrentCharacter();
+      if (currentCharacter) {
+        this.ui.setSelectedCharacter(currentCharacter.id);
+        this.loadCurrentCharacterData();
+      } else if (characters.length > 0) {
+        // Auto-select first character if none is selected
+        console.log('[MONITOR] Auto-selecting first character:', characters[0].name);
+        await this.selectCharacter(characters[0].id);
+      }
+    } catch (error) {
+      console.error('[MONITOR] Error loading characters:', error);
+    }
+  }
+
+  async selectCharacter(characterId) {
+    try {
+      console.log('[MONITOR] Selecting character:', characterId);
+      
+      // Load character into state manager
+      await window.stateManager.loadCharacter(characterId);
+      
+      // Load consciousness data
+      const stateResponse = await fetch(`/api/consciousness/${characterId}/state`);
+      if (stateResponse.ok) {
+        const consciousnessData = await stateResponse.json();
+        console.log('[MONITOR] Consciousness data loaded:', consciousnessData);
+        
+        // Update state manager with consciousness data
+        window.stateManager.updateConsciousnessData(consciousnessData);
+      }
+      
+      // Update UI
+      this.ui.setSelectedCharacter(characterId);
+      this.loadCurrentCharacterData();
+      
+    } catch (error) {
+      console.error('[MONITOR] Error selecting character:', error);
+    }
   }
 
   subscribeToStateManager() {
@@ -79,9 +139,9 @@ class MonitorController {
       this.handleStateUpdate(newState);
     };
 
-    // Listen for state changes
-    window.stateManager.on('stateChanged', this.stateUpdateHandler);
-    window.stateManager.on('characterLoaded', () => this.loadCurrentCharacterData());
+    // Listen for state changes using subscribe method
+    window.stateManager.subscribe('stateChanged', this.stateUpdateHandler);
+    window.stateManager.subscribe('characterLoaded', () => this.loadCurrentCharacterData());
   }
 
   loadCurrentCharacterData() {
@@ -146,6 +206,41 @@ class MonitorController {
     // No WebSocket connection needed - we use local state!
     return Promise.resolve(true);
   }
+
+tartMonitoring(characterId) {
+  console.log('[MONITOR] User clicked Start Monitoring for:', characterId);
+  
+  // Update local state
+  this.state.setSelectedCharacter(characterId);
+  this.state.setMonitoringStatus(true);
+  
+  // Update UI button states
+  this.ui.setMonitoringButtonState(true);
+  
+  // Start socket monitoring session
+  if (window.socketClient) {
+    window.socketClient.startMonitoring(characterId);
+  }
+}
+
+// Add this method too
+stopMonitoring() {
+  console.log('[MONITOR] User clicked Stop Monitoring');
+  
+  const characterId = this.state.selectedCharacter;
+  if (!characterId) return;
+  
+  // Update local state
+  this.state.setMonitoringStatus(false);
+  
+  // Update UI button states
+  this.ui.setMonitoringButtonState(false);
+  
+  // Stop socket monitoring session
+  if (window.socketClient) {
+    window.socketClient.stopMonitoring(characterId);
+  }
+}
 
   // Cleanup
   destroy() {
