@@ -15,7 +15,7 @@ class MonitorController {
     this.consciousness = consciousness;
     this.logger = logger || createLogger('Monitor');
 
-    this.state = new MonitorState();
+    this.state = new MonitorState(stateManager);
     this.ui = new MonitorUI();
     this.stateUpdateHandler = null;
   }
@@ -39,41 +39,45 @@ class MonitorController {
         const payload = {
           consciousness: {
             resources: { cpu, threads, memory: memTotal },
-            memory:   this.state.memory || {},
-            system_errors: this.state.errors || []
+            memory: {},
+            system_errors: []
           },
-          processes: this.state.processes || []
+          processes: []
         };
-        this.state.update(payload);
-        this.ui.updateAll(this.state.consciousnessData);
+        // Update StateManager instead of local state
+        if (this.stateManager) {
+          this.stateManager.updateConsciousnessData(payload);
+        }
       });
-
-      
 
       this.socketClient.on('memory-update', ({ allocationByProcess }) => {
         const payload = {
           consciousness: {
             memory: { pools: allocationByProcess },
-            resources: this.state.resources || {},
-            system_errors: this.state.errors || []
+            resources: {},
+            system_errors: []
           },
-          processes: this.state.processes || []
+          processes: []
         };
-        this.state.update(payload);
-        this.ui.updateAll(this.state.consciousnessData);
+        // Update StateManager instead of local state
+        if (this.stateManager) {
+          this.stateManager.updateConsciousnessData(payload);
+        }
       });
 
       this.socketClient.on('errors-update', ({ list }) => {
         const payload = {
           consciousness: {
             system_errors: list,
-            resources: this.state.resources || {},
-            memory: this.state.memory || {}
+            resources: {},
+            memory: {}
           },
-          processes: this.state.processes || []
+          processes: []
         };
-        this.state.update(payload);
-        this.ui.updateAll(this.state.consciousnessData);
+        // Update StateManager instead of local state
+        if (this.stateManager) {
+          this.stateManager.updateConsciousnessData(payload);
+        }
       });
     }
 
@@ -146,15 +150,29 @@ class MonitorController {
       return;
     }
 
-    // Subscribe to state changes
-    this.stateUpdateHandler = (newState) => {
-      console.log('[GROUND STATE] Monitor received state update from state manager');
-      this.handleStateUpdate(newState);
-    };
+    // Subscribe to character changes
+    this.stateManager.subscribe('currentCharacter', (character) => {
+      if (character) {
+        console.log('[GROUND STATE] Character changed in monitor:', character.name);
+        this.ui.populateCharacterList([character]);
+        this.ui.setSelectedCharacter(character.id);
+        this.ui.updateAll(this.state.consciousnessData);
+      }
+    });
 
-    // Listen for state changes using subscribe method
-    this.stateManager.subscribe('stateChanged', this.stateUpdateHandler);
-    this.stateManager.subscribe('characterLoaded', () => this.loadCurrentCharacterData());
+    // Subscribe to consciousness state changes
+    this.stateManager.subscribe('consciousnessState', (consciousnessState) => {
+      if (consciousnessState) {
+        console.log('[GROUND STATE] Consciousness state updated in monitor');
+        this.ui.updateAll(this.state.consciousnessData);
+      }
+    });
+
+    // Subscribe to monitoring state changes
+    this.stateManager.subscribe('monitoringActive', (active) => {
+      console.log('[GROUND STATE] Monitoring state changed:', active);
+      this.ui.setMonitoringButtonState(active);
+    });
   }
 
   loadCurrentCharacterData() {
@@ -173,9 +191,7 @@ class MonitorController {
     this.ui.populateCharacterList([character]);
     this.ui.setSelectedCharacter(character.id);
     
-    // Update state and displays
-    this.state.setSelectedCharacter(character.id);
-    this.state.update(state);
+    // Update displays - state is now derived from StateManager
     this.ui.updateAll(this.state.consciousnessData);
   }
 
@@ -220,35 +236,37 @@ class MonitorController {
     return Promise.resolve(true);
   }
 
-tartMonitoring(characterId) {
+startMonitoring(characterId) {
   console.log('[MONITOR] User clicked Start Monitoring for:', characterId);
-  
-  // Update local state
-  this.state.setSelectedCharacter(characterId);
-  this.state.setMonitoringStatus(true);
-  
+
+  // Update state through StateManager
+  if (this.stateManager) {
+    this.stateManager.setMonitoringActive(true);
+  }
+
   // Update UI button states
   this.ui.setMonitoringButtonState(true);
-  
+
   // Start socket monitoring session
   if (this.socketClient) {
     this.socketClient.startMonitoring(characterId);
   }
 }
 
-// Add this method too
 stopMonitoring() {
   console.log('[MONITOR] User clicked Stop Monitoring');
-  
+
   const characterId = this.state.selectedCharacter;
   if (!characterId) return;
-  
-  // Update local state
-  this.state.setMonitoringStatus(false);
-  
+
+  // Update state through StateManager
+  if (this.stateManager) {
+    this.stateManager.setMonitoringActive(false);
+  }
+
   // Update UI button states
   this.ui.setMonitoringButtonState(false);
-  
+
   // Stop socket monitoring session
   if (this.socketClient) {
     this.socketClient.stopMonitoring(characterId);

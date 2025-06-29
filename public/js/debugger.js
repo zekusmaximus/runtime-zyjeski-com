@@ -10,18 +10,40 @@ class DebuggerInterface {
     this.consciousness = consciousness;
     this.logger = logger || createLogger('Debugger');
 
-    this.isActive = false;
-    this.currentCharacter = null;
     this.consciousnessState = null;  // Store real consciousness state
-    this.breakpoints = new Map();
-    this.callStack = [];
-    this.variables = {};
-    this.currentLine = null;
-    this.executionState = 'stopped'; // stopped, running, paused
     this.debugSession = null;
     this.codeLines = [];
 
     this.init();
+  }
+
+  // Convenience getters for accessing state
+  get isActive() {
+    return this.stateManager ? this.stateManager.getDebuggerActive() : false;
+  }
+
+  get currentCharacter() {
+    return this.stateManager ? this.stateManager.getCurrentCharacter() : null;
+  }
+
+  get breakpoints() {
+    return this.stateManager ? this.stateManager.getDebuggerBreakpoints() : new Map();
+  }
+
+  get callStack() {
+    return this.stateManager ? this.stateManager.getDebuggerCallStack() : [];
+  }
+
+  get variables() {
+    return this.stateManager ? this.stateManager.getDebuggerVariables() : {};
+  }
+
+  get currentLine() {
+    return this.stateManager ? this.stateManager.getDebuggerCurrentLine() : null;
+  }
+
+  get executionState() {
+    return this.stateManager ? this.stateManager.getDebuggerExecutionState() : 'stopped';
   }
 
   init() {
@@ -35,22 +57,21 @@ class DebuggerInterface {
   // PUBLIC INITIALIZE METHOD - Called by app.js when navigating to debugger section
   initialize() {
     console.log('Debugger interface initializing...');
-    
+
     // Refresh UI elements in case they were dynamically loaded
     this.setupElements();
-    
+
     // Update debugger with current character if available
-    if (window.app && window.app.currentCharacter) {
-      this.currentCharacter = window.app.currentCharacter;
+    if (this.currentCharacter) {
       this.updateDebuggerForCharacter(this.currentCharacter);
     }
-    
+
     // Refresh code editor display
     this.renderCodeEditor();
-    
+
     // Update execution state display
     this.updateExecutionState();
-    
+
     console.log('Debugger interface initialized');
   }
 
@@ -136,20 +157,45 @@ class DebuggerInterface {
   }
 
   subscribeToStateChanges() {
-    if (this.stateManager) {
-      this.stateManager.subscribe('character-changed', (character) => {
-        this.currentCharacter = character;
-        this.updateDebuggerForCharacter(character);
-      });
+    if (!this.stateManager) return;
 
-      this.stateManager.subscribe('debug-mode-changed', (isDebugMode) => {
-        if (isDebugMode) {
-          this.startDebugging();
-        } else {
-          this.stopDebugging();
-        }
-      });
-    }
+    // Subscribe to character changes for debugger updates
+    this.stateManager.subscribe('currentCharacter', (character) => {
+      if (character) {
+        this.updateDebuggerForCharacter(character);
+      }
+    });
+
+    // Subscribe to debugger state changes for UI updates
+    this.stateManager.subscribe('debuggerActive', (active) => {
+      this.logger.info('Debugger active state changed:', active);
+      if (active) {
+        this.startDebugging();
+      } else {
+        this.stopDebugging();
+      }
+    });
+
+    this.stateManager.subscribe('debuggerBreakpoints', (breakpoints) => {
+      this.updateBreakpointsList();
+      this.renderCodeEditor();
+    });
+
+    this.stateManager.subscribe('debuggerExecutionState', (state) => {
+      this.updateExecutionState();
+    });
+
+    this.stateManager.subscribe('debuggerCurrentLine', (line) => {
+      this.renderCodeEditor();
+    });
+
+    this.stateManager.subscribe('debuggerVariables', (variables) => {
+      this.updateVariablesView();
+    });
+
+    this.stateManager.subscribe('debuggerCallStack', (callStack) => {
+      this.updateCallStack();
+    });
   }
 
   // Update debugger interface for character
@@ -398,8 +444,10 @@ class DebuggerInterface {
   }
 
   addBreakpoint(id, breakpoint) {
-    this.breakpoints.set(id, breakpoint);
-    
+    if (this.stateManager) {
+      this.stateManager.addDebuggerBreakpoint(breakpoint.line, breakpoint.condition);
+    }
+
     // Send to server if debugging
     if (this.debugSession) {
       this.sendDebugCommand('add_breakpoint', {
@@ -411,8 +459,12 @@ class DebuggerInterface {
   }
 
   removeBreakpoint(id) {
-    this.breakpoints.delete(id);
-    
+    // Find the breakpoint to get the line number
+    const breakpoint = this.breakpoints.get(id);
+    if (breakpoint && this.stateManager) {
+      this.stateManager.removeDebuggerBreakpoint(breakpoint.line);
+    }
+
     // Send to server if debugging
     if (this.debugSession) {
       this.sendDebugCommand('remove_breakpoint', {
@@ -537,8 +589,8 @@ class DebuggerInterface {
 
   // Execution State Management
   updateExecutionState(newState) {
-    if (newState) {
-      this.executionState = newState;
+    if (newState && this.stateManager) {
+      this.stateManager.setDebuggerExecutionState(newState);
     }
     
     const isRunning = this.executionState === 'running';
@@ -564,38 +616,43 @@ class DebuggerInterface {
   }
 
   highlightCurrentLine(lineNumber) {
-    this.currentLine = lineNumber;
-    this.renderCodeEditor();
+    if (this.stateManager) {
+      this.stateManager.setDebuggerCurrentLine(lineNumber);
+    }
+    // renderCodeEditor will be called by state subscription
   }
 
   // Debug session management
   startDebugging() {
     if (!this.currentCharacter) return;
-    
-    this.isActive = true;
+
+    if (this.stateManager) {
+      this.stateManager.setDebuggerActive(true);
+    }
+
     this.debugSession = {
       id: `debug_${this.currentCharacter.id}_${Date.now()}`,
       characterId: this.currentCharacter.id,
       status: 'active'
     };
-    
-    this.executionState = 'paused';
-    this.updateExecutionState();
+
+    this.updateExecutionState('paused');
     this.updateDebuggerForCharacter(this.currentCharacter);
-    
+
     console.log('Debugging started for', this.currentCharacter.name);
   }
 
   stopDebugging() {
-    this.isActive = false;
+    if (this.stateManager) {
+      this.stateManager.setDebuggerActive(false);
+      this.stateManager.setDebuggerExecutionState('stopped');
+      this.stateManager.setDebuggerCurrentLine(null);
+      this.stateManager.setDebuggerCallStack([]);
+    }
+
     this.debugSession = null;
-    this.executionState = 'stopped';
-    this.currentLine = null;
-    this.callStack = [];
-    
-    this.updateExecutionState();
-    this.renderCodeEditor();
-    
+
+    // UI updates will be handled by state subscriptions
     console.log('Debugging stopped');
   }
 
@@ -613,16 +670,13 @@ class DebuggerInterface {
     switch (data.command) {
       case 'step_into':
       case 'step_over':
-        this.executionState = 'paused';
-        this.updateExecutionState();
+        this.updateExecutionState('paused');
         break;
       case 'continue':
-        this.executionState = 'running';
-        this.updateExecutionState();
+        this.updateExecutionState('running');
         break;
       case 'break_all':
-        this.executionState = 'paused';
-        this.updateExecutionState();
+        this.updateExecutionState('paused');
         break;
     }
   }
@@ -668,20 +722,18 @@ class DebuggerInterface {
     // Update execution state based on consciousness status
     if (state.processes && state.processes.length > 0) {
       const hasRunningProcesses = state.processes.some(p => p.status === 'running');
-      this.executionState = hasRunningProcesses ? 'running' : 'paused';
+      this.updateExecutionState(hasRunningProcesses ? 'running' : 'paused');
     } else {
-      this.executionState = 'stopped';
+      this.updateExecutionState('stopped');
     }
-    
+
     // Update current line based on any active debugging info
     if (state.debug_hooks && state.debug_hooks.length > 0) {
       const activeHook = state.debug_hooks.find(h => h.active);
-      if (activeHook && activeHook.line) {
-        this.currentLine = activeHook.line;
+      if (activeHook && activeHook.line && this.stateManager) {
+        this.stateManager.setDebuggerCurrentLine(activeHook.line);
       }
     }
-    
-    this.updateExecutionState();
   }
 
   handleInterventionApplied(data) {
@@ -718,13 +770,11 @@ class DebuggerInterface {
 
   handleBreakpointTriggered(data) {
     console.log('Breakpoint triggered:', data);
-    this.executionState = 'paused';
-    
+    this.updateExecutionState('paused');
+
     // Highlight the line where breakpoint was hit
     const line = this.getLineFromTarget(data.hook.target);
     this.highlightCurrentLine(line);
-    
-    this.updateExecutionState();
 
     this.logger.warn(`Breakpoint hit: ${data.hook.name}`);
     // Note: Notification would be handled by app when it's available
@@ -733,9 +783,9 @@ class DebuggerInterface {
   // Helper methods
   updateCallStackFromCharacter(character) {
     if (!character?.consciousness) return;
-    
+
     // Generate call stack from running processes
-    this.callStack = character.consciousness.processes
+    const callStack = character.consciousness.processes
       .filter(p => p.status === 'running')
       .slice(0, 5)
       .map((process, index) => ({
@@ -743,18 +793,24 @@ class DebuggerInterface {
         location: `consciousness.cpp:${45 + index * 10}`,
         process: process
       }));
-    
-    this.updateCallStack();
+
+    if (this.stateManager) {
+      this.stateManager.setDebuggerCallStack(callStack);
+    }
   }
 
   updateVariablesFromCharacter(character) {
     if (!character?.consciousness) return;
-    
-    this.variables = {
+
+    const variables = {
       memory: character.consciousness.memory || {},
       resources: character.consciousness.resources || {},
       processes: character.consciousness.processes || []
     };
+
+    if (this.stateManager) {
+      this.stateManager.setDebuggerVariables(variables);
+    }
   }
 
   getLineFromTarget(target) {

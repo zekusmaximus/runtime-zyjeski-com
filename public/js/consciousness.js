@@ -11,8 +11,6 @@ class ConsciousnessManager {
     this.socketClient = socketClient;
     this.logger = logger || createLogger('Consciousness');
 
-    this.currentCharacter = null;
-    this.isMonitoring = false;
     this.updateInterval = null;
     this.isInitializing = false; // ADDED: Prevent concurrent initialization
     // Store the handler reference for proper removal
@@ -24,6 +22,15 @@ class ConsciousnessManager {
       }
     };
     this.init();
+  }
+
+  // Convenience getters for accessing state
+  get currentCharacter() {
+    return this.stateManager ? this.stateManager.getCurrentCharacter() : null;
+  }
+
+  get isMonitoring() {
+    return this.stateManager ? this.stateManager.getMonitoringActive() : false;
   }
 
   init() {
@@ -42,14 +49,17 @@ class ConsciousnessManager {
     // Subscribe to state manager changes
     if (this.stateManager) {
       this.stateManager.subscribe('currentCharacter', (character) => {
-        // GROUND STATE: Only set current character, don't initialize or start monitoring here
-        this.currentCharacter = character;
+        // GROUND STATE: Character change handled by getter, just log
         this.logger.info('Character set in consciousness manager:', character?.name || 'none');
+
+        // Update consciousness preview when character changes
+        if (character && character.consciousness) {
+          this.updateConsciousnessPreview(character.consciousness);
+        }
       });
 
       // GROUND STATE FIX: Remove auto-start logic from monitoringActive subscription
       this.stateManager.subscribe('monitoringActive', (active) => {
-        this.isMonitoring = active;
         this.logger.info('Monitoring state changed:', active);
         // Do NOT auto-start or stop real-time updates here
         // Monitoring should only be started/stopped by explicit user action
@@ -69,8 +79,8 @@ class ConsciousnessManager {
     }
 
     this.logger.info('USER ACTION: Starting consciousness monitoring for', this.currentCharacter.name);
-    this.isMonitoring = true;
 
+    // Update state through StateManager
     if (this.stateManager) {
       this.stateManager.set('monitoringActive', true);
     }
@@ -81,7 +91,6 @@ class ConsciousnessManager {
       // Treat ONLY an explicit `false` as failure; `undefined` is considered success
       if (success === false) {
         this.logger.error('Failed to start WebSocket monitoring');
-        this.isMonitoring = false;
         if (this.stateManager) {
           this.stateManager.set('monitoringActive', false);
         }
@@ -100,8 +109,8 @@ class ConsciousnessManager {
     }
 
     this.logger.info('USER ACTION: Stopping consciousness monitoring');
-    this.isMonitoring = false;
 
+    // Update state through StateManager
     if (this.stateManager) {
       this.stateManager.set('monitoringActive', false);
     }
@@ -139,11 +148,8 @@ class ConsciousnessManager {
 
   try {
     this.isInitializing = true;
-    
-    // Set current character
-    this.currentCharacter = character;
-    
-    // Load character state in state manager
+
+    // Load character state in state manager (this will update currentCharacter via subscription)
     if (this.stateManager) {
       // FIX: Change from loadCharacterState to loadCharacter
       this.stateManager.loadCharacter(character.id);
@@ -610,9 +616,13 @@ class ConsciousnessManager {
     if (this.socketClient) {
       this.socketClient.off('consciousness-update', this._consciousnessUpdateHandler);
     }
-    this.currentCharacter = null;
-    this.isMonitoring = false;
     this.isInitializing = false;
+
+    // Clear state through StateManager
+    if (this.stateManager) {
+      this.stateManager.setCurrentCharacter(null);
+      this.stateManager.setMonitoringActive(false);
+    }
   }
 }
 

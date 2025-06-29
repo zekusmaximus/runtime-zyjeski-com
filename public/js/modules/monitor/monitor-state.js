@@ -1,26 +1,60 @@
 class MonitorState {
-  constructor() {
+  constructor(stateManager = null) {
+    this.stateManager = stateManager;
     this.connectionStatus = 'disconnected'; // disconnected, connected, error
-    this.isMonitoring = false;
-    this.selectedCharacter = null;
-    this.consciousnessData = null;
+    this._lastTransformedData = null; // Cache for transformed data
   }
 
   setConnectionStatus(status) {
     this.connectionStatus = status;
   }
 
+  // Computed getters that derive from StateManager
+  get isMonitoring() {
+    return this.stateManager ? this.stateManager.getMonitoringActive() : false;
+  }
+
+  get selectedCharacter() {
+    const character = this.stateManager ? this.stateManager.getCurrentCharacter() : null;
+    return character ? character.id : null;
+  }
+
+  // Computed getter for consciousness data
+  get consciousnessData() {
+    if (!this.stateManager) return null;
+
+    const character = this.stateManager.getCurrentCharacter();
+    if (!character) return null;
+
+    // Get consciousness state from StateManager
+    const consciousnessState = this.stateManager.getConsciousnessState();
+    if (!consciousnessState) return null;
+
+    // Transform the data using the existing transformation logic
+    return this.transformConsciousnessData({
+      consciousness: consciousnessState,
+      characterId: character.id,
+      timestamp: Date.now()
+    });
+  }
+
+  // Legacy methods for compatibility - now delegate to StateManager
   setMonitoringStatus(isMonitoring) {
-    this.isMonitoring = isMonitoring;
+    if (this.stateManager) {
+      this.stateManager.setMonitoringActive(isMonitoring);
+    }
   }
 
   setSelectedCharacter(characterId) {
-    this.selectedCharacter = characterId;
+    // This should be handled by loading the character through StateManager
+    // The monitor controller should call stateManager.loadCharacter(characterId)
+    console.warn('MonitorState.setSelectedCharacter is deprecated - use stateManager.loadCharacter() instead');
   }
 
-  update(data) {
-    console.log('🔧 Monitor state update received raw data:', data);
-    
+  // Transform consciousness data to format expected by monitor UI
+  transformConsciousnessData(data) {
+    console.log('🔧 Monitor state transforming consciousness data:', data);
+
     // Validate and normalize consciousness data structure
     let rawData;
     if (window.socketClient && window.socketClient.validateConsciousnessData) {
@@ -30,14 +64,14 @@ class MonitorState {
       console.log('🔧 rawData.memoryMap?.regions:', rawData.memoryMap?.regions);
     } else {
       // Enhanced fallback validation
-      rawData = data || { 
-        consciousness: { 
-          processes: [], 
-          memory: { regions: [] }, 
-          resources: {}, 
-          system_errors: [], 
-          threads: [] 
-        } 
+      rawData = data || {
+        consciousness: {
+          processes: [],
+          memory: { regions: [] },
+          resources: {},
+          system_errors: [],
+          threads: []
+        }
       };
     }
 
@@ -54,18 +88,11 @@ class MonitorState {
 
     // Handle process data from multiple possible locations
     let processes = consciousness.processes || rawData.processes || [];
-    
+
     // Transform consciousness data to format expected by monitor UI
     const resources = consciousness.resources || {};
-    
-    // Store simple fields expected by legacy unit tests -----------------
-    this.resources = resources;
-    this.processes = processes;
-    this.memory = consciousness.memory || rawData.memory || {};
-    this.errors = consciousness.system_errors || rawData.errors || [];
-    this.lastUpdate = Date.now();
-    
-    this.consciousnessData = {
+
+    const consciousnessData = {
       // Transform resource data from consciousness format to monitor UI format
       systemResources: {
         cpu: {
@@ -114,16 +141,33 @@ class MonitorState {
       characterId: rawData.characterId || this.selectedCharacter
     };
 
-    console.log('📊 Monitor state updated:', {
-      processCount: this.consciousnessData.processes.length,
-      errorCount: this.consciousnessData.system_errors.length,
-      memoryRegions: this.consciousnessData.memoryMap.regions.length,
-      cpuUsage: this.consciousnessData.systemResources.cpu.currentLoad * 100,
-      memoryUsage: this.consciousnessData.systemResources.memory.percentage
-    });
+    const stats = {
+      processCount: consciousnessData.processes.length,
+      errorCount: consciousnessData.system_errors.length,
+      memoryRegions: consciousnessData.memoryMap.regions.length,
+      cpuUsage: consciousnessData.systemResources.cpu.currentLoad * 100,
+      memoryUsage: consciousnessData.systemResources.memory.percentage
+    };
+
+    console.log('📊 Monitor state transformed:', stats);
+
+    return consciousnessData;
   }
 
-  // Add method for updating consciousness data specifically
+  // Legacy method for compatibility - updates StateManager instead of local state
+  update(data) {
+    console.log('🔧 Monitor state update (legacy) - updating StateManager instead');
+
+    if (this.stateManager && data) {
+      // Update StateManager with the consciousness data
+      this.stateManager.updateConsciousnessData(data);
+    }
+
+    // Cache the transformed data for immediate access
+    this._lastTransformedData = this.transformConsciousnessData(data);
+  }
+
+  // Legacy method for compatibility
   updateConsciousnessData(data) {
     this.update(data);
   }

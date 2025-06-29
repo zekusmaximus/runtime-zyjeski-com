@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State Management Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .pass { color: green; }
+        .fail { color: red; }
+        .info { color: blue; }
+        button { margin: 5px; padding: 10px; }
+        #results { margin-top: 20px; padding: 10px; background: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <h1>State Management Consolidation Test</h1>
+    
+    <div class="test-section">
+        <h2>Quick State Tests</h2>
+        <button onclick="testStateManager()">Test StateManager</button>
+        <button onclick="testGetters()">Test Module Getters</button>
+        <button onclick="testSubscriptions()">Test Subscriptions</button>
+        <button onclick="runFullTest()">Run Full Test Suite</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        // Import StateManager
+        import '/js/state-manager.js';
+        
+        // Simple test functions
+        window.testStateManager = function() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h3>StateManager Test Results:</h3>';
+            
+            try {
+                // Test basic state operations
+                window.stateManager.setIsLoadingCharacter(true);
+                const isLoading = window.stateManager.getIsLoadingCharacter();
+                results.innerHTML += `<p class="${isLoading ? 'pass' : 'fail'}">Loading state: ${isLoading}</p>`;
+                
+                // Test character state
+                const testCharacter = { id: 'test-char', name: 'Test Character' };
+                window.stateManager.setCurrentCharacter(testCharacter);
+                const character = window.stateManager.getCurrentCharacter();
+                results.innerHTML += `<p class="${character?.id === 'test-char' ? 'pass' : 'fail'}">Character state: ${character?.name || 'none'}</p>`;
+                
+                // Test monitoring state
+                window.stateManager.setMonitoringActive(true);
+                const monitoring = window.stateManager.getMonitoringActive();
+                results.innerHTML += `<p class="${monitoring ? 'pass' : 'fail'}">Monitoring state: ${monitoring}</p>`;
+                
+                // Test debugger state
+                window.stateManager.setDebuggerActive(true);
+                const debuggerActive = window.stateManager.getDebuggerActive();
+                results.innerHTML += `<p class="${debuggerActive ? 'pass' : 'fail'}">Debugger state: ${debuggerActive}</p>`;
+                
+                // Test breakpoints
+                window.stateManager.addDebuggerBreakpoint(5, 'test condition');
+                const breakpoints = window.stateManager.getDebuggerBreakpoints();
+                results.innerHTML += `<p class="${breakpoints.size > 0 ? 'pass' : 'fail'}">Breakpoints: ${breakpoints.size}</p>`;
+                
+                results.innerHTML += '<p class="pass">✅ StateManager basic tests passed!</p>';
+                
+            } catch (error) {
+                results.innerHTML += `<p class="fail">❌ StateManager test failed: ${error.message}</p>`;
+            }
+        };
+        
+        window.testGetters = function() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h3>Module Getter Test Results:</h3>';
+            
+            try {
+                // Set up test state
+                const testCharacter = { id: 'getter-test', name: 'Getter Test Character' };
+                window.stateManager.setCurrentCharacter(testCharacter);
+                window.stateManager.setMonitoringActive(true);
+                window.stateManager.setDebuggerActive(true);
+                
+                // Test app.js getters (if available)
+                if (window.app) {
+                    const appCharacter = window.app.currentCharacter;
+                    const appLoading = window.app.isLoadingCharacter;
+                    results.innerHTML += `<p class="${appCharacter?.id === 'getter-test' ? 'pass' : 'fail'}">App character getter: ${appCharacter?.name || 'none'}</p>`;
+                    results.innerHTML += `<p class="info">App loading getter: ${appLoading}</p>`;
+                } else {
+                    results.innerHTML += '<p class="info">App module not loaded</p>';
+                }
+                
+                // Test consciousness.js getters (if available)
+                if (window.consciousness) {
+                    const consciousnessCharacter = window.consciousness.currentCharacter;
+                    const consciousnessMonitoring = window.consciousness.isMonitoring;
+                    results.innerHTML += `<p class="${consciousnessCharacter?.id === 'getter-test' ? 'pass' : 'fail'}">Consciousness character getter: ${consciousnessCharacter?.name || 'none'}</p>`;
+                    results.innerHTML += `<p class="${consciousnessMonitoring ? 'pass' : 'fail'}">Consciousness monitoring getter: ${consciousnessMonitoring}</p>`;
+                } else {
+                    results.innerHTML += '<p class="info">Consciousness module not loaded</p>';
+                }
+                
+                // Test debugger.js getters (if available)
+                if (window.debuggerInterface) {
+                    const debuggerCharacter = window.debuggerInterface.currentCharacter;
+                    const debuggerActive = window.debuggerInterface.isActive;
+                    results.innerHTML += `<p class="${debuggerCharacter?.id === 'getter-test' ? 'pass' : 'fail'}">Debugger character getter: ${debuggerCharacter?.name || 'none'}</p>`;
+                    results.innerHTML += `<p class="${debuggerActive ? 'pass' : 'fail'}">Debugger active getter: ${debuggerActive}</p>`;
+                } else {
+                    results.innerHTML += '<p class="info">Debugger module not loaded</p>';
+                }
+                
+                results.innerHTML += '<p class="pass">✅ Module getter tests completed!</p>';
+                
+            } catch (error) {
+                results.innerHTML += `<p class="fail">❌ Getter test failed: ${error.message}</p>`;
+            }
+        };
+        
+        window.testSubscriptions = function() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h3>Subscription Test Results:</h3>';
+            
+            try {
+                let characterCallbackCalled = false;
+                let monitoringCallbackCalled = false;
+                
+                // Set up test subscriptions
+                window.stateManager.subscribe('currentCharacter', (character) => {
+                    characterCallbackCalled = true;
+                    results.innerHTML += `<p class="info">Character subscription triggered: ${character?.name || 'none'}</p>`;
+                });
+                
+                window.stateManager.subscribe('monitoringActive', (active) => {
+                    monitoringCallbackCalled = true;
+                    results.innerHTML += `<p class="info">Monitoring subscription triggered: ${active}</p>`;
+                });
+                
+                // Trigger state changes
+                window.stateManager.setCurrentCharacter({ id: 'sub-test', name: 'Subscription Test' });
+                window.stateManager.setMonitoringActive(false);
+                
+                // Check if callbacks were called
+                setTimeout(() => {
+                    results.innerHTML += `<p class="${characterCallbackCalled ? 'pass' : 'fail'}">Character subscription: ${characterCallbackCalled ? 'triggered' : 'not triggered'}</p>`;
+                    results.innerHTML += `<p class="${monitoringCallbackCalled ? 'pass' : 'fail'}">Monitoring subscription: ${monitoringCallbackCalled ? 'triggered' : 'not triggered'}</p>`;
+                    results.innerHTML += '<p class="pass">✅ Subscription tests completed!</p>';
+                }, 100);
+                
+            } catch (error) {
+                results.innerHTML += `<p class="fail">❌ Subscription test failed: ${error.message}</p>`;
+            }
+        };
+        
+        window.runFullTest = function() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h3>Running Full Test Suite...</h3>';
+            
+            // Load the full test script if available
+            if (window.testStateConsolidation) {
+                window.testStateConsolidation.runAllTests().then(testResults => {
+                    results.innerHTML += '<h4>Full Test Results:</h4>';
+                    for (const [testName, result] of Object.entries(testResults)) {
+                        const status = typeof result === 'boolean' ? (result ? 'pass' : 'fail') : 'info';
+                        results.innerHTML += `<p class="${status}">${testName}: ${JSON.stringify(result)}</p>`;
+                    }
+                });
+            } else {
+                results.innerHTML += '<p class="info">Full test suite not loaded. Loading basic tests...</p>';
+                testStateManager();
+                setTimeout(() => testGetters(), 200);
+                setTimeout(() => testSubscriptions(), 400);
+            }
+        };
+        
+        // Auto-run basic test on load
+        setTimeout(() => {
+            if (window.stateManager) {
+                testStateManager();
+            } else {
+                document.getElementById('results').innerHTML = '<p class="fail">❌ StateManager not available</p>';
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

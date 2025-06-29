@@ -21,11 +21,67 @@ class RuntimeApp {
     this.debuggerInterface = debuggerInterface;
     this.logger = logger || createLogger('App');
 
-    this.currentCharacter = null;
-    this.isLoadingCharacter = false;
-    this.userInteracted = false; // GROUND STATE: Track user interaction
-    this.components = new Map(); // GROUND STATE: Track component initialization
+    // Set up state subscriptions for UI updates
+    this.setupStateSubscriptions();
     this.initializeApp();
+  }
+
+  setupStateSubscriptions() {
+    if (!this.stateManager) return;
+
+    // Subscribe to character changes for UI updates
+    this.stateManager.subscribe('currentCharacter', (character) => {
+      if (character) {
+        this.updateCharacterSelection(character.id);
+        this.enableNavigation();
+
+        // Connect monitor to character
+        if (this.monitor && typeof this.monitor.connectToCharacter === 'function') {
+          this.logger.info('GROUND STATE: Connecting monitor to character via subscription');
+          const result = this.monitor.connectToCharacter(character);
+          if (result && typeof result.then === 'function') {
+            result.then(() => {
+              this.logger.info('GROUND STATE: Monitor connected successfully via subscription');
+            }).catch(err => {
+              this.logger.error('Failed to connect monitor via subscription:', err);
+            });
+          }
+        }
+      }
+    });
+
+    // Subscribe to loading state changes for UI updates
+    this.stateManager.subscribe('isLoadingCharacter', (isLoading) => {
+      if (isLoading) {
+        this.showLoading('Loading character consciousness...');
+      } else {
+        this.hideLoading();
+      }
+    });
+
+    // Subscribe to user interaction state
+    this.stateManager.subscribe('userInteracted', (interacted) => {
+      if (interacted) {
+        this.logger.info('User interaction detected via state subscription');
+      }
+    });
+  }
+
+  // Convenience getters for accessing state
+  get currentCharacter() {
+    return this.stateManager ? this.stateManager.getCurrentCharacter() : null;
+  }
+
+  get isLoadingCharacter() {
+    return this.stateManager ? this.stateManager.getIsLoadingCharacter() : false;
+  }
+
+  get userInteracted() {
+    return this.stateManager ? this.stateManager.getUserInteracted() : false;
+  }
+
+  get components() {
+    return this.stateManager ? this.stateManager.getInitializedComponents() : new Set();
   }
 
   async initializeApp() {
@@ -155,13 +211,12 @@ class RuntimeApp {
     }
 
     try {
-      this.isLoadingCharacter = true;
-      this.userInteracted = true; // GROUND STATE: Mark user interaction
-      
-      this.showLoading('Loading character consciousness...');
-      
-      // Use state manager to load character
+      // Update state through StateManager - subscriptions will handle UI updates
       if (this.stateManager) {
+        this.stateManager.setIsLoadingCharacter(true);
+        this.stateManager.setUserInteracted(true); // GROUND STATE: Mark user interaction
+
+        // Load character through StateManager
         await this.stateManager.loadCharacter(characterId);
       }
       
@@ -189,21 +244,13 @@ class RuntimeApp {
       }
       
       // Get the loaded character from state manager
-      const state = stateManager.getState();
-      if (state) {
-        this.currentCharacter = {
-          id: state.id,
-          name: state.name,
-          consciousness: state.consciousness
-        };
-        
-        this.updateCharacterSelection(characterId);
-
+      const character = this.stateManager.getCurrentCharacter();
+      if (character) {
         // Start socket monitoring for the selected character
         if (this.socketClient && typeof this.socketClient.startMonitoring === 'function') {
-          this.socketClient.startMonitoring(this.currentCharacter.id)
+          this.socketClient.startMonitoring(character.id)
             .then(() => {
-              this.logger.info('Socket monitoring started for', this.currentCharacter.id);
+              this.logger.info('Socket monitoring started for', character.id);
             })
             .catch((err) => {
               this.logger.error('Failed to start socket monitoring:', err);
@@ -213,34 +260,14 @@ class RuntimeApp {
         // GROUND STATE: Initialize consciousness with complete data
         if (this.consciousness) {
           this.logger.info('GROUND STATE: Loading character into consciousness manager');
-          this.consciousness.loadCharacter(this.currentCharacter);
+          this.consciousness.loadCharacter(character);
         }
 
-        // GROUND STATE: Enable navigation after character loads
-        this.enableNavigation();
+        // Note: UI updates (updateCharacterSelection, enableNavigation, monitor connection)
+        // are now handled by state subscriptions in setupStateSubscriptions()
 
-        // GROUND STATE: Connect monitor only after user loads character
-        if (this.monitor && typeof this.monitor.connectToCharacter === 'function') {
-          this.logger.info('GROUND STATE: Connecting monitor to character');
-          try {
-            const result = this.monitor.connectToCharacter(this.currentCharacter);
+        this.showSuccess(`${character.name} consciousness loaded`);
 
-            // Handle if connectToCharacter returns a promise
-            if (result && typeof result.then === 'function') {
-              result.then(() => {
-                this.logger.info('GROUND STATE: Monitor connected successfully');
-              }).catch(error => {
-                this.logger.error('GROUND STATE: Monitor connection failed:', error);
-              });
-            }
-          } catch (error) {
-            this.logger.error('GROUND STATE: Error connecting monitor:', error);
-          }
-        }
-        
-        this.hideLoading();
-        this.showSuccess(`${state.name} consciousness loaded`);
-        
         // GROUND STATE: Validate compliance after character load
         setTimeout(() => GroundStateValidator.validateCompliance(), 100);
       }
@@ -248,7 +275,9 @@ class RuntimeApp {
       this.logger.error('Failed to select character', { characterId, error });
       this.showError('Failed to load character consciousness');
     } finally {
-      this.isLoadingCharacter = false;
+      if (this.stateManager) {
+        this.stateManager.setIsLoadingCharacter(false);
+      }
     }
   }
 
@@ -345,7 +374,9 @@ class RuntimeApp {
         break;
     }
     
-    this.components.set(componentName, true);
+    if (this.stateManager) {
+      this.stateManager.addInitializedComponent(componentName);
+    }
   }
 
   updateCharacterSelection(characterId) {

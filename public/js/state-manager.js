@@ -13,9 +13,23 @@ class StateManager {
       monitoringActive: false,
       terminalHistory: [],
       currentTerminalPath: '/',
-      interventions: []
+      interventions: [],
+
+      // UI state properties
+      isLoadingCharacter: false,
+      activeSection: 'home',
+      userInteracted: false,
+      initializedComponents: new Set(),
+
+      // Debugger state properties
+      debuggerActive: false,
+      debuggerBreakpoints: new Map(),
+      debuggerExecutionState: 'stopped', // stopped, running, paused
+      debuggerCurrentLine: null,
+      debuggerVariables: {},
+      debuggerCallStack: []
     };
-    
+
     this.subscribers = {};
   }
 
@@ -313,6 +327,102 @@ class StateManager {
     }
     
     return issues;
+  }
+
+  // UI state management
+  getIsLoadingCharacter() {
+    return this.state.isLoadingCharacter;
+  }
+
+  setIsLoadingCharacter(isLoading) {
+    this.updateState('isLoadingCharacter', isLoading);
+  }
+
+  getActiveSection() {
+    return this.state.activeSection;
+  }
+
+  setActiveSection(section) {
+    this.updateState('activeSection', section);
+  }
+
+  getUserInteracted() {
+    return this.state.userInteracted;
+  }
+
+  setUserInteracted(interacted) {
+    this.updateState('userInteracted', interacted);
+  }
+
+  getInitializedComponents() {
+    return this.state.initializedComponents;
+  }
+
+  addInitializedComponent(componentName) {
+    const components = new Set(this.state.initializedComponents);
+    components.add(componentName);
+    this.updateState('initializedComponents', components);
+  }
+
+  // Debugger state management
+  getDebuggerActive() {
+    return this.state.debuggerActive;
+  }
+
+  setDebuggerActive(active) {
+    this.updateState('debuggerActive', active);
+  }
+
+  getDebuggerBreakpoints() {
+    return this.state.debuggerBreakpoints;
+  }
+
+  setDebuggerBreakpoints(breakpoints) {
+    this.updateState('debuggerBreakpoints', breakpoints);
+  }
+
+  addDebuggerBreakpoint(line, condition = null) {
+    const breakpoints = new Map(this.state.debuggerBreakpoints);
+    breakpoints.set(line, { line, condition, enabled: true });
+    this.updateState('debuggerBreakpoints', breakpoints);
+  }
+
+  removeDebuggerBreakpoint(line) {
+    const breakpoints = new Map(this.state.debuggerBreakpoints);
+    breakpoints.delete(line);
+    this.updateState('debuggerBreakpoints', breakpoints);
+  }
+
+  getDebuggerExecutionState() {
+    return this.state.debuggerExecutionState;
+  }
+
+  setDebuggerExecutionState(state) {
+    this.updateState('debuggerExecutionState', state);
+  }
+
+  getDebuggerCurrentLine() {
+    return this.state.debuggerCurrentLine;
+  }
+
+  setDebuggerCurrentLine(line) {
+    this.updateState('debuggerCurrentLine', line);
+  }
+
+  getDebuggerVariables() {
+    return this.state.debuggerVariables;
+  }
+
+  setDebuggerVariables(variables) {
+    this.updateState('debuggerVariables', variables);
+  }
+
+  getDebuggerCallStack() {
+    return this.state.debuggerCallStack;
+  }
+
+  setDebuggerCallStack(callStack) {
+    this.updateState('debuggerCallStack', callStack);
   }
 
   // Generic set method for compatibility with consciousness.js
