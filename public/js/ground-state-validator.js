@@ -32,20 +32,21 @@ class GroundStateValidator {
     
     // Check component initialization violations
     const components = ['monitor', 'terminal', 'debugger'];
+    const currentCharacter = window.app?.stateManager?.getCurrentCharacter();
     components.forEach(name => {
       const component = window[name];
-      if (component?.isInitialized && !window.app?.currentCharacter) {
+      if (component?.isInitialized && !currentCharacter) {
         violations.push(`CRITICAL: ${name} component initialized before character load`);
       }
     });
-    
+
     // Check consciousness manager violations
     if (window.consciousness) {
       if (window.consciousness.isMonitoring && !window.consciousness.currentCharacter) {
         violations.push('CRITICAL: Consciousness monitoring active without character');
       }
-      
-      if (window.consciousness.currentCharacter && !window.app?.userInteracted) {
+
+      if (window.consciousness.currentCharacter && !window.app?.stateManager?.getUserInteracted()) {
         violations.push('WARNING: Consciousness manager has character without user interaction');
       }
     }

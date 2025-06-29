@@ -14,12 +14,12 @@ class Terminal {
     this.element = null;
     this.outputElement = null;
     this.inputElement = null;
-    this.currentCharacter = null;
+    // Remove local currentCharacter - use StateManager getter instead
     this.commandHistory = [];
     this.historyIndex = -1;
     this.isActive = false;
     this.isProcessingCommand = false;
-    
+
     // Enhanced command set with real implementations
     this.commands = {
       'ps': this.processListCommand.bind(this),
@@ -50,6 +50,11 @@ class Terminal {
     Object.assign(this.commands, this.storyCommands.getCommands());
     
     this.init();
+  }
+
+  // Getter for current character from StateManager
+  get currentCharacter() {
+    return this.stateManager ? this.stateManager.getCurrentCharacter() : null;
   }
 
   init() {
@@ -112,7 +117,7 @@ class Terminal {
     // Subscribe to state changes
     if (this.stateManager) {
       this.stateManager.subscribe('currentCharacter', (character) => {
-        this.currentCharacter = character;
+        // No need to set local state - use getter instead
         if (character) {
           this.addOutput(`Attached to ${character.name}'s consciousness`, 'success');
           this.updatePrompt();
@@ -367,8 +372,8 @@ class Terminal {
           this.socketClient.emitToServer('monitor:start', { characterId });
         }
 
-        // Update current character for terminal commands
-        this.currentCharacter = { id: characterId, name: characterId };
+        // Character is now managed by StateManager - no need to set locally
+        // this.currentCharacter = { id: characterId, name: characterId }; // ❌ Removed
         this.updatePrompt();
 
         // Send initial ps command to show processes
