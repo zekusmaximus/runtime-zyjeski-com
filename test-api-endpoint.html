@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Endpoint Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { margin: 5px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>API Endpoint Test</h1>
+    <p>This test verifies that the API endpoints are working correctly.</p>
+    
+    <div class="test-section">
+        <h2>Test API Endpoints</h2>
+        <button onclick="testCharactersEndpoint()">Test /api/characters</button>
+        <button onclick="testCharacterEndpoint()">Test /api/character/alexander-kane</button>
+        <button onclick="testStateManagerLoad()">Test StateManager.loadCharacter</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        // Import the fixed bootstrap
+        import '/js/bootstrap.js';
+        
+        window.testCharactersEndpoint = async function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Characters Endpoint Test:</h2>';
+            
+            try {
+                addResult('info', 'Testing GET /api/characters...');
+                
+                const response = await fetch('/api/characters');
+                addResult('info', `Response status: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    addResult('fail', `Failed to fetch characters: ${response.status}`);
+                    return;
+                }
+                
+                const characters = await response.json();
+                addResult('pass', `Characters loaded successfully: ${characters.length} characters`);
+                
+                // Show character data
+                characters.forEach(char => {
+                    addResult('info', `Character: ${char.name} (${char.id}) - ${char.status}`);
+                });
+                
+                // Check if alexander-kane is in the list
+                const alexanderKane = characters.find(c => c.id === 'alexander-kane');
+                if (alexanderKane) {
+                    addResult('pass', 'Alexander Kane found in character list');
+                } else {
+                    addResult('fail', 'Alexander Kane not found in character list');
+                }
+                
+            } catch (error) {
+                addResult('fail', `Characters endpoint test failed: ${error.message}`);
+            }
+        };
+        
+        window.testCharacterEndpoint = async function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Character Endpoint Test:</h2>';
+            
+            try {
+                addResult('info', 'Testing GET /api/character/alexander-kane...');
+                
+                const response = await fetch('/api/character/alexander-kane');
+                addResult('info', `Response status: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    addResult('fail', `Failed to fetch character: ${response.status}`);
+                    const errorText = await response.text();
+                    addResult('fail', `Error response: ${errorText}`);
+                    return;
+                }
+                
+                const character = await response.json();
+                addResult('pass', `Character loaded successfully: ${character.name}`);
+                
+                // Check character structure
+                if (character.id) {
+                    addResult('pass', `Character has ID: ${character.id}`);
+                } else {
+                    addResult('fail', 'Character missing ID');
+                }
+                
+                if (character.name) {
+                    addResult('pass', `Character has name: ${character.name}`);
+                } else {
+                    addResult('fail', 'Character missing name');
+                }
+                
+                if (character.baseProcesses) {
+                    addResult('pass', `Character has baseProcesses: ${character.baseProcesses.length} processes`);
+                } else {
+                    addResult('fail', 'Character missing baseProcesses');
+                }
+                
+                if (character.consciousness) {
+                    addResult('pass', 'Character has consciousness data');
+                } else {
+                    addResult('info', 'Character does not have consciousness property (may use baseProcesses instead)');
+                }
+                
+                // Show a sample of the data
+                const sample = {
+                    id: character.id,
+                    name: character.name,
+                    processCount: character.baseProcesses?.length || 0,
+                    hasConsciousness: !!character.consciousness
+                };
+                
+                addResult('info', 'Character data sample:');
+                const pre = document.createElement('pre');
+                pre.textContent = JSON.stringify(sample, null, 2);
+                document.getElementById('results').appendChild(pre);
+                
+            } catch (error) {
+                addResult('fail', `Character endpoint test failed: ${error.message}`);
+            }
+        };
+        
+        window.testStateManagerLoad = async function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>StateManager LoadCharacter Test:</h2>';
+            
+            try {
+                if (!window.stateManager) {
+                    addResult('fail', 'StateManager not available');
+                    return;
+                }
+                
+                if (typeof window.stateManager.loadCharacter !== 'function') {
+                    addResult('fail', 'loadCharacter method not found');
+                    return;
+                }
+                
+                addResult('info', 'Testing StateManager.loadCharacter("alexander-kane")...');
+                
+                // Test the loadCharacter method
+                const character = await window.stateManager.loadCharacter('alexander-kane');
+                
+                if (character) {
+                    addResult('pass', `StateManager loaded character: ${character.name}`);
+                    
+                    // Check if state was updated
+                    const currentCharacter = window.stateManager.getCurrentCharacter();
+                    if (currentCharacter && currentCharacter.id === 'alexander-kane') {
+                        addResult('pass', 'Current character state updated correctly');
+                    } else {
+                        addResult('fail', 'Current character state not updated');
+                    }
+                    
+                    // Check consciousness state
+                    const consciousnessState = window.stateManager.getConsciousnessState();
+                    if (consciousnessState) {
+                        addResult('pass', 'Consciousness state loaded');
+                    } else {
+                        addResult('fail', 'Consciousness state not loaded');
+                    }
+                    
+                    // Check loading state
+                    const isLoading = window.stateManager.getIsLoadingCharacter();
+                    addResult(isLoading === false ? 'pass' : 'fail', `Loading state: ${isLoading}`);
+                    
+                } else {
+                    addResult('fail', 'StateManager.loadCharacter returned null/undefined');
+                }
+                
+            } catch (error) {
+                addResult('fail', `StateManager loadCharacter test failed: ${error.message}`);
+                console.error('StateManager test error:', error);
+            }
+        };
+        
+        window.clearResults = function() {
+            document.getElementById('results').innerHTML = '';
+        };
+        
+        function addResult(type, message) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+        }
+        
+        // Auto-run basic test when modules are ready
+        document.addEventListener('app:ready', () => {
+            setTimeout(() => {
+                addResult('info', 'App ready - running API endpoint tests');
+                testCharacterEndpoint();
+            }, 500);
+        });
+        
+        // Fallback test
+        setTimeout(() => {
+            if (document.getElementById('results').innerHTML === '') {
+                addResult('info', 'Auto-running API endpoint test (fallback)');
+                testCharacterEndpoint();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

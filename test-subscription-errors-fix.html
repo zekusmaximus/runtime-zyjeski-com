@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Errors Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { margin: 5px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .character-card { 
+            margin: 10px; padding: 15px; border: 2px solid #ccc; border-radius: 5px; 
+            cursor: pointer; display: inline-block; min-width: 200px;
+        }
+        .character-card:hover { border-color: #007bff; }
+        .character-card.selected { border-color: #28a745; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>Subscription Errors Fix Test</h1>
+    <p>This test verifies that the subscription errors have been fixed.</p>
+    
+    <div class="test-section">
+        <h2>Test Character Selection</h2>
+        <p>Click to test character selection without subscription errors:</p>
+        
+        <div class="character-card" data-character-id="alexander-kane">
+            <h3>Alexander Kane</h3>
+            <p>Test character selection</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Manual Tests</h2>
+        <button onclick="testSubscriptionSystem()">Test Subscription System</button>
+        <button onclick="testDebuggerGetters()">Test Debugger Getters</button>
+        <button onclick="testMonitorController()">Test Monitor Controller</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        // Import the fixed bootstrap
+        import '/js/bootstrap.js';
+        
+        // Set up character card click handlers
+        document.addEventListener('DOMContentLoaded', () => {
+            const characterCards = document.querySelectorAll('.character-card');
+            characterCards.forEach(card => {
+                card.addEventListener('click', async (e) => {
+                    const characterId = card.dataset.characterId;
+                    addResult('info', `Testing character selection: ${characterId}`);
+                    
+                    try {
+                        // Test the app.selectCharacter method
+                        if (window.app && window.app.selectCharacter) {
+                            await window.app.selectCharacter(characterId);
+                            addResult('pass', 'Character selection completed without subscription errors');
+                            
+                            // Check if character was loaded correctly
+                            const currentCharacter = window.stateManager?.getCurrentCharacter();
+                            if (currentCharacter && currentCharacter.id === characterId) {
+                                addResult('pass', `Character loaded: ${currentCharacter.name}`);
+                            } else {
+                                addResult('fail', 'Character not loaded correctly');
+                            }
+                            
+                        } else {
+                            addResult('warning', 'app.selectCharacter not available');
+                        }
+                    } catch (error) {
+                        addResult('fail', `Character selection failed: ${error.message}`);
+                    }
+                    
+                    // Update visual selection
+                    characterCards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                });
+            });
+        });
+        
+        window.testSubscriptionSystem = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Subscription System Test:</h2>';
+            
+            try {
+                if (!window.stateManager) {
+                    addResult('fail', 'StateManager not available');
+                    return;
+                }
+                
+                // Test subscription without errors
+                let subscriptionTriggered = false;
+                let subscriptionError = null;
+                
+                const testCallback = (character) => {
+                    try {
+                        subscriptionTriggered = true;
+                        addResult('pass', `Subscription triggered for: ${character?.name || 'null'}`);
+                    } catch (error) {
+                        subscriptionError = error;
+                        addResult('fail', `Subscription callback error: ${error.message}`);
+                    }
+                };
+                
+                // Subscribe to character changes
+                window.stateManager.subscribe('currentCharacter', testCallback);
+                addResult('info', 'Subscribed to currentCharacter changes');
+                
+                // Trigger a character change
+                const testCharacter = { id: 'test-sub', name: 'Subscription Test Character' };
+                window.stateManager.setCurrentCharacter(testCharacter);
+                
+                setTimeout(() => {
+                    if (subscriptionTriggered && !subscriptionError) {
+                        addResult('pass', 'Subscription system working without errors');
+                    } else if (subscriptionError) {
+                        addResult('fail', `Subscription error: ${subscriptionError.message}`);
+                    } else {
+                        addResult('fail', 'Subscription not triggered');
+                    }
+                }, 100);
+                
+            } catch (error) {
+                addResult('fail', `Subscription system test failed: ${error.message}`);
+            }
+        };
+        
+        window.testDebuggerGetters = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Debugger Getters Test:</h2>';
+            
+            try {
+                if (!window.debuggerInterface) {
+                    addResult('warning', 'DebuggerInterface not available');
+                    return;
+                }
+                
+                // Test that getters work without errors
+                try {
+                    const character = window.debuggerInterface.currentCharacter;
+                    addResult('pass', `Debugger currentCharacter getter works: ${character?.name || 'null'}`);
+                } catch (error) {
+                    addResult('fail', `Debugger currentCharacter getter error: ${error.message}`);
+                }
+                
+                try {
+                    const isActive = window.debuggerInterface.isActive;
+                    addResult('pass', `Debugger isActive getter works: ${isActive}`);
+                } catch (error) {
+                    addResult('fail', `Debugger isActive getter error: ${error.message}`);
+                }
+                
+                try {
+                    const breakpoints = window.debuggerInterface.breakpoints;
+                    addResult('pass', `Debugger breakpoints getter works: ${breakpoints?.size || 0} breakpoints`);
+                } catch (error) {
+                    addResult('fail', `Debugger breakpoints getter error: ${error.message}`);
+                }
+                
+                // Test that we can't set the getter-only properties
+                try {
+                    window.debuggerInterface.currentCharacter = { id: 'test', name: 'Test' };
+                    addResult('fail', 'ERROR: Was able to set currentCharacter (should be getter-only)');
+                } catch (error) {
+                    addResult('pass', 'Correctly prevented setting currentCharacter (getter-only)');
+                }
+                
+            } catch (error) {
+                addResult('fail', `Debugger getters test failed: ${error.message}`);
+            }
+        };
+        
+        window.testMonitorController = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Monitor Controller Test:</h2>';
+            
+            try {
+                if (!window.monitor) {
+                    addResult('warning', 'Monitor not available');
+                    return;
+                }
+                
+                // Test loadCurrentCharacterData method
+                try {
+                    window.monitor.loadCurrentCharacterData();
+                    addResult('pass', 'Monitor loadCurrentCharacterData completed without errors');
+                } catch (error) {
+                    addResult('fail', `Monitor loadCurrentCharacterData error: ${error.message}`);
+                }
+                
+                // Test monitor state access
+                if (window.monitor.state) {
+                    try {
+                        const consciousnessData = window.monitor.state.consciousnessData;
+                        addResult('pass', `Monitor consciousnessData access works: ${consciousnessData ? 'has data' : 'null'}`);
+                    } catch (error) {
+                        addResult('fail', `Monitor consciousnessData access error: ${error.message}`);
+                    }
+                    
+                    try {
+                        const isMonitoring = window.monitor.state.isMonitoring;
+                        addResult('pass', `Monitor isMonitoring getter works: ${isMonitoring}`);
+                    } catch (error) {
+                        addResult('fail', `Monitor isMonitoring getter error: ${error.message}`);
+                    }
+                    
+                    try {
+                        const selectedCharacter = window.monitor.state.selectedCharacter;
+                        addResult('pass', `Monitor selectedCharacter getter works: ${selectedCharacter || 'null'}`);
+                    } catch (error) {
+                        addResult('fail', `Monitor selectedCharacter getter error: ${error.message}`);
+                    }
+                } else {
+                    addResult('warning', 'Monitor state not available');
+                }
+                
+            } catch (error) {
+                addResult('fail', `Monitor controller test failed: ${error.message}`);
+            }
+        };
+        
+        window.clearResults = function() {
+            document.getElementById('results').innerHTML = '';
+        };
+        
+        function addResult(type, message) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+        }
+        
+        // Auto-run basic test when modules are ready
+        document.addEventListener('app:ready', () => {
+            setTimeout(() => {
+                addResult('info', 'App ready - running subscription system test');
+                testSubscriptionSystem();
+            }, 500);
+        });
+        
+        // Fallback test
+        setTimeout(() => {
+            if (window.stateManager && document.getElementById('results').innerHTML === '') {
+                addResult('info', 'Auto-running subscription test (fallback)');
+                testSubscriptionSystem();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick StateManager Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { margin: 5px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Quick StateManager Debug</h1>
+    <button onclick="checkStateManager()">Check StateManager Now</button>
+    <button onclick="loadCharacterAndCheck()">Load Character & Check</button>
+    <div id="results"></div>
+
+    <script type="module">
+        import '/js/bootstrap.js';
+        
+        window.checkStateManager = function() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>StateManager Status:</h2>';
+            
+            if (!window.stateManager) {
+                results.innerHTML += '<p>❌ StateManager not available</p>';
+                return;
+            }
+            
+            const character = window.stateManager.getCurrentCharacter();
+            const processes = window.stateManager.getProcesses();
+            const resources = window.stateManager.getResources();
+            const consciousnessState = window.stateManager.getConsciousnessState();
+            
+            const info = {
+                hasCharacter: !!character,
+                characterName: character?.name || 'none',
+                characterId: character?.id || 'none',
+                processCount: processes.length,
+                resourceKeys: Object.keys(resources).length,
+                hasConsciousnessState: !!consciousnessState,
+                consciousnessStateType: typeof consciousnessState
+            };
+            
+            const pre = document.createElement('pre');
+            pre.textContent = JSON.stringify(info, null, 2);
+            results.appendChild(pre);
+            
+            if (character) {
+                const characterInfo = {
+                    id: character.id,
+                    name: character.name,
+                    hasBaseProcesses: !!character.baseProcesses,
+                    baseProcessesCount: character.baseProcesses?.length || 0,
+                    keys: Object.keys(character).slice(0, 10)
+                };
+                
+                const charPre = document.createElement('pre');
+                charPre.textContent = 'Character Details:\n' + JSON.stringify(characterInfo, null, 2);
+                results.appendChild(charPre);
+            }
+            
+            if (processes.length > 0) {
+                const processSample = processes.slice(0, 3).map(p => ({
+                    pid: p.pid,
+                    name: p.name,
+                    status: p.status
+                }));
+                
+                const procPre = document.createElement('pre');
+                procPre.textContent = 'Process Sample:\n' + JSON.stringify(processSample, null, 2);
+                results.appendChild(procPre);
+            } else {
+                results.innerHTML += '<p>⚠️ No processes in StateManager</p>';
+            }
+        };
+        
+        window.loadCharacterAndCheck = async function() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>Loading Character...</h2>';
+            
+            try {
+                await window.stateManager.loadCharacter('alexander-kane');
+                results.innerHTML += '<p>✅ Character loaded</p>';
+                
+                setTimeout(() => {
+                    checkStateManager();
+                }, 100);
+                
+            } catch (error) {
+                results.innerHTML += `<p>❌ Error: ${error.message}</p>`;
+            }
+        };
+        
+        // Auto-check on load
+        setTimeout(() => {
+            if (window.stateManager) {
+                checkStateManager();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

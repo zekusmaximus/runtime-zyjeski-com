@@ -3,7 +3,7 @@
 // This is the ONLY initialization point for the entire application
 
 import { createLogger } from '/js/logger.js';
-import stateManager from '/js/modules/state-manager.js';
+import '/js/state-manager.js'; // This creates window.stateManager
 import GroundStateValidator from '/js/ground-state-validator.js';
 
 // Import module classes (not instances)
@@ -20,7 +20,7 @@ const logger = createLogger('Bootstrap');
 console.log('📦 Bootstrap module imports completed successfully');
 console.log('📦 Available imports:', {
   createLogger: typeof createLogger,
-  stateManager: typeof stateManager,
+  stateManager: typeof window.stateManager,
   GroundStateValidator: typeof GroundStateValidator,
   SocketClient: typeof SocketClient,
   ConsciousnessManager: typeof ConsciousnessManager,
@@ -40,9 +40,13 @@ console.log('🚀 Bootstrap module loaded, starting initialization...');
 try {
   console.log('🔧 Creating modules with dependency injection...');
 
-  // 1. StateManager (already exists)
+  // 1. StateManager (already exists from import)
   console.log('1. Using existing stateManager');
-  window.stateManager = stateManager;
+  const stateManager = window.stateManager;
+
+  if (!stateManager) {
+    throw new Error('StateManager not available - check state-manager.js import');
+  }
 
   // 2. SocketClient
   console.log('2. Creating socketClient');
@@ -77,7 +81,7 @@ try {
     consciousness: consciousness,
     logger: createLogger('Debugger')
   });
-  window.debugger = debuggerInterface;
+  window.debuggerInterface = debuggerInterface;
 
   // 6. MonitorController
   console.log('6. Creating monitor');
@@ -115,5 +119,11 @@ try {
   console.error('❌ Bootstrap initialization failed:', error);
   console.error('Error details:', error.stack);
 }
+
+// Export bootstrap info for debugging
+const bootstrap = {
+  initialized: true,
+  modules: ['stateManager', 'socketClient', 'consciousness', 'terminal', 'debuggerInterface', 'monitor', 'app']
+};
 
 export default bootstrap;

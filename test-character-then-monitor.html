@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Character Then Monitor</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { margin: 5px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; max-height: 300px; }
+        .character-card { 
+            margin: 10px; padding: 15px; border: 2px solid #ccc; border-radius: 5px; 
+            cursor: pointer; display: inline-block; min-width: 200px;
+        }
+        .character-card:hover { border-color: #007bff; }
+        .character-card.selected { border-color: #28a745; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>Test Character Selection → Monitor Flow</h1>
+    <p>This test verifies the complete flow from character selection to monitor display.</p>
+    
+    <div class="test-section">
+        <h2>Step 1: Select Character</h2>
+        <div class="character-card" data-character-id="alexander-kane">
+            <h3>Alexander Kane</h3>
+            <p>Click to select and load character</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Step 2: Test Monitor Data</h2>
+        <button onclick="testMonitorAfterSelection()">Test Monitor Data</button>
+        <button onclick="checkStateManagerNow()">Check StateManager Now</button>
+        <button onclick="testMonitorUI()">Test Monitor UI Update</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        // Import the fixed bootstrap
+        import '/js/bootstrap.js';
+        
+        // Set up character card click handlers
+        document.addEventListener('DOMContentLoaded', () => {
+            const characterCards = document.querySelectorAll('.character-card');
+            characterCards.forEach(card => {
+                card.addEventListener('click', async (e) => {
+                    const characterId = card.dataset.characterId;
+                    addResult('info', `=== SELECTING CHARACTER: ${characterId} ===`);
+                    
+                    try {
+                        // Test the app.selectCharacter method
+                        if (window.app && window.app.selectCharacter) {
+                            await window.app.selectCharacter(characterId);
+                            addResult('pass', 'Character selection completed');
+                            
+                            // Check StateManager immediately after selection
+                            setTimeout(() => {
+                                checkStateManagerNow();
+                                
+                                // Then test monitor
+                                setTimeout(() => {
+                                    testMonitorAfterSelection();
+                                }, 500);
+                            }, 200);
+                            
+                        } else {
+                            addResult('fail', 'app.selectCharacter not available');
+                        }
+                    } catch (error) {
+                        addResult('fail', `Character selection failed: ${error.message}`);
+                    }
+                    
+                    // Update visual selection
+                    characterCards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                });
+            });
+        });
+        
+        window.checkStateManagerNow = function() {
+            addResult('info', '=== CHECKING STATEMANAGER ===');
+            
+            if (!window.stateManager) {
+                addResult('fail', 'StateManager not available');
+                return;
+            }
+            
+            const character = window.stateManager.getCurrentCharacter();
+            const processes = window.stateManager.getProcesses();
+            const resources = window.stateManager.getResources();
+            
+            if (character) {
+                addResult('pass', `Character in StateManager: ${character.name}`);
+                
+                // Check character structure
+                const hasBaseProcesses = !!character.baseProcesses;
+                const baseProcessesCount = character.baseProcesses?.length || 0;
+                
+                addResult('info', `Character has baseProcesses: ${hasBaseProcesses} (${baseProcessesCount})`);
+                
+                if (hasBaseProcesses && baseProcessesCount > 0) {
+                    const sampleProcess = character.baseProcesses[0];
+                    addResult('info', `Sample baseProcess: ${sampleProcess.name} (${sampleProcess.status})`);
+                }
+            } else {
+                addResult('fail', 'No character in StateManager');
+            }
+            
+            addResult(processes.length > 0 ? 'pass' : 'fail', `StateManager processes: ${processes.length}`);
+            
+            if (processes.length > 0) {
+                const sampleProcess = processes[0];
+                addResult('info', `Sample StateManager process: ${sampleProcess.name} (${sampleProcess.status})`);
+            }
+            
+            addResult('info', `StateManager resources: ${Object.keys(resources).length} keys`);
+        };
+        
+        window.testMonitorAfterSelection = function() {
+            addResult('info', '=== TESTING MONITOR AFTER SELECTION ===');
+            
+            if (!window.monitor || !window.monitor.state) {
+                addResult('fail', 'Monitor not available');
+                return;
+            }
+            
+            // Test monitor state
+            const consciousnessData = window.monitor.state.consciousnessData;
+            
+            if (consciousnessData) {
+                addResult('pass', 'Monitor consciousnessData exists');
+                
+                const processCount = consciousnessData.processes?.length || 0;
+                addResult(processCount > 0 ? 'pass' : 'fail', `Monitor processes: ${processCount}`);
+                
+                if (processCount > 0) {
+                    const sampleProcess = consciousnessData.processes[0];
+                    addResult('info', `Sample monitor process: ${sampleProcess.name} (${sampleProcess.status})`);
+                } else {
+                    addResult('fail', 'Monitor has no processes - this is the problem!');
+                }
+                
+                const dataInfo = {
+                    processCount: processCount,
+                    hasSystemResources: !!consciousnessData.systemResources,
+                    hasMemoryMap: !!consciousnessData.memoryMap,
+                    errorCount: consciousnessData.system_errors?.length || 0,
+                    characterId: consciousnessData.characterId
+                };
+                
+                const pre = document.createElement('pre');
+                pre.textContent = 'Monitor Data Summary:\n' + JSON.stringify(dataInfo, null, 2);
+                document.getElementById('results').appendChild(pre);
+                
+            } else {
+                addResult('fail', 'Monitor consciousnessData is null');
+            }
+        };
+        
+        window.testMonitorUI = function() {
+            addResult('info', '=== TESTING MONITOR UI ===');
+            
+            if (!window.monitor || !window.monitor.ui) {
+                addResult('fail', 'Monitor UI not available');
+                return;
+            }
+            
+            const consciousnessData = window.monitor.state?.consciousnessData;
+            
+            if (consciousnessData) {
+                try {
+                    window.monitor.ui.updateAll(consciousnessData);
+                    addResult('pass', 'Monitor UI update completed');
+                } catch (error) {
+                    addResult('fail', `Monitor UI update failed: ${error.message}`);
+                }
+            } else {
+                addResult('fail', 'No consciousness data for UI update');
+            }
+        };
+        
+        window.clearResults = function() {
+            document.getElementById('results').innerHTML = '';
+        };
+        
+        function addResult(type, message) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+        }
+        
+        // Auto-check current state
+        setTimeout(() => {
+            if (window.stateManager) {
+                addResult('info', 'Auto-checking current StateManager state...');
+                checkStateManagerNow();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

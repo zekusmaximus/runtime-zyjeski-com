@@ -26,16 +26,33 @@ class MonitorState {
     const character = this.stateManager.getCurrentCharacter();
     if (!character) return null;
 
-    // Get consciousness state from StateManager
-    const consciousnessState = this.stateManager.getConsciousnessState();
-    if (!consciousnessState) return null;
+    // Build consciousness data from StateManager components
+    const processes = this.stateManager.getProcesses() || [];
+    const resources = this.stateManager.getResources() || {};
+    const memory = this.stateManager.getMemory() || {};
+    const errors = this.stateManager.getErrors() || [];
+    const threads = this.stateManager.getThreads() || [];
 
-    // Transform the data using the existing transformation logic
-    return this.transformConsciousnessData({
-      consciousness: consciousnessState,
+    // Debug logging for MonitorState
+    console.log('[MONITOR STATE] Building consciousness data:');
+    console.log('  processes from StateManager:', processes.length);
+    console.log('  resources from StateManager:', Object.keys(resources).length);
+    console.log('  character:', character.name);
+
+    const consciousnessData = {
+      consciousness: {
+        processes: processes,
+        resources: resources,
+        memory: memory,
+        system_errors: errors,
+        threads: threads
+      },
       characterId: character.id,
       timestamp: Date.now()
-    });
+    };
+
+    // Transform the data using the existing transformation logic
+    return this.transformConsciousnessData(consciousnessData);
   }
 
   // Legacy methods for compatibility - now delegate to StateManager

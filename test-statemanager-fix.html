@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StateManager Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { margin: 5px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>StateManager Fix Test</h1>
+    <p>This test verifies that the StateManager consolidation is working correctly.</p>
+    
+    <button onclick="runTest()">Run StateManager Test</button>
+    <button onclick="testModuleGetters()">Test Module Getters</button>
+    <button onclick="clearResults()">Clear Results</button>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        // Import the fixed bootstrap
+        import '/js/bootstrap.js';
+        
+        window.runTest = function() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>StateManager Test Results:</h2>';
+            
+            try {
+                // Test 1: Check if StateManager exists and has required methods
+                if (!window.stateManager) {
+                    addResult('fail', 'StateManager not found on window object');
+                    return;
+                }
+                addResult('pass', 'StateManager found on window object');
+                
+                // Test 2: Check for required methods
+                const requiredMethods = [
+                    'getCurrentCharacter', 'setCurrentCharacter',
+                    'getMonitoringActive', 'setMonitoringActive',
+                    'getIsLoadingCharacter', 'setIsLoadingCharacter',
+                    'getDebuggerActive', 'setDebuggerActive',
+                    'subscribe', 'updateState'
+                ];
+                
+                let methodsFound = 0;
+                requiredMethods.forEach(method => {
+                    if (typeof window.stateManager[method] === 'function') {
+                        methodsFound++;
+                        addResult('pass', `Method ${method} found`);
+                    } else {
+                        addResult('fail', `Method ${method} missing`);
+                    }
+                });
+                
+                // Test 3: Test basic functionality
+                if (methodsFound === requiredMethods.length) {
+                    addResult('info', 'Testing basic functionality...');
+                    
+                    // Test character state
+                    const testCharacter = { id: 'test-123', name: 'Test Character' };
+                    window.stateManager.setCurrentCharacter(testCharacter);
+                    const retrievedCharacter = window.stateManager.getCurrentCharacter();
+                    
+                    if (retrievedCharacter && retrievedCharacter.id === 'test-123') {
+                        addResult('pass', 'Character state working correctly');
+                    } else {
+                        addResult('fail', 'Character state not working');
+                    }
+                    
+                    // Test monitoring state
+                    window.stateManager.setMonitoringActive(true);
+                    const monitoring = window.stateManager.getMonitoringActive();
+                    
+                    if (monitoring === true) {
+                        addResult('pass', 'Monitoring state working correctly');
+                    } else {
+                        addResult('fail', 'Monitoring state not working');
+                    }
+                    
+                    // Test loading state
+                    window.stateManager.setIsLoadingCharacter(true);
+                    const loading = window.stateManager.getIsLoadingCharacter();
+                    
+                    if (loading === true) {
+                        addResult('pass', 'Loading state working correctly');
+                    } else {
+                        addResult('fail', 'Loading state not working');
+                    }
+                    
+                    // Test subscription system
+                    let subscriptionTriggered = false;
+                    window.stateManager.subscribe('currentCharacter', (character) => {
+                        subscriptionTriggered = true;
+                        addResult('pass', `Subscription triggered for character: ${character?.name}`);
+                    });
+                    
+                    // Trigger subscription
+                    window.stateManager.setCurrentCharacter({ id: 'sub-test', name: 'Subscription Test' });
+                    
+                    setTimeout(() => {
+                        if (subscriptionTriggered) {
+                            addResult('pass', 'Subscription system working correctly');
+                        } else {
+                            addResult('fail', 'Subscription system not working');
+                        }
+                    }, 100);
+                }
+                
+            } catch (error) {
+                addResult('fail', `Test failed with error: ${error.message}`);
+                console.error('StateManager test error:', error);
+            }
+        };
+        
+        window.testModuleGetters = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Module Getter Test Results:</h2>';
+            
+            try {
+                // Set up test state
+                const testCharacter = { id: 'getter-test', name: 'Getter Test Character' };
+                window.stateManager.setCurrentCharacter(testCharacter);
+                window.stateManager.setMonitoringActive(true);
+                
+                // Test consciousness module getters
+                if (window.consciousness) {
+                    const consciousnessCharacter = window.consciousness.currentCharacter;
+                    const consciousnessMonitoring = window.consciousness.isMonitoring;
+                    
+                    if (consciousnessCharacter && consciousnessCharacter.id === 'getter-test') {
+                        addResult('pass', 'Consciousness character getter working');
+                    } else {
+                        addResult('fail', 'Consciousness character getter not working');
+                    }
+                    
+                    if (consciousnessMonitoring === true) {
+                        addResult('pass', 'Consciousness monitoring getter working');
+                    } else {
+                        addResult('fail', 'Consciousness monitoring getter not working');
+                    }
+                } else {
+                    addResult('info', 'Consciousness module not available');
+                }
+                
+                // Test app module getters
+                if (window.app) {
+                    const appCharacter = window.app.currentCharacter;
+                    
+                    if (appCharacter && appCharacter.id === 'getter-test') {
+                        addResult('pass', 'App character getter working');
+                    } else {
+                        addResult('fail', 'App character getter not working');
+                    }
+                } else {
+                    addResult('info', 'App module not available');
+                }
+                
+                // Test debugger module getters
+                if (window.debuggerInterface) {
+                    const debuggerCharacter = window.debuggerInterface.currentCharacter;
+                    
+                    if (debuggerCharacter && debuggerCharacter.id === 'getter-test') {
+                        addResult('pass', 'Debugger character getter working');
+                    } else {
+                        addResult('fail', 'Debugger character getter not working');
+                    }
+                } else {
+                    addResult('info', 'Debugger module not available');
+                }
+                
+            } catch (error) {
+                addResult('fail', `Module getter test failed: ${error.message}`);
+                console.error('Module getter test error:', error);
+            }
+        };
+        
+        window.clearResults = function() {
+            document.getElementById('results').innerHTML = '';
+        };
+        
+        function addResult(type, message) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        // Auto-run test after modules load
+        document.addEventListener('app:ready', () => {
+            setTimeout(() => {
+                addResult('info', 'App ready event received - modules loaded');
+                runTest();
+            }, 500);
+        });
+        
+        // Fallback if app:ready doesn't fire
+        setTimeout(() => {
+            if (window.stateManager && document.getElementById('results').innerHTML === '') {
+                addResult('info', 'Auto-running test (fallback)');
+                runTest();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

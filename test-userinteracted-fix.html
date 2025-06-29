@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UserInteracted Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { margin: 5px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .character-card { 
+            margin: 10px; padding: 15px; border: 2px solid #ccc; border-radius: 5px; 
+            cursor: pointer; display: inline-block; min-width: 200px;
+        }
+        .character-card:hover { border-color: #007bff; }
+        .character-card.selected { border-color: #28a745; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>UserInteracted Fix Test</h1>
+    <p>This test verifies that the userInteracted property fix is working correctly.</p>
+    
+    <div class="test-section">
+        <h2>Test Character Selection</h2>
+        <p>Click on a character card to test the userInteracted fix:</p>
+        
+        <div class="character-card" data-character-id="alexander-kane">
+            <h3>Alexander Kane</h3>
+            <p>Test character selection</p>
+        </div>
+        
+        <div class="character-card" data-character-id="test-character">
+            <h3>Test Character</h3>
+            <p>Another test character</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Manual Tests</h2>
+        <button onclick="testUserInteracted()">Test UserInteracted Property</button>
+        <button onclick="testGroundStateValidator()">Test Ground State Validator</button>
+        <button onclick="testCharacterSelection()">Test Character Selection</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        // Import the fixed bootstrap
+        import '/js/bootstrap.js';
+        
+        // Set up character card click handlers
+        document.addEventListener('DOMContentLoaded', () => {
+            const characterCards = document.querySelectorAll('.character-card');
+            characterCards.forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const characterId = card.dataset.characterId;
+                    addResult('info', `Clicked character: ${characterId}`);
+                    
+                    // Test the ground state validator
+                    try {
+                        if (window.GroundStateValidator) {
+                            window.GroundStateValidator.validateUserAction('character-selection', { characterId });
+                            addResult('pass', 'GroundStateValidator.validateUserAction succeeded');
+                        } else {
+                            addResult('fail', 'GroundStateValidator not available');
+                        }
+                    } catch (error) {
+                        addResult('fail', `GroundStateValidator error: ${error.message}`);
+                    }
+                    
+                    // Check if userInteracted was set correctly
+                    setTimeout(() => {
+                        if (window.stateManager) {
+                            const userInteracted = window.stateManager.getUserInteracted();
+                            addResult(userInteracted ? 'pass' : 'fail', `UserInteracted state: ${userInteracted}`);
+                        }
+                        
+                        if (window.app) {
+                            try {
+                                const appUserInteracted = window.app.userInteracted;
+                                addResult('pass', `App userInteracted getter: ${appUserInteracted}`);
+                            } catch (error) {
+                                addResult('fail', `App userInteracted getter error: ${error.message}`);
+                            }
+                        }
+                    }, 100);
+                    
+                    // Update visual selection
+                    characterCards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                });
+            });
+        });
+        
+        window.testUserInteracted = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>UserInteracted Property Test:</h2>';
+            
+            try {
+                // Test StateManager userInteracted
+                if (!window.stateManager) {
+                    addResult('fail', 'StateManager not available');
+                    return;
+                }
+                
+                // Test getter/setter
+                const originalValue = window.stateManager.getUserInteracted();
+                addResult('info', `Original userInteracted value: ${originalValue}`);
+                
+                // Test setting to true
+                window.stateManager.setUserInteracted(true);
+                const newValue = window.stateManager.getUserInteracted();
+                addResult(newValue === true ? 'pass' : 'fail', `Set to true: ${newValue}`);
+                
+                // Test app getter
+                if (window.app) {
+                    try {
+                        const appValue = window.app.userInteracted;
+                        addResult(appValue === true ? 'pass' : 'fail', `App getter returns: ${appValue}`);
+                    } catch (error) {
+                        addResult('fail', `App getter error: ${error.message}`);
+                    }
+                } else {
+                    addResult('info', 'App not available for testing');
+                }
+                
+                // Test setting to false
+                window.stateManager.setUserInteracted(false);
+                const falseValue = window.stateManager.getUserInteracted();
+                addResult(falseValue === false ? 'pass' : 'fail', `Set to false: ${falseValue}`);
+                
+            } catch (error) {
+                addResult('fail', `UserInteracted test failed: ${error.message}`);
+            }
+        };
+        
+        window.testGroundStateValidator = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Ground State Validator Test:</h2>';
+            
+            try {
+                // Check if GroundStateValidator is available
+                if (!window.GroundStateValidator) {
+                    addResult('fail', 'GroundStateValidator not available');
+                    return;
+                }
+                
+                // Reset userInteracted to false
+                if (window.stateManager) {
+                    window.stateManager.setUserInteracted(false);
+                    addResult('info', 'Reset userInteracted to false');
+                }
+                
+                // Test validateUserAction
+                const result = window.GroundStateValidator.validateUserAction('test-action', { test: true });
+                addResult(result ? 'pass' : 'fail', `validateUserAction returned: ${result}`);
+                
+                // Check if userInteracted was set to true
+                setTimeout(() => {
+                    if (window.stateManager) {
+                        const userInteracted = window.stateManager.getUserInteracted();
+                        addResult(userInteracted ? 'pass' : 'fail', `UserInteracted after validation: ${userInteracted}`);
+                    }
+                }, 100);
+                
+            } catch (error) {
+                addResult('fail', `Ground State Validator test failed: ${error.message}`);
+            }
+        };
+        
+        window.testCharacterSelection = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Character Selection Test:</h2>';
+            
+            try {
+                // Simulate character selection like the app does
+                if (!window.app || !window.app.selectCharacter) {
+                    addResult('info', 'App.selectCharacter not available - testing manually');
+                    
+                    // Manual test
+                    if (window.GroundStateValidator) {
+                        window.GroundStateValidator.validateUserAction('character-selection', { characterId: 'test-char' });
+                        addResult('pass', 'Manual character selection validation succeeded');
+                    }
+                    return;
+                }
+                
+                // Test actual app method
+                addResult('info', 'Testing app.selectCharacter method...');
+                
+                // This should trigger the ground state validator
+                window.app.selectCharacter('alexander-kane');
+                
+                setTimeout(() => {
+                    const userInteracted = window.stateManager?.getUserInteracted();
+                    addResult(userInteracted ? 'pass' : 'fail', `UserInteracted after selectCharacter: ${userInteracted}`);
+                }, 200);
+                
+            } catch (error) {
+                addResult('fail', `Character selection test failed: ${error.message}`);
+            }
+        };
+        
+        window.clearResults = function() {
+            document.getElementById('results').innerHTML = '';
+        };
+        
+        function addResult(type, message) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+        }
+        
+        // Auto-run basic test when modules are ready
+        document.addEventListener('app:ready', () => {
+            setTimeout(() => {
+                addResult('info', 'App ready - running basic userInteracted test');
+                testUserInteracted();
+            }, 500);
+        });
+        
+        // Fallback test
+        setTimeout(() => {
+            if (window.stateManager && document.getElementById('results').innerHTML === '') {
+                addResult('info', 'Auto-running userInteracted test (fallback)');
+                testUserInteracted();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

@@ -83,7 +83,12 @@ class StateManager {
   }
 
   setProcesses(processes) {
-    this.updateState('processes', Array.isArray(processes) ? processes : []);
+    const processArray = Array.isArray(processes) ? processes : [];
+    console.log('[STATE MANAGER] setProcesses called with:', processArray.length, 'processes');
+    if (processArray.length > 0) {
+      console.log('[STATE MANAGER] Sample process:', processArray[0].name || processArray[0]);
+    }
+    this.updateState('processes', processArray);
   }
 
   // Resource management
@@ -190,7 +195,40 @@ class StateManager {
     this.setInterventions([...currentInterventions, intervention]);
   }
 
-  // Character-specific state management
+  // Load character by ID (fetches from server)
+  async loadCharacter(characterId) {
+    console.log('[STATE MANAGER] Loading character:', characterId);
+
+    if (!characterId) {
+      console.error('Cannot load character: characterId is null or undefined');
+      return;
+    }
+
+    try {
+      this.updateState('isLoadingCharacter', true);
+
+      // Fetch character data from server
+      const response = await fetch(`/api/character/${characterId}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch character: ${response.status} ${response.statusText}`);
+      }
+
+      const characterData = await response.json();
+      console.log('[STATE MANAGER] Character data received:', characterData);
+
+      // Load the character state
+      this.loadCharacterState(characterData);
+
+      return characterData;
+
+    } catch (error) {
+      console.error('[STATE MANAGER] Failed to load character:', error);
+      this.updateState('isLoadingCharacter', false);
+      throw error;
+    }
+  }
+
+  // Character-specific state management (accepts character object)
   loadCharacterState(character) {
     if (!character) {
       console.error('Cannot load character state: character is null or undefined');
@@ -199,18 +237,44 @@ class StateManager {
 
     try {
       this.setCurrentCharacter(character);
-      
-      // FIXED: Add null checks and default values
-      const consciousness = character.consciousness || {};
-      
+
+      // Handle both nested consciousness structure and flat structure
+      let consciousness, processes, resources, errors, memory, threads;
+
+      if (character.consciousness) {
+        // Nested structure: character.consciousness.processes
+        consciousness = character.consciousness;
+        processes = consciousness.processes || [];
+        resources = consciousness.resources || {};
+        errors = consciousness.system_errors || consciousness.errors || [];
+        memory = consciousness.memory || null;
+        threads = consciousness.threads || [];
+      } else {
+        // Flat structure: character.baseProcesses (like alexander-kane.json)
+        consciousness = character; // Use the character object itself as consciousness
+        processes = character.baseProcesses || character.processes || [];
+        resources = character.resources || {};
+        errors = character.system_errors || character.errors || [];
+        memory = character.memory || null;
+        threads = character.threads || [];
+
+        // Debug logging for flat structure
+        console.log('[STATE MANAGER] Flat structure detected:');
+        console.log('  character.baseProcesses:', character.baseProcesses?.length || 0);
+        console.log('  character.processes:', character.processes?.length || 0);
+        console.log('  final processes array:', processes.length);
+      }
+
       this.setConsciousnessState(consciousness);
-      this.setProcesses(consciousness.processes || []);
-      this.setResources(consciousness.resources || {});
-      this.setErrors(consciousness.system_errors || []);
-      this.setMemory(consciousness.memory || null);
-      this.setThreads(consciousness.threads || []);
-      
+      this.setProcesses(processes);
+      this.setResources(resources);
+      this.setErrors(errors);
+      this.setMemory(memory);
+      this.setThreads(threads);
+
       console.log('Character state loaded successfully:', character.name);
+      console.log('Loaded processes:', processes.length);
+      console.log('Loaded resources:', Object.keys(resources).length);
     } catch (error) {
       console.error('Failed to load character state:', error);
       this.addError({

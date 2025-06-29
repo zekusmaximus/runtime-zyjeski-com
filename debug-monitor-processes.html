@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Monitor Processes</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { margin: 5px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; max-height: 400px; }
+    </style>
+</head>
+<body>
+    <h1>Debug Monitor Processes</h1>
+    <p>This debug page helps identify why the monitor is showing 0 processes.</p>
+    
+    <div class="test-section">
+        <h2>Debug Tests</h2>
+        <button onclick="debugStateManager()">Debug StateManager</button>
+        <button onclick="debugCharacterData()">Debug Character Data</button>
+        <button onclick="debugMonitorState()">Debug Monitor State</button>
+        <button onclick="debugTransformData()">Debug Transform Data</button>
+        <button onclick="loadCharacterAndDebug()">Load Character & Debug</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        // Import the fixed bootstrap
+        import '/js/bootstrap.js';
+        
+        window.debugStateManager = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>StateManager Debug:</h2>';
+            
+            try {
+                if (!window.stateManager) {
+                    addResult('fail', 'StateManager not available');
+                    return;
+                }
+                
+                // Check current character
+                const character = window.stateManager.getCurrentCharacter();
+                if (character) {
+                    addResult('pass', `Current character: ${character.name} (${character.id})`);
+                    
+                    // Show character structure
+                    const characterInfo = {
+                        id: character.id,
+                        name: character.name,
+                        hasBaseProcesses: !!character.baseProcesses,
+                        baseProcessesCount: character.baseProcesses?.length || 0,
+                        hasProcesses: !!character.processes,
+                        processesCount: character.processes?.length || 0,
+                        hasConsciousness: !!character.consciousness,
+                        keys: Object.keys(character)
+                    };
+                    
+                    const pre = document.createElement('pre');
+                    pre.textContent = 'Character Structure:\n' + JSON.stringify(characterInfo, null, 2);
+                    document.getElementById('results').appendChild(pre);
+                    
+                    // Show first few baseProcesses if they exist
+                    if (character.baseProcesses && character.baseProcesses.length > 0) {
+                        const processInfo = character.baseProcesses.slice(0, 3).map(p => ({
+                            pid: p.pid,
+                            name: p.name,
+                            status: p.status,
+                            type: p.type
+                        }));
+                        
+                        const processPre = document.createElement('pre');
+                        processPre.textContent = 'Sample BaseProcesses:\n' + JSON.stringify(processInfo, null, 2);
+                        document.getElementById('results').appendChild(processPre);
+                    }
+                    
+                } else {
+                    addResult('fail', 'No current character in StateManager');
+                }
+                
+                // Check StateManager processes
+                const processes = window.stateManager.getProcesses();
+                addResult(processes.length > 0 ? 'pass' : 'fail', `StateManager processes: ${processes.length}`);
+                
+                if (processes.length > 0) {
+                    const processInfo = processes.slice(0, 3).map(p => ({
+                        pid: p.pid,
+                        name: p.name,
+                        status: p.status,
+                        type: p.type
+                    }));
+                    
+                    const processPre = document.createElement('pre');
+                    processPre.textContent = 'StateManager Processes:\n' + JSON.stringify(processInfo, null, 2);
+                    document.getElementById('results').appendChild(processPre);
+                } else {
+                    addResult('warning', 'StateManager processes array is empty');
+                }
+                
+                // Check consciousness state
+                const consciousnessState = window.stateManager.getConsciousnessState();
+                if (consciousnessState) {
+                    addResult('info', 'Consciousness state exists');
+                    
+                    const consciousnessInfo = {
+                        type: typeof consciousnessState,
+                        hasBaseProcesses: !!consciousnessState.baseProcesses,
+                        baseProcessesCount: consciousnessState.baseProcesses?.length || 0,
+                        hasProcesses: !!consciousnessState.processes,
+                        processesCount: consciousnessState.processes?.length || 0,
+                        keys: Object.keys(consciousnessState)
+                    };
+                    
+                    const consciousnessPre = document.createElement('pre');
+                    consciousnessPre.textContent = 'Consciousness State:\n' + JSON.stringify(consciousnessInfo, null, 2);
+                    document.getElementById('results').appendChild(consciousnessPre);
+                } else {
+                    addResult('warning', 'No consciousness state');
+                }
+                
+            } catch (error) {
+                addResult('fail', `StateManager debug failed: ${error.message}`);
+            }
+        };
+        
+        window.debugCharacterData = async function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Character Data Debug:</h2>';
+            
+            try {
+                addResult('info', 'Fetching character data directly from API...');
+                
+                const response = await fetch('/api/character/alexander-kane');
+                if (!response.ok) {
+                    addResult('fail', `API request failed: ${response.status}`);
+                    return;
+                }
+                
+                const characterData = await response.json();
+                addResult('pass', `Character data fetched: ${characterData.name}`);
+                
+                // Analyze character data structure
+                const dataInfo = {
+                    id: characterData.id,
+                    name: characterData.name,
+                    hasBaseProcesses: !!characterData.baseProcesses,
+                    baseProcessesCount: characterData.baseProcesses?.length || 0,
+                    hasProcesses: !!characterData.processes,
+                    processesCount: characterData.processes?.length || 0,
+                    hasConsciousness: !!characterData.consciousness,
+                    keys: Object.keys(characterData)
+                };
+                
+                const pre = document.createElement('pre');
+                pre.textContent = 'Raw Character Data:\n' + JSON.stringify(dataInfo, null, 2);
+                document.getElementById('results').appendChild(pre);
+                
+                // Show sample processes
+                if (characterData.baseProcesses && characterData.baseProcesses.length > 0) {
+                    addResult('pass', `Found ${characterData.baseProcesses.length} baseProcesses`);
+                    
+                    const sampleProcesses = characterData.baseProcesses.slice(0, 3).map(p => ({
+                        pid: p.pid,
+                        name: p.name,
+                        status: p.status,
+                        type: p.type,
+                        description: p.description?.substring(0, 50) + '...'
+                    }));
+                    
+                    const processPre = document.createElement('pre');
+                    processPre.textContent = 'Sample BaseProcesses from API:\n' + JSON.stringify(sampleProcesses, null, 2);
+                    document.getElementById('results').appendChild(processPre);
+                } else {
+                    addResult('fail', 'No baseProcesses found in character data');
+                }
+                
+            } catch (error) {
+                addResult('fail', `Character data debug failed: ${error.message}`);
+            }
+        };
+        
+        window.debugMonitorState = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Monitor State Debug:</h2>';
+            
+            try {
+                if (!window.monitor || !window.monitor.state) {
+                    addResult('fail', 'Monitor state not available');
+                    return;
+                }
+                
+                const monitorState = window.monitor.state;
+                
+                // Check if stateManager is connected
+                if (monitorState.stateManager) {
+                    addResult('pass', 'Monitor has stateManager reference');
+                } else {
+                    addResult('fail', 'Monitor missing stateManager reference');
+                    return;
+                }
+                
+                // Test the consciousnessData getter step by step
+                addResult('info', 'Testing consciousnessData getter step by step...');
+                
+                const character = monitorState.stateManager.getCurrentCharacter();
+                addResult(character ? 'pass' : 'fail', `Character: ${character?.name || 'null'}`);
+                
+                if (character) {
+                    const processes = monitorState.stateManager.getProcesses();
+                    addResult(processes.length > 0 ? 'pass' : 'fail', `Processes from StateManager: ${processes.length}`);
+                    
+                    const resources = monitorState.stateManager.getResources();
+                    addResult('info', `Resources from StateManager: ${Object.keys(resources).length} keys`);
+                    
+                    const memory = monitorState.stateManager.getMemory();
+                    addResult('info', `Memory from StateManager: ${memory ? 'exists' : 'null'}`);
+                    
+                    const errors = monitorState.stateManager.getErrors();
+                    addResult('info', `Errors from StateManager: ${errors.length}`);
+                    
+                    // Test the full consciousnessData getter
+                    const consciousnessData = monitorState.consciousnessData;
+                    if (consciousnessData) {
+                        addResult('pass', 'Monitor consciousnessData getter works');
+                        
+                        const dataInfo = {
+                            processCount: consciousnessData.processes?.length || 0,
+                            hasSystemResources: !!consciousnessData.systemResources,
+                            hasMemoryMap: !!consciousnessData.memoryMap,
+                            errorCount: consciousnessData.system_errors?.length || 0,
+                            characterId: consciousnessData.characterId
+                        };
+                        
+                        const pre = document.createElement('pre');
+                        pre.textContent = 'Monitor Consciousness Data:\n' + JSON.stringify(dataInfo, null, 2);
+                        document.getElementById('results').appendChild(pre);
+                        
+                        if (dataInfo.processCount === 0) {
+                            addResult('fail', 'Monitor consciousness data has 0 processes - this is the problem!');
+                        }
+                    } else {
+                        addResult('fail', 'Monitor consciousnessData getter returned null');
+                    }
+                }
+                
+            } catch (error) {
+                addResult('fail', `Monitor state debug failed: ${error.message}`);
+                console.error('Monitor state debug error:', error);
+            }
+        };
+        
+        window.debugTransformData = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Transform Data Debug:</h2>';
+            
+            try {
+                if (!window.monitor || !window.monitor.state) {
+                    addResult('fail', 'Monitor state not available');
+                    return;
+                }
+                
+                // Manually test the transform function
+                const testData = {
+                    consciousness: {
+                        processes: [
+                            { pid: 1, name: 'test_process', status: 'running', type: 'core' },
+                            { pid: 2, name: 'another_process', status: 'idle', type: 'background' }
+                        ],
+                        resources: { cpu: { percentage: 50 } },
+                        memory: { used: 1000, total: 2000 },
+                        system_errors: [],
+                        threads: []
+                    },
+                    characterId: 'test-character',
+                    timestamp: Date.now()
+                };
+                
+                addResult('info', 'Testing transformConsciousnessData with mock data...');
+                
+                const transformed = window.monitor.state.transformConsciousnessData(testData);
+                
+                if (transformed) {
+                    addResult('pass', 'Transform function works with mock data');
+                    
+                    const transformInfo = {
+                        processCount: transformed.processes?.length || 0,
+                        hasSystemResources: !!transformed.systemResources,
+                        hasMemoryMap: !!transformed.memoryMap,
+                        errorCount: transformed.system_errors?.length || 0
+                    };
+                    
+                    const pre = document.createElement('pre');
+                    pre.textContent = 'Transformed Mock Data:\n' + JSON.stringify(transformInfo, null, 2);
+                    document.getElementById('results').appendChild(pre);
+                    
+                    if (transformInfo.processCount === 2) {
+                        addResult('pass', 'Transform correctly processed 2 mock processes');
+                    } else {
+                        addResult('fail', `Transform returned ${transformInfo.processCount} processes instead of 2`);
+                    }
+                } else {
+                    addResult('fail', 'Transform function returned null with mock data');
+                }
+                
+            } catch (error) {
+                addResult('fail', `Transform data debug failed: ${error.message}`);
+                console.error('Transform debug error:', error);
+            }
+        };
+        
+        window.loadCharacterAndDebug = async function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Load Character & Debug:</h2>';
+            
+            try {
+                addResult('info', 'Loading alexander-kane and debugging...');
+                
+                if (window.stateManager) {
+                    await window.stateManager.loadCharacter('alexander-kane');
+                    addResult('pass', 'Character loaded');
+                    
+                    // Wait for state to settle
+                    setTimeout(() => {
+                        debugStateManager();
+                        setTimeout(() => {
+                            debugMonitorState();
+                        }, 200);
+                    }, 200);
+                } else {
+                    addResult('fail', 'StateManager not available');
+                }
+                
+            } catch (error) {
+                addResult('fail', `Load and debug failed: ${error.message}`);
+            }
+        };
+        
+        window.clearResults = function() {
+            document.getElementById('results').innerHTML = '';
+        };
+        
+        function addResult(type, message) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+        }
+        
+        // Auto-run debug when ready
+        document.addEventListener('app:ready', () => {
+            setTimeout(() => {
+                addResult('info', 'App ready - running debug');
+                debugStateManager();
+            }, 500);
+        });
+        
+        // Fallback
+        setTimeout(() => {
+            if (window.stateManager && document.getElementById('results').innerHTML === '') {
+                addResult('info', 'Auto-running debug (fallback)');
+                debugStateManager();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

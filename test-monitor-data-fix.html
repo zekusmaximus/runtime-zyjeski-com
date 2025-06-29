@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Data Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { margin: 5px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; max-height: 300px; }
+        .character-card { 
+            margin: 10px; padding: 15px; border: 2px solid #ccc; border-radius: 5px; 
+            cursor: pointer; display: inline-block; min-width: 200px;
+        }
+        .character-card:hover { border-color: #007bff; }
+        .character-card.selected { border-color: #28a745; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>Monitor Data Fix Test</h1>
+    <p>This test verifies that the monitor is receiving consciousness data correctly.</p>
+    
+    <div class="test-section">
+        <h2>Test Character Selection</h2>
+        <p>Click to load character and test monitor data:</p>
+        
+        <div class="character-card" data-character-id="alexander-kane">
+            <h3>Alexander Kane</h3>
+            <p>Test monitor data loading</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Manual Tests</h2>
+        <button onclick="testStateManagerData()">Test StateManager Data</button>
+        <button onclick="testMonitorState()">Test Monitor State</button>
+        <button onclick="testMonitorUI()">Test Monitor UI Data</button>
+        <button onclick="loadCharacterAndTest()">Load Character & Test</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        // Import the fixed bootstrap
+        import '/js/bootstrap.js';
+        
+        // Set up character card click handlers
+        document.addEventListener('DOMContentLoaded', () => {
+            const characterCards = document.querySelectorAll('.character-card');
+            characterCards.forEach(card => {
+                card.addEventListener('click', async (e) => {
+                    const characterId = card.dataset.characterId;
+                    addResult('info', `Loading character: ${characterId}`);
+                    
+                    try {
+                        // Test the app.selectCharacter method
+                        if (window.app && window.app.selectCharacter) {
+                            await window.app.selectCharacter(characterId);
+                            addResult('pass', 'Character selection completed');
+                            
+                            // Test monitor data after character load
+                            setTimeout(() => {
+                                testMonitorState();
+                            }, 500);
+                            
+                        } else {
+                            addResult('warning', 'app.selectCharacter not available');
+                        }
+                    } catch (error) {
+                        addResult('fail', `Character selection failed: ${error.message}`);
+                    }
+                    
+                    // Update visual selection
+                    characterCards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                });
+            });
+        });
+        
+        window.testStateManagerData = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>StateManager Data Test:</h2>';
+            
+            try {
+                if (!window.stateManager) {
+                    addResult('fail', 'StateManager not available');
+                    return;
+                }
+                
+                // Test character data
+                const character = window.stateManager.getCurrentCharacter();
+                if (character) {
+                    addResult('pass', `Character loaded: ${character.name} (${character.id})`);
+                } else {
+                    addResult('fail', 'No character loaded in StateManager');
+                    return;
+                }
+                
+                // Test consciousness components
+                const processes = window.stateManager.getProcesses();
+                addResult(processes.length > 0 ? 'pass' : 'fail', `Processes: ${processes.length}`);
+                
+                const resources = window.stateManager.getResources();
+                addResult('info', `Resources: ${Object.keys(resources).length} keys`);
+                
+                const memory = window.stateManager.getMemory();
+                addResult('info', `Memory: ${memory ? 'loaded' : 'null'}`);
+                
+                const errors = window.stateManager.getErrors();
+                addResult('info', `Errors: ${errors.length}`);
+                
+                const threads = window.stateManager.getThreads();
+                addResult('info', `Threads: ${threads.length}`);
+                
+                // Test consciousness state
+                const consciousnessState = window.stateManager.getConsciousnessState();
+                addResult('info', `Consciousness state: ${consciousnessState ? 'loaded' : 'null'}`);
+                
+                if (consciousnessState) {
+                    const sample = {
+                        hasProcesses: !!consciousnessState.baseProcesses,
+                        hasResources: !!consciousnessState.resources,
+                        hasMemory: !!consciousnessState.memory,
+                        type: typeof consciousnessState
+                    };
+                    
+                    const pre = document.createElement('pre');
+                    pre.textContent = 'Consciousness State Sample:\n' + JSON.stringify(sample, null, 2);
+                    document.getElementById('results').appendChild(pre);
+                }
+                
+            } catch (error) {
+                addResult('fail', `StateManager data test failed: ${error.message}`);
+            }
+        };
+        
+        window.testMonitorState = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Monitor State Test:</h2>';
+            
+            try {
+                if (!window.monitor || !window.monitor.state) {
+                    addResult('fail', 'Monitor or monitor state not available');
+                    return;
+                }
+                
+                const monitorState = window.monitor.state;
+                
+                // Test monitor state getters
+                const isMonitoring = monitorState.isMonitoring;
+                addResult('info', `Monitor isMonitoring: ${isMonitoring}`);
+                
+                const selectedCharacter = monitorState.selectedCharacter;
+                addResult('info', `Monitor selectedCharacter: ${selectedCharacter || 'null'}`);
+                
+                // Test consciousness data getter
+                const consciousnessData = monitorState.consciousnessData;
+                if (consciousnessData) {
+                    addResult('pass', 'Monitor consciousnessData is not null');
+                    
+                    // Check data structure
+                    const dataInfo = {
+                        hasProcesses: !!consciousnessData.processes,
+                        processCount: consciousnessData.processes?.length || 0,
+                        hasSystemResources: !!consciousnessData.systemResources,
+                        hasMemoryMap: !!consciousnessData.memoryMap,
+                        hasErrors: !!consciousnessData.system_errors,
+                        errorCount: consciousnessData.system_errors?.length || 0,
+                        timestamp: consciousnessData.timestamp,
+                        characterId: consciousnessData.characterId
+                    };
+                    
+                    addResult('pass', `Processes: ${dataInfo.processCount}`);
+                    addResult('info', `Has system resources: ${dataInfo.hasSystemResources}`);
+                    addResult('info', `Has memory map: ${dataInfo.hasMemoryMap}`);
+                    addResult('info', `Errors: ${dataInfo.errorCount}`);
+                    
+                    const pre = document.createElement('pre');
+                    pre.textContent = 'Monitor Consciousness Data Info:\n' + JSON.stringify(dataInfo, null, 2);
+                    document.getElementById('results').appendChild(pre);
+                    
+                } else {
+                    addResult('fail', 'Monitor consciousnessData is null');
+                    
+                    // Debug why it's null
+                    if (!monitorState.stateManager) {
+                        addResult('fail', 'Monitor state has no stateManager reference');
+                    } else {
+                        const character = monitorState.stateManager.getCurrentCharacter();
+                        addResult('info', `StateManager has character: ${character ? character.name : 'null'}`);
+                        
+                        const processes = monitorState.stateManager.getProcesses();
+                        addResult('info', `StateManager has processes: ${processes.length}`);
+                    }
+                }
+                
+            } catch (error) {
+                addResult('fail', `Monitor state test failed: ${error.message}`);
+                console.error('Monitor state test error:', error);
+            }
+        };
+        
+        window.testMonitorUI = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Monitor UI Test:</h2>';
+            
+            try {
+                if (!window.monitor || !window.monitor.ui) {
+                    addResult('fail', 'Monitor UI not available');
+                    return;
+                }
+                
+                const consciousnessData = window.monitor.state?.consciousnessData;
+                
+                if (consciousnessData) {
+                    addResult('info', 'Testing monitor UI update with consciousness data...');
+                    
+                    // Test UI update
+                    window.monitor.ui.updateAll(consciousnessData);
+                    addResult('pass', 'Monitor UI updateAll completed without errors');
+                    
+                } else {
+                    addResult('fail', 'No consciousness data available for UI test');
+                }
+                
+            } catch (error) {
+                addResult('fail', `Monitor UI test failed: ${error.message}`);
+            }
+        };
+        
+        window.loadCharacterAndTest = async function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Load Character & Test:</h2>';
+            
+            try {
+                addResult('info', 'Loading alexander-kane...');
+                
+                if (window.stateManager) {
+                    await window.stateManager.loadCharacter('alexander-kane');
+                    addResult('pass', 'Character loaded via StateManager');
+                } else {
+                    addResult('fail', 'StateManager not available');
+                    return;
+                }
+                
+                // Wait a moment for state to propagate
+                setTimeout(() => {
+                    testStateManagerData();
+                    setTimeout(() => {
+                        testMonitorState();
+                    }, 200);
+                }, 200);
+                
+            } catch (error) {
+                addResult('fail', `Load character test failed: ${error.message}`);
+            }
+        };
+        
+        window.clearResults = function() {
+            document.getElementById('results').innerHTML = '';
+        };
+        
+        function addResult(type, message) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+        }
+        
+        // Auto-run basic test when modules are ready
+        document.addEventListener('app:ready', () => {
+            setTimeout(() => {
+                addResult('info', 'App ready - running StateManager data test');
+                testStateManagerData();
+            }, 500);
+        });
+        
+        // Fallback test
+        setTimeout(() => {
+            if (window.stateManager && document.getElementById('results').innerHTML === '') {
+                addResult('info', 'Auto-running StateManager test (fallback)');
+                testStateManagerData();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

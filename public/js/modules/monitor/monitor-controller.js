@@ -178,9 +178,8 @@ class MonitorController {
   loadCurrentCharacterData() {
     // Get current character from state manager
     const character = this.stateManager ? this.stateManager.getCurrentCharacter() : null;
-    const state = this.stateManager ? this.stateManager.getState() : null;
-    
-    if (!character || !state) {
+
+    if (!character) {
       console.log('[GROUND STATE] No character loaded yet');
       return;
     }

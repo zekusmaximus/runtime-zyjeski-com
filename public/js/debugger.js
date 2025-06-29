@@ -201,8 +201,9 @@ class DebuggerInterface {
   // Update debugger interface for character
   updateDebuggerForCharacter(character) {
     if (!character) return;
-    
-    this.currentCharacter = character;
+
+    // Character is now managed by StateManager, no need to set locally
+    // this.currentCharacter = character; // ❌ Removed - now a getter
     
     // Request current consciousness state if character is attached
     if (character.id && this.consciousness) {

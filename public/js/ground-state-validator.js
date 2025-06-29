@@ -119,12 +119,14 @@ class GroundStateValidator {
   
   static validateUserAction(actionType, context = {}) {
     console.log(`👤 USER ACTION: ${actionType}`, context);
-    
-    // Log this as a valid user interaction
-    if (window.app) {
-      window.app.userInteracted = true;
+
+    // Log this as a valid user interaction through StateManager
+    if (window.stateManager) {
+      window.stateManager.setUserInteracted(true);
+    } else if (window.app && window.app.stateManager) {
+      window.app.stateManager.setUserInteracted(true);
     }
-    
+
     return true;
   }
 }

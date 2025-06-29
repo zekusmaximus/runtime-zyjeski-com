@@ -415,18 +415,28 @@ class SocketClient {
 
     const state = data.state || data;
 
+    // Handle both nested consciousness structure and flat structure
+    const consciousness = state.consciousness || state;
+
     const result = {
       characterId: data.characterId || state.characterId,
       // IMPORTANT: Preserve memoryMap at top level (this contains regions!)
       memoryMap: state.memoryMap || data.memoryMap || {},
       consciousness: {
-        processes: Array.isArray(state.processes) ? state.processes : [],
-        memory: state.memory && typeof state.memory === 'object' ? state.memory : {},
-        threads: Array.isArray(state.threads) ? state.threads : [],
-        system_errors: Array.isArray(state.system_errors) ? state.system_errors : [],
-        resources: state.resources && typeof state.resources === 'object' ? state.resources : {},
-        debug_hooks: Array.isArray(state.debug_hooks) ? state.debug_hooks : [],
-        timestamp: state.timestamp || new Date().toISOString()
+        // Look for processes in both consciousness.processes and state.processes
+        processes: Array.isArray(consciousness.processes) ? consciousness.processes :
+                  Array.isArray(state.processes) ? state.processes : [],
+        memory: (consciousness.memory && typeof consciousness.memory === 'object') ? consciousness.memory :
+               (state.memory && typeof state.memory === 'object') ? state.memory : {},
+        threads: Array.isArray(consciousness.threads) ? consciousness.threads :
+                Array.isArray(state.threads) ? state.threads : [],
+        system_errors: Array.isArray(consciousness.system_errors) ? consciousness.system_errors :
+                      Array.isArray(state.system_errors) ? state.system_errors : [],
+        resources: (consciousness.resources && typeof consciousness.resources === 'object') ? consciousness.resources :
+                  (state.resources && typeof state.resources === 'object') ? state.resources : {},
+        debug_hooks: Array.isArray(consciousness.debug_hooks) ? consciousness.debug_hooks :
+                    Array.isArray(state.debug_hooks) ? state.debug_hooks : [],
+        timestamp: consciousness.timestamp || state.timestamp || new Date().toISOString()
       },
       timestamp: data.timestamp || new Date().toISOString()
     };

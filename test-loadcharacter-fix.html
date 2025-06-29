@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoadCharacter Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { margin: 5px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .character-card { 
+            margin: 10px; padding: 15px; border: 2px solid #ccc; border-radius: 5px; 
+            cursor: pointer; display: inline-block; min-width: 200px;
+        }
+        .character-card:hover { border-color: #007bff; }
+        .character-card.selected { border-color: #28a745; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>LoadCharacter Fix Test</h1>
+    <p>This test verifies that the StateManager.loadCharacter method is working correctly.</p>
+    
+    <div class="test-section">
+        <h2>Test StateManager Methods</h2>
+        <button onclick="testLoadCharacterMethod()">Test loadCharacter Method</button>
+        <button onclick="testLoadCharacterState()">Test loadCharacterState Method</button>
+        <button onclick="testCharacterSelection()">Test Full Character Selection</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Character Selection</h2>
+        <p>Click to test character selection with the fixed loadCharacter method:</p>
+        
+        <div class="character-card" data-character-id="alexander-kane">
+            <h3>Alexander Kane</h3>
+            <p>Test character selection</p>
+        </div>
+        
+        <div class="character-card" data-character-id="test-character">
+            <h3>Test Character</h3>
+            <p>Another test character</p>
+        </div>
+    </div>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        // Import the fixed bootstrap
+        import '/js/bootstrap.js';
+        
+        // Set up character card click handlers
+        document.addEventListener('DOMContentLoaded', () => {
+            const characterCards = document.querySelectorAll('.character-card');
+            characterCards.forEach(card => {
+                card.addEventListener('click', async (e) => {
+                    const characterId = card.dataset.characterId;
+                    addResult('info', `Testing character selection: ${characterId}`);
+                    
+                    try {
+                        // Test the app.selectCharacter method
+                        if (window.app && window.app.selectCharacter) {
+                            await window.app.selectCharacter(characterId);
+                            addResult('pass', 'app.selectCharacter completed successfully');
+                        } else {
+                            addResult('warning', 'app.selectCharacter not available');
+                        }
+                    } catch (error) {
+                        addResult('fail', `Character selection failed: ${error.message}`);
+                    }
+                    
+                    // Update visual selection
+                    characterCards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                });
+            });
+        });
+        
+        window.testLoadCharacterMethod = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>LoadCharacter Method Test:</h2>';
+            
+            try {
+                // Check if StateManager exists and has loadCharacter method
+                if (!window.stateManager) {
+                    addResult('fail', 'StateManager not available');
+                    return;
+                }
+                
+                if (typeof window.stateManager.loadCharacter !== 'function') {
+                    addResult('fail', 'loadCharacter method not found');
+                    return;
+                }
+                
+                addResult('pass', 'loadCharacter method exists');
+                
+                // Test method signature
+                const methodStr = window.stateManager.loadCharacter.toString();
+                const isAsync = methodStr.includes('async');
+                addResult(isAsync ? 'pass' : 'warning', `loadCharacter is ${isAsync ? 'async' : 'not async'}`);
+                
+                // Test with invalid input
+                try {
+                    window.stateManager.loadCharacter(null);
+                    addResult('pass', 'loadCharacter handles null input gracefully');
+                } catch (error) {
+                    addResult('warning', `loadCharacter with null: ${error.message}`);
+                }
+                
+                // Note: We can't test actual loading without a server response
+                addResult('info', 'Note: Actual character loading requires server connection');
+                
+            } catch (error) {
+                addResult('fail', `LoadCharacter method test failed: ${error.message}`);
+            }
+        };
+        
+        window.testLoadCharacterState = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>LoadCharacterState Method Test:</h2>';
+            
+            try {
+                if (!window.stateManager) {
+                    addResult('fail', 'StateManager not available');
+                    return;
+                }
+                
+                if (typeof window.stateManager.loadCharacterState !== 'function') {
+                    addResult('fail', 'loadCharacterState method not found');
+                    return;
+                }
+                
+                addResult('pass', 'loadCharacterState method exists');
+                
+                // Test with mock character data
+                const mockCharacter = {
+                    id: 'test-character',
+                    name: 'Test Character',
+                    consciousness: {
+                        processes: [
+                            { pid: 1, name: 'Test Process', status: 'running' }
+                        ],
+                        resources: { cpu: { percentage: 50 } },
+                        memory: { used: 1000, total: 2000 },
+                        system_errors: []
+                    }
+                };
+                
+                // Test loading character state
+                window.stateManager.loadCharacterState(mockCharacter);
+                
+                // Verify state was loaded
+                const currentCharacter = window.stateManager.getCurrentCharacter();
+                if (currentCharacter && currentCharacter.id === 'test-character') {
+                    addResult('pass', 'Character state loaded successfully');
+                } else {
+                    addResult('fail', 'Character state not loaded correctly');
+                }
+                
+                // Test consciousness state
+                const consciousnessState = window.stateManager.getConsciousnessState();
+                if (consciousnessState && consciousnessState.processes) {
+                    addResult('pass', 'Consciousness state loaded successfully');
+                } else {
+                    addResult('fail', 'Consciousness state not loaded correctly');
+                }
+                
+                // Test loading state
+                const isLoading = window.stateManager.getIsLoadingCharacter();
+                addResult(isLoading === false ? 'pass' : 'warning', `Loading state: ${isLoading}`);
+                
+            } catch (error) {
+                addResult('fail', `LoadCharacterState test failed: ${error.message}`);
+            }
+        };
+        
+        window.testCharacterSelection = async function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h2>Full Character Selection Test:</h2>';
+            
+            try {
+                if (!window.app || !window.app.selectCharacter) {
+                    addResult('warning', 'app.selectCharacter not available');
+                    return;
+                }
+                
+                addResult('info', 'Testing full character selection process...');
+                
+                // Test character selection
+                await window.app.selectCharacter('alexander-kane');
+                
+                // Check if character was loaded
+                const currentCharacter = window.stateManager?.getCurrentCharacter();
+                if (currentCharacter) {
+                    addResult('pass', `Character loaded: ${currentCharacter.name || currentCharacter.id}`);
+                } else {
+                    addResult('fail', 'No character loaded after selection');
+                }
+                
+                // Check user interaction state
+                const userInteracted = window.stateManager?.getUserInteracted();
+                addResult(userInteracted ? 'pass' : 'fail', `User interaction tracked: ${userInteracted}`);
+                
+            } catch (error) {
+                addResult('fail', `Character selection test failed: ${error.message}`);
+                console.error('Character selection error:', error);
+            }
+        };
+        
+        window.clearResults = function() {
+            document.getElementById('results').innerHTML = '';
+        };
+        
+        function addResult(type, message) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+        }
+        
+        // Auto-run basic test when modules are ready
+        document.addEventListener('app:ready', () => {
+            setTimeout(() => {
+                addResult('info', 'App ready - running loadCharacter method test');
+                testLoadCharacterMethod();
+            }, 500);
+        });
+        
+        // Fallback test
+        setTimeout(() => {
+            if (window.stateManager && document.getElementById('results').innerHTML === '') {
+                addResult('info', 'Auto-running loadCharacter test (fallback)');
+                testLoadCharacterMethod();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
