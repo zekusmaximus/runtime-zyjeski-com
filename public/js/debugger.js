@@ -229,18 +229,26 @@ class DebuggerInterface {
   // Generate consciousness code representation
   generateConsciousnessCode() {
     // Generate code based on actual consciousness state if available
-    if (this.currentCharacter && this.consciousnessState) {
-      this.generateDynamicCode();
+    if (this.currentCharacter && this.stateManager) {
+      // Check if we have consciousness data in StateManager
+      const processes = this.stateManager.getProcesses() || [];
+      const resources = this.stateManager.getResources() || {};
+
+      if (processes.length > 0 || Object.keys(resources).length > 0) {
+        this.generateDynamicCode();
+      } else {
+        this.generateStaticCode();
+      }
     } else {
       this.generateStaticCode();
     }
   }
 
   generateDynamicCode() {
-    const state = this.consciousnessState;
-    const processes = state.consciousness?.processes || [];
-    const resources = state.consciousness?.resources || {};
-    const errors = state.consciousness?.system_errors || [];
+    // Get consciousness data directly from StateManager
+    const processes = this.stateManager?.getProcesses() || [];
+    const resources = this.stateManager?.getResources() || {};
+    const errors = this.stateManager?.getErrors() || [];
     
     this.codeLines = [
       `// Consciousness Runtime - ${this.currentCharacter.name}`,
@@ -715,14 +723,14 @@ class DebuggerInterface {
 
   // New method to update debugger from consciousness data
   updateFromCharacter(consciousnessData) {
-    if (!consciousnessData) return;
-    
-    const state = consciousnessData.state?.consciousness || consciousnessData.consciousness;
-    if (!state) return;
-    
+    if (!this.stateManager) return;
+
+    // Get consciousness data directly from StateManager instead of from parameter
+    const processes = this.stateManager.getProcesses() || [];
+
     // Update execution state based on consciousness status
-    if (state.processes && state.processes.length > 0) {
-      const hasRunningProcesses = state.processes.some(p => p.status === 'running');
+    if (processes.length > 0) {
+      const hasRunningProcesses = processes.some(p => p.status === 'running');
       this.updateExecutionState(hasRunningProcesses ? 'running' : 'paused');
     } else {
       this.updateExecutionState('stopped');
@@ -783,10 +791,13 @@ class DebuggerInterface {
 
   // Helper methods
   updateCallStackFromCharacter(character) {
-    if (!character?.consciousness) return;
+    if (!character || !this.stateManager) return;
+
+    // Get processes directly from StateManager instead of character.consciousness
+    const processes = this.stateManager.getProcesses() || [];
 
     // Generate call stack from running processes
-    const callStack = character.consciousness.processes
+    const callStack = processes
       .filter(p => p.status === 'running')
       .slice(0, 5)
       .map((process, index) => ({
@@ -795,23 +806,20 @@ class DebuggerInterface {
         process: process
       }));
 
-    if (this.stateManager) {
-      this.stateManager.setDebuggerCallStack(callStack);
-    }
+    this.stateManager.setDebuggerCallStack(callStack);
   }
 
   updateVariablesFromCharacter(character) {
-    if (!character?.consciousness) return;
+    if (!character || !this.stateManager) return;
 
+    // Get consciousness data directly from StateManager instead of character.consciousness
     const variables = {
-      memory: character.consciousness.memory || {},
-      resources: character.consciousness.resources || {},
-      processes: character.consciousness.processes || []
+      memory: this.stateManager.getMemory() || {},
+      resources: this.stateManager.getResources() || {},
+      processes: this.stateManager.getProcesses() || []
     };
 
-    if (this.stateManager) {
-      this.stateManager.setDebuggerVariables(variables);
-    }
+    this.stateManager.setDebuggerVariables(variables);
   }
 
   getLineFromTarget(target) {
