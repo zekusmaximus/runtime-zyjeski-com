@@ -1,7 +1,16 @@
 // Enhanced Terminal Interface Module
 import StoryTerminalCommands from './story-terminal-commands.js';
+import { createLogger } from '/js/logger.js';
+
 class Terminal {
-  constructor() {
+  constructor(dependencies = {}) {
+    // Dependency injection - accept dependencies instead of global access
+    const { stateManager, socketClient, logger } = dependencies;
+
+    this.stateManager = stateManager;
+    this.socketClient = socketClient;
+    this.logger = logger || createLogger('Terminal');
+
     this.element = null;
     this.outputElement = null;
     this.inputElement = null;
@@ -101,33 +110,35 @@ class Terminal {
     });
 
     // Subscribe to state changes
-    window.stateManager.subscribe('currentCharacter', (character) => {
-      this.currentCharacter = character;
-      if (character) {
-        this.addOutput(`Attached to ${character.name}'s consciousness`, 'success');
-        this.updatePrompt();
-      }
-    });
+    if (this.stateManager) {
+      this.stateManager.subscribe('currentCharacter', (character) => {
+        this.currentCharacter = character;
+        if (character) {
+          this.addOutput(`Attached to ${character.name}'s consciousness`, 'success');
+          this.updatePrompt();
+        }
+      });
 
-    window.stateManager.subscribe('connectionStatus', (status) => {
-      if (status === 'connected') {
-        this.addOutput('Connection established', 'success');
-      } else {
-        this.addOutput('Connection lost', 'error');
-      }
-    });
+      this.stateManager.subscribe('connectionStatus', (status) => {
+        if (status === 'connected') {
+          this.addOutput('Connection established', 'success');
+        } else {
+          this.addOutput('Connection lost', 'error');
+        }
+      });
+    }
   }
 
   setupSocketListeners() {
-    if (!window.socketClient) return;
+    if (!this.socketClient) return;
 
     // Listen for debug command results
-    window.socketClient.on('debug-result', (data) => {
+    this.socketClient.on('debug-result', (data) => {
       this.handleDebugResult(data);
     });
 
     // Listen for consciousness updates
-    window.socketClient.on('consciousness-update', (data) => {
+    this.socketClient.on('consciousness-update', (data) => {
       if (data.type === 'simulation-update' && this.currentCharacter && data.characterId === this.currentCharacter.id) {
         // Show subtle updates for critical changes
         this.handleConsciousnessUpdate(data);
@@ -135,17 +146,17 @@ class Terminal {
     });
 
     // Listen for intervention results
-    window.socketClient.on('intervention-applied', (data) => {
+    this.socketClient.on('intervention-applied', (data) => {
       this.addOutput(`Intervention applied: ${data.intervention.type}`, 'success');
     });
 
     // Listen for system messages
-    window.socketClient.on('system-message', (data) => {
+    this.socketClient.on('system-message', (data) => {
       this.addOutput(`SYSTEM: ${data.message}`, data.type);
     });
 
     // Listen for debug hooks
-    window.socketClient.on('debug-hook-triggered', (data) => {
+    this.socketClient.on('debug-hook-triggered', (data) => {
       this.addOutput(`DEBUG HOOK: ${data.hook.name} triggered`, 'warning');
       this.addOutput(`Condition: ${data.hook.condition}`, 'info');
     });
@@ -241,9 +252,11 @@ class Terminal {
 
     this.addOutput('Querying consciousness processes...', 'info');
     // Don't set isProcessingCommand to false here - let the response handler do it
-    
-    // Send real command to backend  
-    window.socketClient.sendDebugCommand(this.currentCharacter.id, 'ps', { args });
+
+    // Send real command to backend
+    if (this.socketClient) {
+      this.socketClient.sendDebugCommand(this.currentCharacter.id, 'ps', { args });
+    }
   }
 
   topCommand(args) {
@@ -255,7 +268,9 @@ class Terminal {
 
     this.addOutput('Retrieving resource usage...', 'info');
     // Don't set isProcessingCommand to false here - let the response handler do it
-    window.socketClient.sendDebugCommand(this.currentCharacter.id, 'top', { args });
+    if (this.socketClient) {
+      this.socketClient.sendDebugCommand(this.currentCharacter.id, 'top', { args });
+    }
   }
 
   killCommand(args) {
@@ -281,7 +296,9 @@ class Terminal {
 
     this.addOutput(`Terminating process ${pid}...`, 'warning');
     // Don't set isProcessingCommand to false here - let the response handler do it
-    window.socketClient.sendDebugCommand(this.currentCharacter.id, 'kill', { pid });
+    if (this.socketClient) {
+      this.socketClient.sendDebugCommand(this.currentCharacter.id, 'kill', { pid });
+    }
   }
 
   restartCommand(args) {
@@ -306,10 +323,12 @@ class Terminal {
     }
 
     this.addOutput(`Restarting process ${pid}...`, 'info');
-    window.socketClient.sendPlayerIntervention(this.currentCharacter.id, {
-      type: 'restart_process',
-      pid: pid
-    });
+    if (this.socketClient) {
+      this.socketClient.sendPlayerIntervention(this.currentCharacter.id, {
+        type: 'restart_process',
+        pid: pid
+      });
+    }
   }
 
   monitorCommand(args) {
@@ -320,7 +339,9 @@ class Terminal {
     }
 
     this.addOutput('Generating consciousness monitor report...', 'info');
-    window.socketClient.sendDebugCommand(this.currentCharacter.id, 'monitor', { args });
+    if (this.socketClient) {
+      this.socketClient.sendDebugCommand(this.currentCharacter.id, 'monitor', { args });
+    }
   }
 
   attachCommand(args) {
@@ -340,22 +361,26 @@ class Terminal {
         // Character loaded, now start monitoring
         this.addOutput(`✓ Character ${characterId} loaded`, 'success');
         this.addOutput(`✓ Starting consciousness monitoring...`, 'info');
-        
+
         // Start monitoring the consciousness
-        window.socketClient.emitToServer('monitor:start', { characterId });
-        
+        if (this.socketClient) {
+          this.socketClient.emitToServer('monitor:start', { characterId });
+        }
+
         // Update current character for terminal commands
         this.currentCharacter = { id: characterId, name: characterId };
         this.updatePrompt();
-        
+
         // Send initial ps command to show processes
         setTimeout(() => {
           this.addOutput(`✓ Attached to ${characterId} consciousness`, 'success');
           this.addOutput('', 'output');
           this.addOutput('Running initial process scan...', 'info');
-          window.socketClient.sendDebugCommand(characterId, 'ps', {});
+          if (this.socketClient) {
+            this.socketClient.sendDebugCommand(characterId, 'ps', {});
+          }
         }, 500);
-        
+
         this.isProcessingCommand = false;
       }).catch((error) => {
         this.addOutput(`✗ Failed to attach to ${characterId}: ${error.message}`, 'error');
@@ -375,7 +400,9 @@ class Terminal {
     }
 
     this.addOutput('Starting debug session...', 'info');
-    window.socketClient.sendDebugCommand(this.currentCharacter.id, 'debug', { args });
+    if (this.socketClient) {
+      this.socketClient.sendDebugCommand(this.currentCharacter.id, 'debug', { args });
+    }
   }
 
   memoryCommand(args) {
@@ -386,7 +413,9 @@ class Terminal {
     }
 
     this.addOutput('Analyzing memory allocation...', 'info');
-    window.socketClient.sendDebugCommand(this.currentCharacter.id, 'memory', { args });
+    if (this.socketClient) {
+      this.socketClient.sendDebugCommand(this.currentCharacter.id, 'memory', { args });
+    }
   }
 
   errorsCommand(args) {
@@ -397,7 +426,9 @@ class Terminal {
     }
 
     this.addOutput('Retrieving system errors...', 'info');
-    window.socketClient.sendDebugCommand(this.currentCharacter.id, 'errors', { args });
+    if (this.socketClient) {
+      this.socketClient.sendDebugCommand(this.currentCharacter.id, 'errors', { args });
+    }
   }
 
   threadsCommand(args) {
@@ -408,7 +439,9 @@ class Terminal {
     }
 
     this.addOutput('Examining thread states...', 'info');
-    window.socketClient.sendDebugCommand(this.currentCharacter.id, 'threads', { args });
+    if (this.socketClient) {
+      this.socketClient.sendDebugCommand(this.currentCharacter.id, 'threads', { args });
+    }
   }
 
   resourcesCommand(args) {
@@ -419,7 +452,9 @@ class Terminal {
     }
 
     this.addOutput('Checking resource allocation...', 'info');
-    window.socketClient.sendDebugCommand(this.currentCharacter.id, 'resources', { args });
+    if (this.socketClient) {
+      this.socketClient.sendDebugCommand(this.currentCharacter.id, 'resources', { args });
+    }
   }
 
   optimizeCommand(args) {
@@ -451,11 +486,13 @@ class Terminal {
     if (cpuLimit) parameters.cpu_limit = cpuLimit;
 
     this.addOutput(`Optimizing process ${pid}...`, 'info');
-    window.socketClient.sendPlayerIntervention(this.currentCharacter.id, {
-      type: 'optimize_process',
-      pid: pid,
-      parameters: parameters
-    });
+    if (this.socketClient) {
+      this.socketClient.sendPlayerIntervention(this.currentCharacter.id, {
+        type: 'optimize_process',
+        pid: pid,
+        parameters: parameters
+      });
+    }
   }
 
   emergencyCommand(args) {
@@ -467,17 +504,19 @@ class Terminal {
 
     this.addOutput('EMERGENCY STOP INITIATED', 'error');
     this.addOutput('Stopping all consciousness processes...', 'warning');
-    
-    window.socketClient.emitToServer('emergency-stop', {
-      characterId: this.currentCharacter.id
-    });
+
+    if (this.socketClient) {
+      this.socketClient.emitToServer('emergency-stop', {
+        characterId: this.currentCharacter.id
+      });
+    }
   }
 
   // Utility commands
   statusCommand(args) {
-    const connectionStatus = window.stateManager.getConnectionStatus();
-    const character = window.stateManager.getCurrentCharacter();
-    const monitoring = window.stateManager.isMonitoringActive();
+    const connectionStatus = this.stateManager ? this.stateManager.getConnectionStatus() : 'unknown';
+    const character = this.stateManager ? this.stateManager.getCurrentCharacter() : null;
+    const monitoring = this.stateManager ? this.stateManager.isMonitoringActive() : false;
     
     this.addOutput('╭─ System Status ─────────────────────────╮', 'info');
     this.addOutput(`│ Connection: ${connectionStatus.padEnd(27)} │`, connectionStatus === 'connected' ? 'success' : 'error');
@@ -528,7 +567,9 @@ class Terminal {
 
     // Show memory usage summary
     this.addOutput('Requesting memory usage summary...', 'info');
-    window.socketClient.sendDebugCommand(this.currentCharacter.id, 'memory', { summary: true });
+    if (this.socketClient) {
+      this.socketClient.sendDebugCommand(this.currentCharacter.id, 'memory', { summary: true });
+    }
   }
 
   diskUsageCommand(args) {
@@ -1016,6 +1057,6 @@ class Terminal {
   }
 }
 
-// Create global terminal instance
-window.terminal = new Terminal();
+// Export Terminal class for dependency injection
+export default Terminal;
 

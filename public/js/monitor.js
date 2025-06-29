@@ -1,14 +1,5 @@
 // public/js/monitor.js
 import MonitorController from './modules/monitor/monitor-controller.js';
 
-console.log('[MONITOR.JS] Monitor module loaded');
-
-// Export the MonitorController class as default for dynamic imports
+// Export the MonitorController class for dependency injection
 export default MonitorController;
-
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('[MONITOR.JS] DOMContentLoaded fired, creating monitor controller');
-  const controller = new MonitorController();
-  window.monitor = controller;
-  console.log('[MONITOR.JS] Monitor controller created and assigned to window.monitor');
-});

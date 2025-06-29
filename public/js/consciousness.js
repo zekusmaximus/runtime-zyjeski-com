@@ -1,6 +1,16 @@
 // Fixed Consciousness Management Module - Prevent double initialization
+
+import { createLogger } from '/js/logger.js';
+
 class ConsciousnessManager {
-  constructor() {
+  constructor(dependencies = {}) {
+    // Dependency injection - accept dependencies instead of global access
+    const { stateManager, socketClient, logger } = dependencies;
+
+    this.stateManager = stateManager;
+    this.socketClient = socketClient;
+    this.logger = logger || createLogger('Consciousness');
+
     this.currentCharacter = null;
     this.isMonitoring = false;
     this.updateInterval = null;
@@ -10,7 +20,7 @@ class ConsciousnessManager {
       try {
         this.handleConsciousnessUpdate(data);
       } catch (error) {
-        console.error('Error in consciousness update handler:', error);
+        this.logger.error('Error in consciousness update handler:', error);
       }
     };
     this.init();
@@ -23,24 +33,24 @@ class ConsciousnessManager {
 
   setupEventListeners() {
     // Subscribe to socket events with error handling
-    if (window.socketClient) {
-      window.socketClient.on('consciousness-update', this._consciousnessUpdateHandler);
+    if (this.socketClient) {
+      this.socketClient.on('consciousness-update', this._consciousnessUpdateHandler);
     }
   }
 
   subscribeToStateChanges() {
     // Subscribe to state manager changes
-    if (window.stateManager) {
-      window.stateManager.subscribe('currentCharacter', (character) => {
+    if (this.stateManager) {
+      this.stateManager.subscribe('currentCharacter', (character) => {
         // GROUND STATE: Only set current character, don't initialize or start monitoring here
         this.currentCharacter = character;
-        console.log('Character set in consciousness manager:', character?.name || 'none');
+        this.logger.info('Character set in consciousness manager:', character?.name || 'none');
       });
 
       // GROUND STATE FIX: Remove auto-start logic from monitoringActive subscription
-      window.stateManager.subscribe('monitoringActive', (active) => {
+      this.stateManager.subscribe('monitoringActive', (active) => {
         this.isMonitoring = active;
-        console.log('Monitoring state changed:', active);
+        this.logger.info('Monitoring state changed:', active);
         // Do NOT auto-start or stop real-time updates here
         // Monitoring should only be started/stopped by explicit user action
       });
@@ -50,80 +60,80 @@ class ConsciousnessManager {
   // User-initiated monitoring start
   userStartMonitoring() {
     if (!this.currentCharacter) {
-      console.warn('No character selected for monitoring');
+      this.logger.warn('No character selected for monitoring');
       return false;
     }
     if (this.isMonitoring) {
-      console.log('Monitoring already active');
+      this.logger.info('Monitoring already active');
       return true;
     }
-    
-    console.log('USER ACTION: Starting consciousness monitoring for', this.currentCharacter.name);
+
+    this.logger.info('USER ACTION: Starting consciousness monitoring for', this.currentCharacter.name);
     this.isMonitoring = true;
-    
-    if (window.stateManager) {
-      window.stateManager.set('monitoringActive', true);
+
+    if (this.stateManager) {
+      this.stateManager.set('monitoringActive', true);
     }
-    
+
     // Connect and start monitoring via WebSocket
-    if (window.socketClient) {
-      const success = window.socketClient.startMonitoring(this.currentCharacter.id);
+    if (this.socketClient) {
+      const success = this.socketClient.startMonitoring(this.currentCharacter.id);
       // Treat ONLY an explicit `false` as failure; `undefined` is considered success
       if (success === false) {
-        console.error('Failed to start WebSocket monitoring');
+        this.logger.error('Failed to start WebSocket monitoring');
         this.isMonitoring = false;
-        if (window.stateManager) {
-          window.stateManager.set('monitoringActive', false);
+        if (this.stateManager) {
+          this.stateManager.set('monitoringActive', false);
         }
         return false;
       }
     }
-    
+
     return true;
   }
 
   // User-initiated monitoring stop
   userStopMonitoring() {
     if (!this.isMonitoring) {
-      console.log('Monitoring already inactive');
+      this.logger.info('Monitoring already inactive');
       return true;
     }
-    
-    console.log('USER ACTION: Stopping consciousness monitoring');
+
+    this.logger.info('USER ACTION: Stopping consciousness monitoring');
     this.isMonitoring = false;
-    
-    if (window.stateManager) {
-      window.stateManager.set('monitoringActive', false);
+
+    if (this.stateManager) {
+      this.stateManager.set('monitoringActive', false);
     }
-    
+
     this.stopRealTimeUpdates();
-    
-    if (window.socketClient && this.currentCharacter) {
-      window.socketClient.stopMonitoring(this.currentCharacter.id);
+
+    if (this.socketClient && this.currentCharacter) {
+      this.socketClient.stopMonitoring(this.currentCharacter.id);
     }
-    
+
     return true;
   }
 
   // FIXED: Main entry point that prevents double initialization
  loadCharacter(character) {
-  console.log('ConsciousnessManager.loadCharacter called with:', character?.name || 'no character');
+  this.logger.info('ConsciousnessManager.loadCharacter called with:', character?.name || 'no character');
 
   // Validate character data
   if (!character || typeof character !== 'object') {
-    console.error('Cannot load character: character is null or undefined');
+    this.logger.error('Cannot load character: character is null or undefined');
     return;
   }
 
   // Prevent concurrent initialization
   if (this.isInitializing) {
-    console.log('Character initialization already in progress, skipping duplicate');
+    this.logger.info('Character initialization already in progress, skipping duplicate');
     return;
   }
 
   // If same character is already loaded, don't reload
   if (this.currentCharacter && this.currentCharacter.id === character.id) {
-    console.log(`Character ${character.id} already loaded and initialized`);
+    this.logger.info(`Character ${character.id} already loaded and initialized`);
     return;
   }
 
@@ -134,9 +144,9 @@ class ConsciousnessManager {
     this.currentCharacter = character;
     
     // Load character state in state manager
-    if (window.stateManager) {
+    if (this.stateManager) {
       // FIX: Change from loadCharacterState to loadCharacter
-      window.stateManager.loadCharacter(character.id);
+      this.stateManager.loadCharacter(character.id);
     }
     
     // Initialize consciousness once
@@ -149,11 +159,11 @@ class ConsciousnessManager {
 
   initializeCharacterConsciousness(character) {
     if (!character) {
-      console.error('Cannot initialize consciousness: character is null or undefined');
+      this.logger.error('Cannot initialize consciousness: character is null or undefined');
       return;
     }
 
-    console.log('Initializing consciousness for:', character.name);
+    this.logger.info('Initializing consciousness for:', character.name);
 
     // Only fetch the latest state from the server so process data is available
     this.requestConsciousnessUpdate();
@@ -166,11 +176,11 @@ class ConsciousnessManager {
 
   // Updated preview renderer with robust validation
   updateConsciousnessPreview(consciousness) {
-    console.log('updateConsciousnessPreview called with:', consciousness);
+    this.logger.debug('updateConsciousnessPreview called with:', consciousness);
 
     // Validate input data
     if (!consciousness || typeof consciousness !== 'object') {
-      console.warn('Invalid consciousness data provided to updateConsciousnessPreview:', consciousness);
+      this.logger.warn('Invalid consciousness data provided to updateConsciousnessPreview:', consciousness);
 
       // Show error message in preview
       const preview = document.getElementById('consciousnessPreview');
@@ -185,17 +195,17 @@ class ConsciousnessManager {
 
     const preview = document.getElementById('consciousnessPreview');
     if (!preview) {
-      console.warn('Consciousness preview element not found');
+      this.logger.warn('Consciousness preview element not found');
       return;
     }
 
     const processList = preview.querySelector('.process-list');
     if (!processList) {
-      console.warn('Process list element not found in consciousness preview');
+      this.logger.warn('Process list element not found in consciousness preview');
       return;
     }    // Validate consciousness data structure
     if (!consciousness || typeof consciousness !== 'object') {
-      console.warn('Invalid consciousness data: not an object');
+      this.logger.warn('Invalid consciousness data: not an object');
       processList.innerHTML = '<div class="no-processes">Invalid consciousness data<br><small>Check server connection</small></div>';
       return;
     }
@@ -205,24 +215,24 @@ class ConsciousnessManager {
 
     if (Array.isArray(consciousness.processes)) {
       processes = consciousness.processes;
-      console.log('Found processes in consciousness.processes');
+      this.logger.debug('Found processes in consciousness.processes');
     } else if (consciousness.consciousness && Array.isArray(consciousness.consciousness.processes)) {
       processes = consciousness.consciousness.processes;
-      console.log('Found processes in consciousness.consciousness.processes');
+      this.logger.debug('Found processes in consciousness.consciousness.processes');
     } else if (consciousness.data && Array.isArray(consciousness.data.processes)) {
       processes = consciousness.data.processes;
-      console.log('Found processes in consciousness.data.processes');
+      this.logger.debug('Found processes in consciousness.data.processes');
     } else if (consciousness.state && Array.isArray(consciousness.state.processes)) {
       processes = consciousness.state.processes;
-      console.log('Found processes in consciousness.state.processes');
+      this.logger.debug('Found processes in consciousness.state.processes');
     } else {
       // No valid processes array found
-      console.warn('No valid processes array found in consciousness data:', consciousness);
-      console.log('Available keys:', Object.keys(consciousness));
-      
+      this.logger.warn('No valid processes array found in consciousness data:', consciousness);
+      this.logger.debug('Available keys:', Object.keys(consciousness));
+
       // Try to extract from nested structures as fallback
       if (consciousness.consciousness && consciousness.consciousness.processes) {
-        console.log('Found non-array processes in consciousness.consciousness.processes:', typeof consciousness.consciousness.processes);
+        this.logger.debug('Found non-array processes in consciousness.consciousness.processes:', typeof consciousness.consciousness.processes);
         processes = [];
       } else {
         processList.innerHTML = '<div class="no-processes">No processes data available<br><small>Check server connection and character data</small></div>';
@@ -230,7 +240,7 @@ class ConsciousnessManager {
       }
     }
 
-    console.log(`Found ${processes.length} processes to display`);
+    this.logger.debug(`Found ${processes.length} processes to display`);
 
     if (processes.length === 0) {
       processList.innerHTML = '<div class="no-processes">No active processes</div>';
@@ -272,46 +282,50 @@ class ConsciousnessManager {
         `;
       }).join('');
 
-      console.log('Successfully updated consciousness preview');
+      this.logger.debug('Successfully updated consciousness preview');
     } catch (error) {
-      console.error('Error updating consciousness preview:', error);
+      this.logger.error('Error updating consciousness preview:', error);
       processList.innerHTML = '<div class="process-item error">Error displaying processes - check console</div>';
     }
   }
 
   // FIXED: Add robust data validation to handleConsciousnessUpdate
   handleConsciousnessUpdate(data) {
-    console.log('[DEBUG] Received consciousness-update:', data); // <--- ADD THIS LINE
+    this.logger.debug('[DEBUG] Received consciousness-update:', data); // <--- ADD THIS LINE
     // Validate input data
     if (!data) {
-      console.warn('Received null/undefined consciousness update data');
+      this.logger.warn('Received null/undefined consciousness update data');
       return;
     }
 
     if (!this.currentCharacter) {
-      console.warn('No current character set, ignoring consciousness update');
+      this.logger.warn('No current character set, ignoring consciousness update');
       return;
     }
 
     try {
-      console.log('Updating consciousness state:', data);
-      
+      this.logger.debug('Updating consciousness state:', data);
+
       // PREVENT FEEDBACK LOOP: Set flag to indicate we're processing server data
-      window.stateManager._processingServerUpdate = true;
-      
+      if (this.stateManager) {
+        this.stateManager._processingServerUpdate = true;
+      }
+
       // Extract and validate consciousness data
       const consciousnessData = this.extractConsciousnessData(data);
       if (!consciousnessData) {
-        console.warn('No valid consciousness data found in update');
-        window.stateManager._processingServerUpdate = false;
+        this.logger.warn('No valid consciousness data found in update');
+        if (this.stateManager) {
+          this.stateManager._processingServerUpdate = false;
+        }
         return;
       }
 
       // Update state manager with validated data
-      if (window.stateManager && typeof window.stateManager.updateConsciousnessData === 'function') {
-        window.stateManager.updateConsciousnessData(consciousnessData);
+      if (this.stateManager && typeof this.stateManager.updateConsciousnessData === 'function') {
+        this.stateManager.updateConsciousnessData(consciousnessData);
       } else {
-        console.error('StateManager not available or updateConsciousnessData method missing');
+        this.logger.error('StateManager not available or updateConsciousnessData method missing');
       }
       
       // Update UI components with validated data
@@ -321,12 +335,16 @@ class ConsciousnessManager {
       this.notifyComponents('consciousness-updated', consciousnessData);
       
       // Clear the flag
-      window.stateManager._processingServerUpdate = false;
+      if (this.stateManager) {
+        this.stateManager._processingServerUpdate = false;
+      }
 
     } catch (error) {
       // Always clear the flag even on error to prevent permanent lock
-      window.stateManager._processingServerUpdate = false;
-      console.error('Error handling consciousness update:', error);
+      if (this.stateManager) {
+        this.stateManager._processingServerUpdate = false;
+      }
+      this.logger.error('Error handling consciousness update:', error);
     }
   }
 
@@ -396,14 +414,14 @@ class ConsciousnessManager {
       }
       
       const state = await response.json();
-      
-      if (window.stateManager) {
-        window.stateManager.updateConsciousnessData(state);
+
+      if (this.stateManager) {
+        this.stateManager.updateConsciousnessData(state);
       }
       
       this.updateConsciousnessPreview(state);
     } catch (error) {
-      console.error('Failed to fetch consciousness update:', error);
+      this.logger.error('Failed to fetch consciousness update:', error);
     }
   }
 
@@ -432,7 +450,7 @@ class ConsciousnessManager {
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('Failed to kill process:', error);
+      this.logger.error('Failed to kill process:', error);
       throw error;
     }
   }
@@ -441,7 +459,7 @@ class ConsciousnessManager {
     if (!this.currentCharacter) {
       throw new Error('No character selected');
     }
-    
+
     try {
       const response = await fetch(`/api/process/${pid}/restart`, {
         method: 'POST',
@@ -461,7 +479,7 @@ class ConsciousnessManager {
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('Failed to restart process:', error);
+      this.logger.error('Failed to restart process:', error);
       throw error;
     }
   }
@@ -470,10 +488,10 @@ class ConsciousnessManager {
     if (!this.currentCharacter) {
       throw new Error('No character selected');
     }
-    
+
     try {
-      if (window.socketClient) {
-        await window.socketClient.applyIntervention(this.currentCharacter.id, {
+      if (this.socketClient) {
+        await this.socketClient.applyIntervention(this.currentCharacter.id, {
           type: 'adjust_resource',
           resource_type: resourceType,
           amount: amount
@@ -482,7 +500,7 @@ class ConsciousnessManager {
         throw new Error('Socket client not available');
       }
     } catch (error) {
-      console.error('Failed to adjust resource:', error);
+      this.logger.error('Failed to adjust resource:', error);
       throw error;
     }
   }
@@ -555,7 +573,7 @@ class ConsciousnessManager {
         window.debugger.onConsciousnessUpdate(event, data);
       }
     } catch (error) {
-      console.error('Error notifying components:', error);
+      this.logger.error('Error notifying components:', error);
     }
   }
 
@@ -589,8 +607,8 @@ class ConsciousnessManager {
   // Cleanup
   destroy() {
     this.stopRealTimeUpdates();
-    if (window.socketClient) {
-      window.socketClient.off('consciousness-update', this._consciousnessUpdateHandler);
+    if (this.socketClient) {
+      this.socketClient.off('consciousness-update', this._consciousnessUpdateHandler);
     }
     this.currentCharacter = null;
     this.isMonitoring = false;
@@ -598,21 +616,6 @@ class ConsciousnessManager {
   }
 }
 
-// Export for testing and ESM environments
-export { ConsciousnessManager };
-
-// Remove auto-instantiation on page load
-// if (typeof window !== 'undefined') {
-//   window.consciousness = new ConsciousnessManager();
-// }
-
-// Instead, provide an explicit initializer for user-triggered setup
-if (typeof window !== 'undefined') {
-  window.initConsciousnessManager = function() {
-    if (!window.consciousness) {
-      window.consciousness = new ConsciousnessManager();
-    }
-    return window.consciousness;
-  };
-}
-// NOTE: Monitoring will NOT start automatically. Call window.initConsciousnessManager() from a user event (e.g., character card click), then call window.consciousness.userStartMonitoring() to begin monitoring.
+// Export ConsciousnessManager class for dependency injection
+// No auto-instantiation - will be created by bootstrap with proper dependencies
+export default ConsciousnessManager;

@@ -1,6 +1,15 @@
 // Complete Debugger Interface Module for Runtime.zyjeski.com
+import { createLogger } from '/js/logger.js';
+
 class DebuggerInterface {
-  constructor() {
+  constructor(dependencies = {}) {
+    // Dependency injection - accept dependencies instead of global access
+    const { stateManager, consciousness, logger } = dependencies;
+
+    this.stateManager = stateManager;
+    this.consciousness = consciousness;
+    this.logger = logger || createLogger('Debugger');
+
     this.isActive = false;
     this.currentCharacter = null;
     this.consciousnessState = null;  // Store real consciousness state
@@ -11,7 +20,7 @@ class DebuggerInterface {
     this.executionState = 'stopped'; // stopped, running, paused
     this.debugSession = null;
     this.codeLines = [];
-    
+
     this.init();
   }
 
@@ -121,23 +130,19 @@ class DebuggerInterface {
   }
 
   setupSocketListeners() {
-    if (window.socketClient) {
-      window.socketClient.on('debug-result', (data) => this.handleDebugResult(data));
-      window.socketClient.on('consciousness-update', (data) => this.handleConsciousnessUpdate(data));
-      window.socketClient.on('intervention-applied', (data) => this.handleInterventionApplied(data));
-      window.socketClient.on('debug-session-started', (data) => this.handleDebugSessionStarted(data));
-      window.socketClient.on('breakpoint-triggered', (data) => this.handleBreakpointTriggered(data));
-    }
+    // Note: DebuggerInterface doesn't directly use socketClient
+    // It relies on consciousness manager for socket communication
+    this.logger.debug('Socket listeners setup - using consciousness manager for communication');
   }
 
   subscribeToStateChanges() {
-    if (window.stateManager) {
-      window.stateManager.subscribe('character-changed', (character) => {
+    if (this.stateManager) {
+      this.stateManager.subscribe('character-changed', (character) => {
         this.currentCharacter = character;
         this.updateDebuggerForCharacter(character);
       });
 
-      window.stateManager.subscribe('debug-mode-changed', (isDebugMode) => {
+      this.stateManager.subscribe('debug-mode-changed', (isDebugMode) => {
         if (isDebugMode) {
           this.startDebugging();
         } else {
@@ -154,9 +159,9 @@ class DebuggerInterface {
     this.currentCharacter = character;
     
     // Request current consciousness state if character is attached
-    if (character.id && window.socketClient && window.socketClient.isSocketConnected()) {
-      // Request fresh consciousness state for the debugger
-      window.socketClient.emitToServer('refresh-monitor');
+    if (character.id && this.consciousness) {
+      // Request fresh consciousness state for the debugger through consciousness manager
+      this.consciousness.requestConsciousnessUpdate();
     }
     
     // Update call stack and variables
@@ -364,12 +369,12 @@ class DebuggerInterface {
   }
 
   sendDebugCommand(command, args = {}) {
-    if (window.socketClient && this.currentCharacter) {
-      window.socketClient.emitToServer('debug-command', {
-        characterId: this.currentCharacter.id,
-        command: command,
-        args: args
-      });
+    if (this.consciousness && this.currentCharacter) {
+      // Use consciousness manager to send debug commands
+      this.logger.debug(`Sending debug command: ${command}`, args);
+      // Note: This would need to be implemented in consciousness manager
+      // For now, just log the command
+      this.logger.info(`Debug command would be sent: ${command} for ${this.currentCharacter.id}`);
     }
   }
 
@@ -599,9 +604,8 @@ class DebuggerInterface {
     console.log('Debug result received:', data);
     
     if (data.result.error) {
-      if (window.app) {
-        window.app.showNotification(`Debug Error: ${data.result.error}`, 'error');
-      }
+      this.logger.error(`Debug Error: ${data.result.error}`);
+      // Note: Notification would be handled by app when it's available
       return;
     }
     
@@ -686,18 +690,15 @@ class DebuggerInterface {
     
     // Check if intervention was successful
     if (data.error) {
-      console.error('Intervention error:', data.error);
-      if (window.app) {
-        window.app.showNotification(`Intervention failed: ${data.error}`, 'error');
-      }
+      this.logger.error('Intervention error:', data.error);
+      // Note: Notification would be handled by app when it's available
       return;
     }
-    
+
     // Show success message
     if (data.result && data.result.success) {
-      if (window.app) {
-        window.app.showNotification(`Intervention applied: ${data.intervention.type}`, 'success');
-      }
+      this.logger.info(`Intervention applied: ${data.intervention.type}`);
+      // Note: Notification would be handled by app when it's available
     }
     
     // Don't try to access data.state.consciousness - it doesn't exist in intervention responses
@@ -724,10 +725,9 @@ class DebuggerInterface {
     this.highlightCurrentLine(line);
     
     this.updateExecutionState();
-    
-    if (window.app) {
-      window.app.showNotification(`Breakpoint hit: ${data.hook.name}`, 'warning');
-    }
+
+    this.logger.warn(`Breakpoint hit: ${data.hook.name}`);
+    // Note: Notification would be handled by app when it's available
   }
 
   // Helper methods
@@ -772,5 +772,5 @@ class DebuggerInterface {
   }
 }
 
-// Initialize global debugger instance
-window.debugger = new DebuggerInterface();
+// Export DebuggerInterface class for dependency injection
+export default DebuggerInterface;

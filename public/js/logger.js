@@ -1,53 +1,74 @@
 /**
- * Frontend Logger Utility
- * Provides controlled logging for browser environments with environment-based filtering
+ * Centralized Logging Service
+ * Provides controlled logging for browser environments with module-based filtering
  */
-class Logger {
-  constructor() {
-    // Determine log level based on environment
-    this.isDevelopment = window.location.hostname === 'localhost' || 
-                        window.location.hostname === '127.0.0.1' ||
-                        window.location.search.includes('debug=true');
-    
-    // Log levels (higher number = more verbose)
-    this.levels = {
-      error: 0,
-      warn: 1,
-      info: 2,
-      debug: 3
-    };
-    
-    // Set current log level based on environment
-    this.currentLevel = this.isDevelopment ? this.levels.debug : this.levels.warn;
-    
-    // Store logs for potential reporting
-    this.logBuffer = [];
-    this.maxBufferSize = 100;
+
+// Global logging configuration
+const globalConfig = {
+  // Log levels (higher number = more verbose)
+  levels: {
+    none: -1,
+    error: 0,
+    warn: 1,
+    info: 2,
+    debug: 3
+  },
+
+  // Current global log level - determined by environment
+  currentLevel: null,
+
+  // Module-specific overrides
+  moduleStates: new Map(), // Map<moduleName, boolean> - true=enabled, false=disabled
+
+  // Initialize global level based on environment
+  init() {
+    // Check for DEBUG_MODE flag first, then fallback to environment detection
+    const debugMode = window.DEBUG_MODE;
+    const isDevelopment = window.location.hostname === 'localhost' ||
+                         window.location.hostname === '127.0.0.1' ||
+                         window.location.search.includes('debug=true');
+
+    if (debugMode === true) {
+      this.currentLevel = this.levels.debug;
+    } else if (debugMode === false) {
+      this.currentLevel = this.levels.info;
+    } else {
+      // Fallback to environment detection if DEBUG_MODE is undefined
+      this.currentLevel = isDevelopment ? this.levels.debug : this.levels.info;
+    }
   }
-  
+};
+
+// Initialize global config
+globalConfig.init();
+
+/**
+ * Logger instance for a specific module
+ */
+class ModuleLogger {
+  constructor(moduleName) {
+    this.moduleName = moduleName;
+  }
+
   /**
    * Internal method to handle logging
    */
   _log(level, message, ...args) {
-    if (this.levels[level] > this.currentLevel) {
-      return; // Skip if log level is too verbose for current environment
+    // Check if this module is specifically disabled
+    if (globalConfig.moduleStates.has(this.moduleName) &&
+        globalConfig.moduleStates.get(this.moduleName) === false) {
+      return; // Module is disabled
     }
-    
-    const timestamp = new Date().toISOString();
-    const logEntry = {
-      timestamp,
-      level,
-      message,
-      args: args.length > 0 ? args : undefined
-    };
-    
-    // Add to buffer
-    this._addToBuffer(logEntry);
-    
-    // Output to console based on level
+
+    // Check global log level
+    if (globalConfig.levels[level] > globalConfig.currentLevel) {
+      return; // Log level too verbose for current setting
+    }
+
+    // Format message with module name
+    const prefix = `[${level.toUpperCase()}] [${this.moduleName}]`;
     const consoleMethod = console[level] || console.log;
-    const prefix = `[${timestamp}] [${level.toUpperCase()}]:`;
-    
+
     if (args.length > 0) {
       consoleMethod(prefix, message, ...args);
     } else {
@@ -56,78 +77,81 @@ class Logger {
   }
   
   /**
-   * Add log entry to buffer for potential error reporting
-   */
-  _addToBuffer(logEntry) {
-    this.logBuffer.push(logEntry);
-    if (this.logBuffer.length > this.maxBufferSize) {
-      this.logBuffer.shift(); // Remove oldest entry
-    }
-  }
-  
-  /**
-   * Log debug messages (only in development)
+   * Log debug messages
    */
   debug(message, ...args) {
     this._log('debug', message, ...args);
   }
-  
+
   /**
    * Log info messages
    */
   info(message, ...args) {
     this._log('info', message, ...args);
   }
-  
+
   /**
    * Log warning messages
    */
   warn(message, ...args) {
     this._log('warn', message, ...args);
   }
-  
+
   /**
    * Log error messages
    */
   error(message, ...args) {
     this._log('error', message, ...args);
   }
-  
-  /**
-   * Get recent logs for error reporting
-   */
-  getRecentLogs(count = 10) {
-    return this.logBuffer.slice(-count);
+}
+
+/**
+ * Create a logger instance for a specific module
+ * @param {string} moduleName - Name of the module (e.g., 'SocketClient', 'Consciousness')
+ * @returns {ModuleLogger} Logger instance for the module
+ */
+export function createLogger(moduleName) {
+  if (!moduleName || typeof moduleName !== 'string') {
+    throw new Error('Module name is required and must be a string');
   }
-  
-  /**
-   * Clear the log buffer
-   */
-  clearBuffer() {
-    this.logBuffer = [];
-  }
-  
-  /**
-   * Set log level programmatically
-   */
-  setLevel(level) {
-    if (this.levels.hasOwnProperty(level)) {
-      this.currentLevel = this.levels[level];
-    }
-  }
-  
-  /**
-   * Check if a log level is enabled
-   */
-  isLevelEnabled(level) {
-    return this.levels[level] <= this.currentLevel;
+  return new ModuleLogger(moduleName);
+}
+
+/**
+ * Set global log level for all loggers
+ * @param {string} level - Log level: 'debug', 'info', 'warn', 'error', 'none'
+ */
+export function setGlobalLevel(level) {
+  if (globalConfig.levels.hasOwnProperty(level)) {
+    globalConfig.currentLevel = globalConfig.levels[level];
+    console.log(`[LOGGER] Global log level set to: ${level.toUpperCase()}`);
+  } else {
+    console.error(`[LOGGER] Invalid log level: ${level}. Valid levels:`, Object.keys(globalConfig.levels));
   }
 }
 
-// Create and export global logger instance
-const logger = new Logger();
+/**
+ * Enable logging for a specific module
+ * @param {string} moduleName - Name of the module to enable
+ */
+export function enableModule(moduleName) {
+  globalConfig.moduleStates.set(moduleName, true);
+  console.log(`[LOGGER] Module '${moduleName}' logging enabled`);
+}
 
-// Make it available globally for easy access
-window.logger = logger;
+/**
+ * Disable logging for a specific module
+ * @param {string} moduleName - Name of the module to disable
+ */
+export function disableModule(moduleName) {
+  globalConfig.moduleStates.set(moduleName, false);
+  console.log(`[LOGGER] Module '${moduleName}' logging disabled`);
+}
 
-export default logger;
+// Make global control functions available on window for browser console access
+window.setGlobalLevel = setGlobalLevel;
+window.enableModule = enableModule;
+window.disableModule = disableModule;
+
+// Export the createLogger function as default for backward compatibility
+export default createLogger;

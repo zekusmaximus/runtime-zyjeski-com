@@ -1,57 +1,26 @@
 // public/js/app.js
-import logger from '/js/logger.js';
-import '/js/init-fix.js';
-// import '/js/modules/init-state-manager.js'; // Remove this - we'll integrate it directly
-import stateManager from '/js/modules/state-manager.js';
+import { createLogger } from '/js/logger.js';
+const logger = createLogger('App');
+
 import GroundStateValidator from '/js/ground-state-validator.js';
 
-// Make state manager available globally for debugging
-window.stateManager = stateManager;
+// Note: All dependencies will be injected by bootstrap - no direct imports needed
 
-// Set up socket → state manager connection
-function setupSocketStateSync() {
-  if (window.socketClient && window.stateManager) {
-    // Remove any existing listener to prevent duplicates
-    window.socketClient.off('consciousness-update');
-    
-    // Add the sync handler with enhanced logging
-    window.socketClient.on('consciousness-update', (data) => {
-      console.group('🔄 Socket → State Manager Sync');
-      console.log('Raw socket data:', data);
-      console.log('Character ID:', data.characterId);
-      console.log('Trigger:', data.trigger || 'unknown');
-      console.log('Has state property:', !!data.state);
-      
-      // Extract consciousness state from the wrapper
-      // Server sends: { characterId, state, trigger, timestamp }
-      // We need: the 'state' property
-      const consciousnessState = data.state || data;
-      console.log('Consciousness state to sync:', consciousnessState);
-      
-      if (window.stateManager) {
-        // Update state manager (this will trigger 'stateChanged' event)
-        window.stateManager.updateConsciousnessData(consciousnessState);
-        console.log('✅ State manager updated');
-        
-        // Optional: Track what triggered the update
-        if (data.trigger) {
-          console.log(`Update triggered by: ${data.trigger}`);
-        }
-      } else {
-        console.error('❌ State manager not available!');
-      }
-      console.groupEnd();
-    });
-    
-    console.log('✅ Socket → State Manager sync established');
-  } else {
-    console.warn('Socket or State Manager not ready, retrying...');
-    setTimeout(setupSocketStateSync, 500);
-  }
-}
+// Note: Socket → State Manager sync will be handled by bootstrap with dependency injection
 
 class RuntimeApp {
-  constructor() {
+  constructor(dependencies = {}) {
+    // Dependency injection - accept dependencies instead of global access
+    const { stateManager, socketClient, consciousness, monitor, terminal, debugger: debuggerInterface, logger } = dependencies;
+
+    this.stateManager = stateManager;
+    this.socketClient = socketClient;
+    this.consciousness = consciousness;
+    this.monitor = monitor;
+    this.terminal = terminal;
+    this.debuggerInterface = debuggerInterface;
+    this.logger = logger || createLogger('App');
+
     this.currentCharacter = null;
     this.isLoadingCharacter = false;
     this.userInteracted = false; // GROUND STATE: Track user interaction
@@ -60,7 +29,7 @@ class RuntimeApp {
   }
 
   async initializeApp() {
-    logger.info('Initializing Runtime.zyjeski.com in Ground State');
+    this.logger.info('Initializing Runtime.zyjeski.com in Ground State');
     
     // GROUND STATE: Validate we start in compliant state
     GroundStateValidator.validateCompliance();
@@ -83,7 +52,7 @@ class RuntimeApp {
     this.setupEventListeners();
     this.loadCharacters();
     
-    logger.info('App initialization complete - Ground State maintained');
+    this.logger.info('App initialization complete - Ground State maintained');
     
     // GROUND STATE: Validate compliance after initialization
     setTimeout(() => GroundStateValidator.validateCompliance(), 100);
@@ -96,7 +65,7 @@ class RuntimeApp {
   setupNavigation() {
     const navLinks = document.querySelectorAll('.nav-link');
     if (!navLinks.length) {
-      logger.debug('No navigation links found – skipping navigation setup');
+      this.logger.debug('No navigation links found – skipping navigation setup');
       return;
     }
 
@@ -134,10 +103,8 @@ class RuntimeApp {
         // GROUND STATE: Mark this as user interaction
         GroundStateValidator.validateUserAction('character-selection', { characterId });
         
-        // GROUND STATE: Initialize consciousness manager only on user action
-        if (!window.consciousness) {
-          window.initConsciousnessManager();
-        }
+        // GROUND STATE: Consciousness manager is already initialized via dependency injection
+        // No need to initialize here - it's handled by bootstrap
         
         this.selectCharacter(characterId);
       });
@@ -169,11 +136,11 @@ class RuntimeApp {
   }
 
   async selectCharacter(characterId) {
-    console.log(`[APP] USER ACTION: Character selection - ${characterId}`);
-    
+    logger.info(`USER ACTION: Character selection - ${characterId}`);
+
     // GROUND STATE: This is THE ground state transition event
     GroundStateValidator.logGroundStateTransition('character-selection', { characterId });
-    
+
     // Prevent concurrent character loads
     if (this.isLoadingCharacter) {
       logger.debug('Character loading already in progress', { characterId });
@@ -182,7 +149,7 @@ class RuntimeApp {
 
     // If the same character is already loaded, don't reload
     if (this.currentCharacter && this.currentCharacter.id === characterId) {
-      logger.debug('Character already loaded', { characterId });
+      this.logger.debug('Character already loaded', { characterId });
       this.updateCharacterSelection(characterId);
       return;
     }
@@ -194,28 +161,30 @@ class RuntimeApp {
       this.showLoading('Loading character consciousness...');
       
       // Use state manager to load character
-      await stateManager.loadCharacter(characterId);
+      if (this.stateManager) {
+        await this.stateManager.loadCharacter(characterId);
+      }
       
       // NEW: Also load consciousness state into state manager
-      console.log('Loading consciousness state for character...');
+      this.logger.info('Loading consciousness state for character...');
       try {
         const stateResponse = await fetch(`/api/consciousness/${characterId}/state`);
         if (stateResponse.ok) {
           const consciousnessData = await stateResponse.json();
-          console.log('Consciousness data loaded successfully');
-          
+          this.logger.info('Consciousness data loaded successfully');
+
           // Update state manager with consciousness data
-          if (window.stateManager) {
-            window.stateManager.updateConsciousnessData(consciousnessData);
-            console.log('State manager updated with initial consciousness data');
+          if (this.stateManager) {
+            this.stateManager.updateConsciousnessData(consciousnessData);
+            this.logger.info('State manager updated with initial consciousness data');
           } else {
-            console.error('State manager not available');
+            this.logger.error('State manager not available');
           }
         } else {
-          console.error('Failed to load consciousness state:', stateResponse.status);
+          this.logger.error('Failed to load consciousness state:', stateResponse.status);
         }
       } catch (error) {
-        console.error('Error loading consciousness state:', error);
+        this.logger.error('Error loading consciousness state:', error);
         // Don't fail the entire character load if consciousness fails
       }
       
@@ -231,41 +200,41 @@ class RuntimeApp {
         this.updateCharacterSelection(characterId);
 
         // Start socket monitoring for the selected character
-if (window.socketClient && typeof window.socketClient.startMonitoring === 'function') {
-  window.socketClient.startMonitoring(this.currentCharacter.id)
-    .then(() => {
-      console.log('[APP] Socket monitoring started for', this.currentCharacter.id);
-    })
-    .catch((err) => {
-      console.error('[APP] Failed to start socket monitoring:', err);
-    });
-}
-        
-        // GROUND STATE: Initialize consciousness with complete data
-        if (window.consciousness) {
-          console.log('[APP] GROUND STATE: Loading character into consciousness manager');
-          window.consciousness.loadCharacter(this.currentCharacter);
+        if (this.socketClient && typeof this.socketClient.startMonitoring === 'function') {
+          this.socketClient.startMonitoring(this.currentCharacter.id)
+            .then(() => {
+              this.logger.info('Socket monitoring started for', this.currentCharacter.id);
+            })
+            .catch((err) => {
+              this.logger.error('Failed to start socket monitoring:', err);
+            });
         }
-        
+
+        // GROUND STATE: Initialize consciousness with complete data
+        if (this.consciousness) {
+          this.logger.info('GROUND STATE: Loading character into consciousness manager');
+          this.consciousness.loadCharacter(this.currentCharacter);
+        }
+
         // GROUND STATE: Enable navigation after character loads
         this.enableNavigation();
-        
+
         // GROUND STATE: Connect monitor only after user loads character
-        if (window.monitor && typeof window.monitor.connectToCharacter === 'function') {
-          console.log('[APP] GROUND STATE: Connecting monitor to character');
+        if (this.monitor && typeof this.monitor.connectToCharacter === 'function') {
+          this.logger.info('GROUND STATE: Connecting monitor to character');
           try {
-            const result = window.monitor.connectToCharacter(this.currentCharacter);
-            
+            const result = this.monitor.connectToCharacter(this.currentCharacter);
+
             // Handle if connectToCharacter returns a promise
             if (result && typeof result.then === 'function') {
               result.then(() => {
-                console.log('[APP] GROUND STATE: Monitor connected successfully');
+                this.logger.info('GROUND STATE: Monitor connected successfully');
               }).catch(error => {
-                console.error('[APP] GROUND STATE: Monitor connection failed:', error);
+                this.logger.error('GROUND STATE: Monitor connection failed:', error);
               });
             }
           } catch (error) {
-            console.error('[APP] GROUND STATE: Error connecting monitor:', error);
+            this.logger.error('GROUND STATE: Error connecting monitor:', error);
           }
         }
         
@@ -276,7 +245,7 @@ if (window.socketClient && typeof window.socketClient.startMonitoring === 'funct
         setTimeout(() => GroundStateValidator.validateCompliance(), 100);
       }
     } catch (error) {
-      logger.error('Failed to select character', { characterId, error });
+      this.logger.error('Failed to select character', { characterId, error });
       this.showError('Failed to load character consciousness');
     } finally {
       this.isLoadingCharacter = false;
@@ -312,8 +281,8 @@ if (window.socketClient && typeof window.socketClient.startMonitoring === 'funct
         link.setAttribute('data-navigation-enabled', 'true');
       }
     });
-    
-    console.log('GROUND STATE: Navigation enabled after character load');
+
+    logger.info('GROUND STATE: Navigation enabled after character load');
   }
 
   // GROUND STATE: Navigate to section and initialize component if needed
@@ -340,24 +309,24 @@ if (window.socketClient && typeof window.socketClient.startMonitoring === 'funct
 
   // GROUND STATE: Initialize components only when user navigates to them
   initializeComponent(componentName) {
-    console.log(`GROUND STATE: Initializing ${componentName} component`);
-    
+    this.logger.info(`GROUND STATE: Initializing ${componentName} component`);
+
     switch (componentName) {
       case 'monitor':
-        if (window.monitor && typeof window.monitor.initialize === 'function') {
-          window.monitor.initialize();
-          
+        if (this.monitor && typeof this.monitor.initialize === 'function') {
+          this.monitor.initialize();
+
           // GROUND STATE: Connect to character if one is loaded
-          if (this.currentCharacter && typeof window.monitor.connectToCharacter === 'function') {
-            console.log('GROUND STATE: Connecting monitor to current character:', this.currentCharacter.name);
-            const result = window.monitor.connectToCharacter(this.currentCharacter);
-            
+          if (this.currentCharacter && typeof this.monitor.connectToCharacter === 'function') {
+            this.logger.info('GROUND STATE: Connecting monitor to current character:', this.currentCharacter.name);
+            const result = this.monitor.connectToCharacter(this.currentCharacter);
+
             // Handle promise if returned
             if (result && typeof result.then === 'function') {
               result.then(() => {
-                console.log('GROUND STATE: Monitor connected to character successfully');
+                this.logger.info('GROUND STATE: Monitor connected to character successfully');
               }).catch(error => {
-                console.error('GROUND STATE: Failed to connect monitor to character:', error);
+                this.logger.error('GROUND STATE: Failed to connect monitor to character:', error);
               });
             }
           }
@@ -366,11 +335,11 @@ if (window.socketClient && typeof window.socketClient.startMonitoring === 'funct
       case 'terminal':
         // Terminal automatically subscribes to currentCharacter via state manager
         // No manual initialization needed - it's already initialized on load
-        console.log('GROUND STATE: Terminal ready (auto-subscribes to character state)');
+        this.logger.info('GROUND STATE: Terminal ready (auto-subscribes to character state)');
         break;
       case 'debugger':
-        if (window.debugger && typeof window.debugger.initialize === 'function') {
-          window.debugger.initialize();
+        if (this.debuggerInterface && typeof this.debuggerInterface.initialize === 'function') {
+          this.debuggerInterface.initialize();
           // Debugger automatically handles current character in its initialize method
         }
         break;
@@ -429,17 +398,5 @@ if (window.socketClient && typeof window.socketClient.startMonitoring === 'funct
   }
 }
 
-// Initialize app
-const app = new RuntimeApp();
-window.app = app;
-
-// Initialize socket-state sync when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-  // Small delay to ensure all modules are loaded
-  setTimeout(() => {
-    setupSocketStateSync();
-  }, 100);
-});
-
-// Export for debugging
-export default app;
+// Export RuntimeApp class for dependency injection
+export default RuntimeApp;

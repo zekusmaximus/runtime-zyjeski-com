@@ -3,16 +3,25 @@
 
 import MonitorUI from './monitor-ui.js';
 import MonitorState from './monitor-state.js';
+import { createLogger } from '../../logger.js';
 
 class MonitorController {
-  constructor() {
+  constructor(dependencies = {}) {
+    // Dependency injection - accept dependencies instead of global access
+    const { stateManager, socketClient, consciousness, logger } = dependencies;
+
+    this.stateManager = stateManager;
+    this.socketClient = socketClient;
+    this.consciousness = consciousness;
+    this.logger = logger || createLogger('Monitor');
+
     this.state = new MonitorState();
     this.ui = new MonitorUI();
     this.stateUpdateHandler = null;
   }
 
   initialize() {
-    console.log('[GROUND STATE] Monitor initializing - will use local state manager data');
+    this.logger.info('[GROUND STATE] Monitor initializing - will use local state manager data');
     
     // Initialize UI
     this.ui.initialize(this);
@@ -25,8 +34,8 @@ class MonitorController {
 
     // Listen for real-time socket updates if a connection is present.
     // This keeps the UI live once monitoring starts (Task C).
-    if (window.socketClient) {
-      window.socketClient.on('resources-update', ({ cpu, threads, memTotal }) => {
+    if (this.socketClient) {
+      this.socketClient.on('resources-update', ({ cpu, threads, memTotal }) => {
         const payload = {
           consciousness: {
             resources: { cpu, threads, memory: memTotal },
@@ -41,7 +50,7 @@ class MonitorController {
 
       
 
-      window.socketClient.on('memory-update', ({ allocationByProcess }) => {
+      this.socketClient.on('memory-update', ({ allocationByProcess }) => {
         const payload = {
           consciousness: {
             memory: { pools: allocationByProcess },
@@ -54,7 +63,7 @@ class MonitorController {
         this.ui.updateAll(this.state.consciousnessData);
       });
 
-      window.socketClient.on('errors-update', ({ list }) => {
+      this.socketClient.on('errors-update', ({ list }) => {
         const payload = {
           consciousness: {
             system_errors: list,
@@ -87,7 +96,7 @@ class MonitorController {
       this.ui.populateCharacterList(characters);
       
       // If there's a character already in state manager, select it
-      const currentCharacter = window.stateManager?.getCurrentCharacter();
+      const currentCharacter = this.stateManager?.getCurrentCharacter();
       if (currentCharacter) {
         this.ui.setSelectedCharacter(currentCharacter.id);
         this.loadCurrentCharacterData();
@@ -106,16 +115,20 @@ class MonitorController {
       console.log('[MONITOR] Selecting character:', characterId);
       
       // Load character into state manager
-      await window.stateManager.loadCharacter(characterId);
-      
+      if (this.stateManager) {
+        await this.stateManager.loadCharacter(characterId);
+      }
+
       // Load consciousness data
       const stateResponse = await fetch(`/api/consciousness/${characterId}/state`);
       if (stateResponse.ok) {
         const consciousnessData = await stateResponse.json();
         console.log('[MONITOR] Consciousness data loaded:', consciousnessData);
-        
+
         // Update state manager with consciousness data
-        window.stateManager.updateConsciousnessData(consciousnessData);
+        if (this.stateManager) {
+          this.stateManager.updateConsciousnessData(consciousnessData);
+        }
       }
       
       // Update UI
@@ -128,7 +141,7 @@ class MonitorController {
   }
 
   subscribeToStateManager() {
-    if (!window.stateManager) {
+    if (!this.stateManager) {
       console.error('[GROUND STATE] State manager not available');
       return;
     }
@@ -140,14 +153,14 @@ class MonitorController {
     };
 
     // Listen for state changes using subscribe method
-    window.stateManager.subscribe('stateChanged', this.stateUpdateHandler);
-    window.stateManager.subscribe('characterLoaded', () => this.loadCurrentCharacterData());
+    this.stateManager.subscribe('stateChanged', this.stateUpdateHandler);
+    this.stateManager.subscribe('characterLoaded', () => this.loadCurrentCharacterData());
   }
 
   loadCurrentCharacterData() {
     // Get current character from state manager
-    const character = window.stateManager.getCurrentCharacter();
-    const state = window.stateManager.getState();
+    const character = this.stateManager ? this.stateManager.getCurrentCharacter() : null;
+    const state = this.stateManager ? this.stateManager.getState() : null;
     
     if (!character || !state) {
       console.log('[GROUND STATE] No character loaded yet');
@@ -186,12 +199,12 @@ class MonitorController {
     this.ui.clearErrorLog();
     
     // Also clear errors in state manager
-    if (window.stateManager) {
-      const currentErrors = window.stateManager.getErrors();
+    if (this.stateManager) {
+      const currentErrors = this.stateManager.getErrors();
       if (currentErrors && currentErrors.length > 0) {
         // This would typically trigger a server action to clear errors
         // For now, just clear the display
-        window.stateManager.setErrors([]);
+        this.stateManager.setErrors([]);
       }
     }
   }
@@ -218,8 +231,8 @@ tartMonitoring(characterId) {
   this.ui.setMonitoringButtonState(true);
   
   // Start socket monitoring session
-  if (window.socketClient) {
-    window.socketClient.startMonitoring(characterId);
+  if (this.socketClient) {
+    this.socketClient.startMonitoring(characterId);
   }
 }
 
@@ -237,16 +250,16 @@ stopMonitoring() {
   this.ui.setMonitoringButtonState(false);
   
   // Stop socket monitoring session
-  if (window.socketClient) {
-    window.socketClient.stopMonitoring(characterId);
+  if (this.socketClient) {
+    this.socketClient.stopMonitoring(characterId);
   }
 }
 
   // Cleanup
   destroy() {
-    if (this.stateUpdateHandler && window.stateManager) {
-      window.stateManager.off('stateChanged', this.stateUpdateHandler);
-      window.stateManager.off('characterLoaded', this.stateUpdateHandler);
+    if (this.stateUpdateHandler && this.stateManager) {
+      this.stateManager.off('stateChanged', this.stateUpdateHandler);
+      this.stateManager.off('characterLoaded', this.stateUpdateHandler);
     }
   }
 }

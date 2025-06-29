@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dependency Injection Test - Runtime.zyjeski.com</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            padding: 20px;
+            margin: 0;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 3px solid #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+        .test-result.error {
+            border-left-color: #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff0000;
+        }
+        .test-result.warning {
+            border-left-color: #ffff00;
+            background: rgba(255, 255, 0, 0.1);
+            color: #ffff00;
+        }
+        .module-status {
+            display: grid;
+            grid-template-columns: 200px 100px 1fr;
+            gap: 10px;
+            margin: 5px 0;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .status-ok { color: #00ff00; }
+        .status-error { color: #ff0000; }
+        .status-warning { color: #ffff00; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Dependency Injection Test</h1>
+        <p>Testing the new bootstrap system with dependency injection...</p>
+        
+        <div id="testResults"></div>
+        
+        <h2>Module Status</h2>
+        <div id="moduleStatus"></div>
+        
+        <h2>Initialization Logs</h2>
+        <div id="initLogs"></div>
+        
+        <button onclick="runTests()" style="margin-top: 20px; padding: 10px 20px; background: #00ff00; color: #000; border: none; cursor: pointer;">
+            🔄 Run Tests Again
+        </button>
+    </div>
+
+    <!-- Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- Bootstrap handles ALL module initialization -->
+    <script type="module" src="/js/bootstrap.js"></script>
+    
+    <script>
+        let testResults = [];
+        let initLogs = [];
+        
+        // Capture console logs
+        const originalLog = console.log;
+        const originalInfo = console.info;
+        const originalDebug = console.debug;
+        const originalError = console.error;
+        
+        console.log = (...args) => {
+            initLogs.push({ type: 'log', message: args.join(' '), timestamp: new Date().toISOString() });
+            originalLog.apply(console, args);
+        };
+        
+        console.info = (...args) => {
+            initLogs.push({ type: 'info', message: args.join(' '), timestamp: new Date().toISOString() });
+            originalInfo.apply(console, args);
+        };
+        
+        console.debug = (...args) => {
+            initLogs.push({ type: 'debug', message: args.join(' '), timestamp: new Date().toISOString() });
+            originalDebug.apply(console, args);
+        };
+        
+        console.error = (...args) => {
+            initLogs.push({ type: 'error', message: args.join(' '), timestamp: new Date().toISOString() });
+            originalError.apply(console, args);
+        };
+        
+        function addTestResult(name, status, message) {
+            testResults.push({ name, status, message });
+            updateDisplay();
+        }
+        
+        function updateDisplay() {
+            const resultsDiv = document.getElementById('testResults');
+            const statusDiv = document.getElementById('moduleStatus');
+            const logsDiv = document.getElementById('initLogs');
+            
+            // Update test results
+            resultsDiv.innerHTML = testResults.map(result => 
+                `<div class="test-result ${result.status}">
+                    <strong>${result.name}:</strong> ${result.message}
+                </div>`
+            ).join('');
+            
+            // Update module status
+            const modules = ['stateManager', 'socketClient', 'consciousness', 'terminal', 'debugger', 'monitor', 'app'];
+            statusDiv.innerHTML = modules.map(module => {
+                const exists = window[module] !== undefined;
+                const hasCorrectType = exists && typeof window[module] === 'object';
+                const status = hasCorrectType ? 'ok' : 'error';
+                const statusText = hasCorrectType ? '✅ OK' : '❌ Missing';
+                
+                return `<div class="module-status">
+                    <span>${module}</span>
+                    <span class="status-${status}">${statusText}</span>
+                    <span>${exists ? typeof window[module] : 'undefined'}</span>
+                </div>`;
+            }).join('');
+            
+            // Update logs (last 20 entries)
+            logsDiv.innerHTML = initLogs.slice(-20).map(log => 
+                `<div style="margin: 2px 0; font-size: 12px;">
+                    <span style="color: #666;">[${log.timestamp.split('T')[1].split('.')[0]}]</span>
+                    <span style="color: ${log.type === 'error' ? '#ff0000' : log.type === 'info' ? '#00ff00' : '#cccccc'};">
+                        [${log.type.toUpperCase()}]
+                    </span>
+                    ${log.message}
+                </div>`
+            ).join('');
+        }
+        
+        function runTests() {
+            testResults = [];
+            
+            // Test 1: Check if app:ready event was fired
+            addTestResult('App Ready Event', 
+                window.appReadyFired ? 'ok' : 'error',
+                window.appReadyFired ? 'Event was fired successfully' : 'Event was not detected'
+            );
+            
+            // Test 2: Check if all modules exist
+            const requiredModules = ['stateManager', 'socketClient', 'consciousness', 'terminal', 'debugger', 'monitor', 'app'];
+            const missingModules = requiredModules.filter(module => !window[module]);
+            
+            addTestResult('Module Availability',
+                missingModules.length === 0 ? 'ok' : 'error',
+                missingModules.length === 0 ? 'All modules available' : `Missing: ${missingModules.join(', ')}`
+            );
+            
+            // Test 3: Check if modules have dependencies injected
+            if (window.app && window.app.stateManager) {
+                addTestResult('Dependency Injection',
+                    'ok',
+                    'RuntimeApp has injected dependencies'
+                );
+            } else {
+                addTestResult('Dependency Injection',
+                    'error',
+                    'RuntimeApp missing injected dependencies'
+                );
+            }
+            
+            // Test 4: Check initialization order in logs
+            const bootstrapLogs = initLogs.filter(log => log.message.includes('Bootstrap'));
+            addTestResult('Bootstrap Logs',
+                bootstrapLogs.length > 0 ? 'ok' : 'warning',
+                `Found ${bootstrapLogs.length} bootstrap log entries`
+            );
+            
+            updateDisplay();
+        }
+        
+        // Listen for app:ready event
+        document.addEventListener('app:ready', (event) => {
+            window.appReadyFired = true;
+            console.info('🎉 App ready event received!', event.detail);
+            
+            // Run tests after app is ready
+            setTimeout(runTests, 1000);
+        });
+        
+        // Run initial tests after a delay
+        setTimeout(() => {
+            if (!window.appReadyFired) {
+                addTestResult('Initialization Timeout', 'warning', 'App ready event not received within 5 seconds');
+            }
+            runTests();
+        }, 5000);
+        
+        // Update display every second
+        setInterval(updateDisplay, 1000);
+    </script>
+</body>
+</html>
