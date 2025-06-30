@@ -177,7 +177,7 @@ class DebuggerInterface {
     });
 
     this.stateManager.subscribe('debuggerBreakpoints', (breakpoints) => {
-      this.updateBreakpointsList();
+      this.updateBreakpointsDisplay();  // ✅ This method does exist
       this.renderCodeEditor();
     });
 
@@ -349,8 +349,13 @@ class DebuggerInterface {
 
   // Render code editor with syntax highlighting
   renderCodeEditor() {
-    if (!this.codeEditor || !this.codeLines) return;
-    
+  if (!this.codeEditor || !this.codeLines) return;
+  
+  // Use requestAnimationFrame to batch multiple calls
+  if (this._renderPending) return;
+  this._renderPending = true;
+  
+  requestAnimationFrame(() => {
     const codeContent = this.codeLines.map((line, index) => {
       const lineNumber = index + 1;
       const hasBreakpoint = this.breakpoints.has(`line_${lineNumber}`);
@@ -373,7 +378,9 @@ class DebuggerInterface {
     }).join('');
     
     this.codeEditor.innerHTML = codeContent;
-  }
+    this._renderPending = false;
+  });
+}
 
   // Basic syntax highlighting
   syntaxHighlight(code) {
@@ -435,21 +442,20 @@ class DebuggerInterface {
 
   // Breakpoint Management
   toggleBreakpointAtLine(lineNumber) {
-    const breakpointId = `line_${lineNumber}`;
-    
-    if (this.breakpoints.has(breakpointId)) {
-      this.removeBreakpoint(breakpointId);
+    if (!lineNumber || !this.stateManager) return;
+
+    const line = parseInt(lineNumber);
+    const breakpoints = this.stateManager.getDebuggerBreakpoints();
+
+    if (breakpoints.has(line)) {
+      this.stateManager.removeDebuggerBreakpoint(line);
+      console.log(`Removed breakpoint at line ${line}`);
     } else {
-      this.addBreakpoint(breakpointId, {
-        line: lineNumber,
-        enabled: true,
-        condition: null,
-        location: `consciousness.cpp:${lineNumber}`
-      });
+      this.stateManager.addDebuggerBreakpoint(line);
+      console.log(`Added breakpoint at line ${line}`);
     }
-    
-    this.updateBreakpointsDisplay();
-    this.updateCodeEditorBreakpoints();
+
+    // The subscription will automatically call updateBreakpointsDisplay() and renderCodeEditor()
   }
 
   addBreakpoint(id, breakpoint) {
@@ -482,32 +488,42 @@ class DebuggerInterface {
     }
   }
 
-  toggleBreakpoint(id) {
-    const breakpoint = this.breakpoints.get(id);
-    if (breakpoint) {
+  toggleBreakpoint(lineNumber) {
+    if (!this.stateManager) return;
+
+    const breakpoints = this.stateManager.getDebuggerBreakpoints();
+    const line = parseInt(lineNumber);
+
+    if (breakpoints.has(line)) {
+      // Toggle the enabled state
+      const breakpoint = breakpoints.get(line);
       breakpoint.enabled = !breakpoint.enabled;
-      this.updateBreakpointsDisplay();
+      this.stateManager.setDebuggerBreakpoints(breakpoints);
     }
+
+    this.updateBreakpointsDisplay();
   }
 
   updateBreakpointsDisplay() {
     if (!this.breakpointsList) return;
-    
+
     let html = '';
-    this.breakpoints.forEach((breakpoint, id) => {
-      const checkboxId = `breakpoint-checkbox-${id}`;
-      html += `
-        <div class="breakpoint-item ${breakpoint.enabled ? 'active' : ''}" data-breakpoint-id="${id}">
-          <input type="checkbox" id="${checkboxId}" class="breakpoint-checkbox" ${breakpoint.enabled ? 'checked' : ''}>
-          <label for="${checkboxId}" class="breakpoint-location">${breakpoint.location}:${breakpoint.line}</label>
-        </div>
-      `;
-    });
-    
-    if (html === '') {
+    const breakpoints = this.stateManager ? this.stateManager.getDebuggerBreakpoints() : new Map();
+
+    if (breakpoints.size === 0) {
       html = '<div class="no-breakpoints">No breakpoints set</div>';
+    } else {
+      breakpoints.forEach((breakpoint, line) => {
+        const checkboxId = `breakpoint-checkbox-${line}`;
+        html += `
+          <div class="breakpoint-item ${breakpoint.enabled ? 'active' : ''}" data-breakpoint-id="${line}">
+            <input type="checkbox" id="${checkboxId}" class="breakpoint-checkbox" ${breakpoint.enabled ? 'checked' : ''}>
+            <label for="${checkboxId}" class="breakpoint-location">consciousness.cpp:${line}</label>
+          </div>
+        `;
+      });
     }
-    
+
     this.breakpointsList.innerHTML = html;
   }
 

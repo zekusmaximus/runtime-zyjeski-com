@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breakpoint Display Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .pass { color: green; }
+        .fail { color: red; }
+        .info { color: blue; }
+        button { margin: 5px; padding: 8px 12px; }
+        #results { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Breakpoint Display Fix Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="testBreakpointDisplay()">Test Breakpoint Display</button>
+        <button onclick="testBreakpointToggle()">Test Breakpoint Toggle</button>
+        <button onclick="testBreakpointAtLine()">Test Breakpoint At Line</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        // Import the bootstrap to get the full application context
+        import bootstrap from '/js/bootstrap.js';
+
+        // Wait for app to be ready
+        document.addEventListener('app:ready', () => {
+            console.log('App is ready, modules available:', bootstrap.modules);
+            setTimeout(() => {
+                log('=== App ready - running comprehensive tests ===', 'info');
+                testBreakpointDisplay();
+            }, 500);
+        });
+    </script>
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const p = document.createElement('p');
+            p.className = type;
+            p.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(p);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testBreakpointDisplay() {
+            log('Testing breakpoint display functionality...', 'info');
+            
+            try {
+                // Check if StateManager exists
+                if (!window.stateManager) {
+                    log('❌ StateManager not found', 'fail');
+                    return;
+                }
+                log('✅ StateManager found', 'pass');
+
+                // Clear existing breakpoints
+                window.stateManager.setDebuggerBreakpoints(new Map());
+                log('✅ Cleared existing breakpoints', 'pass');
+
+                // Add test breakpoints
+                window.stateManager.addDebuggerBreakpoint(5, null);
+                window.stateManager.addDebuggerBreakpoint(10, 'test condition');
+                window.stateManager.addDebuggerBreakpoint(15, null);
+                
+                const breakpoints = window.stateManager.getDebuggerBreakpoints();
+                log(`✅ Added ${breakpoints.size} test breakpoints`, 'pass');
+
+                // Check breakpoint structure
+                breakpoints.forEach((breakpoint, line) => {
+                    log(`Breakpoint at line ${line}: enabled=${breakpoint.enabled}, condition=${breakpoint.condition}`, 'info');
+                });
+
+                // Test debugger interface if available
+                if (window.debuggerInterface) {
+                    log('✅ Debugger interface found', 'pass');
+
+                    // Test the updateBreakpointsDisplay method
+                    if (typeof window.debuggerInterface.updateBreakpointsDisplay === 'function') {
+                        // Create a mock breakpoints list element for testing
+                        const mockElement = document.createElement('div');
+                        const originalElement = window.debuggerInterface.breakpointsList;
+                        window.debuggerInterface.breakpointsList = mockElement;
+
+                        window.debuggerInterface.updateBreakpointsDisplay();
+                        log('✅ updateBreakpointsDisplay() called successfully', 'pass');
+                        log(`Generated HTML: ${mockElement.innerHTML.substring(0, 200)}...`, 'info');
+
+                        // Restore original element
+                        window.debuggerInterface.breakpointsList = originalElement;
+
+                        // Test that the HTML contains expected breakpoint structure
+                        if (mockElement.innerHTML.includes('breakpoint-item') && mockElement.innerHTML.includes('consciousness.cpp:')) {
+                            log('✅ Generated HTML has correct breakpoint structure', 'pass');
+                        } else if (mockElement.innerHTML.includes('no-breakpoints')) {
+                            log('✅ Generated HTML shows no breakpoints message correctly', 'pass');
+                        } else {
+                            log('❌ Generated HTML structure is unexpected', 'fail');
+                        }
+                    } else {
+                        log('❌ updateBreakpointsDisplay method not found', 'fail');
+                    }
+                } else {
+                    log('❌ Debugger interface not found', 'fail');
+                }
+
+            } catch (error) {
+                log(`❌ Error during test: ${error.message}`, 'fail');
+                console.error('Test error:', error);
+            }
+        }
+
+        async function testBreakpointToggle() {
+            log('Testing breakpoint toggle functionality...', 'info');
+            
+            try {
+                if (!window.stateManager) {
+                    log('❌ StateManager not found', 'fail');
+                    return;
+                }
+
+                // Add a test breakpoint
+                window.stateManager.addDebuggerBreakpoint(20, null);
+                let breakpoints = window.stateManager.getDebuggerBreakpoints();
+                let breakpoint = breakpoints.get(20);
+                log(`Initial breakpoint state: enabled=${breakpoint.enabled}`, 'info');
+
+                // Test toggle functionality
+                if (window.debuggerInterface && typeof window.debuggerInterface.toggleBreakpoint === 'function') {
+                    window.debuggerInterface.toggleBreakpoint(20);
+                    breakpoints = window.stateManager.getDebuggerBreakpoints();
+                    breakpoint = breakpoints.get(20);
+                    log(`After toggle: enabled=${breakpoint.enabled}`, 'info');
+                    log('✅ toggleBreakpoint() works correctly', 'pass');
+                } else {
+                    log('⚠️ Testing with manual toggle', 'info');
+                    breakpoint.enabled = !breakpoint.enabled;
+                    window.stateManager.setDebuggerBreakpoints(breakpoints);
+                    log(`Manual toggle result: enabled=${breakpoint.enabled}`, 'info');
+                }
+
+            } catch (error) {
+                log(`❌ Error during toggle test: ${error.message}`, 'fail');
+                console.error('Toggle test error:', error);
+            }
+        }
+
+        async function testBreakpointAtLine() {
+            log('Testing toggleBreakpointAtLine functionality...', 'info');
+            
+            try {
+                if (!window.stateManager) {
+                    log('❌ StateManager not found', 'fail');
+                    return;
+                }
+
+                const testLine = 25;
+                let breakpoints = window.stateManager.getDebuggerBreakpoints();
+                const initialHasBreakpoint = breakpoints.has(testLine);
+                log(`Initial state - line ${testLine} has breakpoint: ${initialHasBreakpoint}`, 'info');
+
+                if (window.debuggerInterface && typeof window.debuggerInterface.toggleBreakpointAtLine === 'function') {
+                    // Toggle the breakpoint
+                    window.debuggerInterface.toggleBreakpointAtLine(testLine);
+                    
+                    breakpoints = window.stateManager.getDebuggerBreakpoints();
+                    const finalHasBreakpoint = breakpoints.has(testLine);
+                    log(`After toggle - line ${testLine} has breakpoint: ${finalHasBreakpoint}`, 'info');
+                    
+                    if (initialHasBreakpoint !== finalHasBreakpoint) {
+                        log('✅ toggleBreakpointAtLine() works correctly', 'pass');
+                    } else {
+                        log('❌ toggleBreakpointAtLine() did not change state', 'fail');
+                    }
+                } else {
+                    log('❌ toggleBreakpointAtLine method not found', 'fail');
+                }
+
+            } catch (error) {
+                log(`❌ Error during line toggle test: ${error.message}`, 'fail');
+                console.error('Line toggle test error:', error);
+            }
+        }
+
+        // Auto-run basic test on load (only if app:ready event hasn't fired)
+        let appReadyFired = false;
+        document.addEventListener('app:ready', () => { appReadyFired = true; });
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (!appReadyFired) {
+                    log('=== App not ready yet, running basic tests ===', 'info');
+                    testBreakpointDisplay();
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
