@@ -1,8 +1,8 @@
 // public/js/app.js
-import { createLogger } from '/js/logger.js';
+import { createLogger } from './logger.js';
 const logger = createLogger('App');
 
-import GroundStateValidator from '/js/ground-state-validator.js';
+import GroundStateValidator from './ground-state-validator.js';
 
 // Note: All dependencies will be injected by bootstrap - no direct imports needed
 

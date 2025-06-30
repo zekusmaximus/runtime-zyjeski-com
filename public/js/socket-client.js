@@ -1,7 +1,7 @@
 // Fixed Socket Client for Runtime.zyjeski.com
 // Prevents infinite user interaction logging loop
 
-import { createLogger } from '/js/logger.js';
+import { createLogger } from './logger.js';
 
 class SocketClient {
   constructor(dependencies = {}) {

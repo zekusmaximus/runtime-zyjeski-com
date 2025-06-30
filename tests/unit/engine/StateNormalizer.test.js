@@ -1,4 +1,4 @@
-import { StateNormalizer } from '../../lib/engine/StateNormalizer.js';
+import { StateNormalizer } from '../../../lib/engine/StateNormalizer.js';
 import { expect } from 'chai';
 
 describe('StateNormalizer', () => {

@@ -1,16 +1,29 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ConsciousnessManager } from '../../public/js/consciousness.js';
+import ConsciousnessManager from '../../public/js/consciousness.js';
 
 describe('ConsciousnessManager Monitoring Lifecycle', () => {
   let manager;
   beforeEach(() => {
     global.window = {};
-    window.stateManager = {
-      set: vi.fn(),
+
+    // Mock stateManager with all required methods
+    let isMonitoringActive = false;
+    const mockStateManager = {
+      set: vi.fn((key, value) => {
+        if (key === 'monitoringActive') {
+          isMonitoringActive = value;
+        }
+      }),
       subscribe: vi.fn(),
       loadCharacterState: vi.fn(),
-      updateConsciousnessData: vi.fn()
+      updateConsciousnessData: vi.fn(),
+      getCurrentCharacter: vi.fn(() => ({ id: 'alexander-kane', name: 'Alexander Kane' })),
+      getMonitoringActive: vi.fn(() => isMonitoringActive),
+      setCurrentCharacter: vi.fn(),
+      setMonitoringActive: vi.fn((active) => { isMonitoringActive = active; })
     };
+
+    window.stateManager = mockStateManager;
     window.socketClient = {
       isSocketConnected: () => true,
       startMonitoring: vi.fn(),
@@ -18,8 +31,12 @@ describe('ConsciousnessManager Monitoring Lifecycle', () => {
       on: vi.fn(),
       off: vi.fn()
     };
-    manager = new ConsciousnessManager();
-    manager.currentCharacter = { id: 'alexander-kane', name: 'Alexander Kane' };
+
+    // Create manager with dependency injection
+    manager = new ConsciousnessManager({
+      stateManager: mockStateManager,
+      socketClient: window.socketClient
+    });
   });
 
   afterEach(() => {
@@ -40,7 +57,11 @@ describe('ConsciousnessManager Monitoring Lifecycle', () => {
   });
 
   it('stops monitoring after userStopMonitoring()', () => {
+    // First start monitoring to set up the state
     manager.userStartMonitoring();
+    expect(manager.isMonitoring).toBe(true); // Verify it started
+
+    // Then stop monitoring
     manager.userStopMonitoring();
     expect(manager.isMonitoring).toBe(false);
     expect(manager.updateInterval).toBe(null);

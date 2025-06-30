@@ -2,17 +2,17 @@
 // Single Bootstrap Module with Dependency Injection
 // This is the ONLY initialization point for the entire application
 
-import { createLogger } from '/js/logger.js';
-import '/js/state-manager.js'; // This creates window.stateManager
-import GroundStateValidator from '/js/ground-state-validator.js';
+import { createLogger } from './logger.js';
+import './state-manager.js'; // This creates window.stateManager
+import GroundStateValidator from './ground-state-validator.js';
 
 // Import module classes (not instances)
-import SocketClient from '/js/socket-client.js';
-import ConsciousnessManager from '/js/consciousness.js';
-import Terminal from '/js/terminal.js';
-import DebuggerInterface from '/js/debugger.js';
-import MonitorController from '/js/monitor.js';
-import RuntimeApp from '/js/app.js';
+import SocketClient from './socket-client.js';
+import ConsciousnessManager from './consciousness.js';
+import Terminal from './terminal.js';
+import DebuggerInterface from './debugger.js';
+import MonitorController from './monitor.js';
+import RuntimeApp from './app.js';
 
 const logger = createLogger('Bootstrap');
 

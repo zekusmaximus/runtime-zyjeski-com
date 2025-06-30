@@ -1,6 +1,6 @@
 // Fixed Consciousness Management Module - Prevent double initialization
 
-import { createLogger } from '/js/logger.js';
+import { createLogger } from './logger.js';
 
 class ConsciousnessManager {
   constructor(dependencies = {}) {

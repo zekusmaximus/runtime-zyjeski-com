@@ -1,5 +1,5 @@
 // Complete Debugger Interface Module for Runtime.zyjeski.com
-import { createLogger } from '/js/logger.js';
+import { createLogger } from './logger.js';
 
 class DebuggerInterface {
   constructor(dependencies = {}) {
