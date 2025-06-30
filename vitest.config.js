@@ -8,7 +8,7 @@ export default defineConfig({
     include: ['tests/**/*.test.{js,ts}', 'public/js/**/*.test.{js,ts}'],
     coverage: {
       reporter: ['text', 'html'],
-      provider: 'c8'
+      provider: 'v8' // Changed from c8 to v8
     }
   },
 });
