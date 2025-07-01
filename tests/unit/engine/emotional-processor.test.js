@@ -14,4 +14,15 @@ describe('EmotionalProcessor', () => {
     proc.intensifyAll(0.1);
     expect(proc.getTotalIntensity()).toBeCloseTo(0.6, 2);
   });
+
+  it('shuts down gracefully', async () => {
+    const proc = new EmotionalProcessor({}, { initialState: { grief: 0.5 } });
+    await proc.initialize();
+
+    const result = await proc.shutdown();
+    expect(result).toBe(true);
+
+    // Processor should still be functional after shutdown (just logged)
+    expect(proc.getTotalIntensity()).toBeCloseTo(0.5, 2);
+  });
 });
