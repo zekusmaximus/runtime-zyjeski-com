@@ -5,11 +5,17 @@ import { createLogger } from './logger.js';
 class ConsciousnessManager {
   constructor(dependencies = {}) {
     // Dependency injection - accept dependencies instead of global access
-    const { stateManager, socketClient, logger } = dependencies;
+    const { stateManager, socketClient, logger, transformer } = dependencies;
 
     this.stateManager = stateManager;
     this.socketClient = socketClient;
     this.logger = logger || createLogger('Consciousness');
+    this.transformer = transformer;
+
+    // Validate required dependencies
+    if (!this.transformer) {
+      this.logger.warn('ConsciousnessTransformer not provided - data transformation may be limited');
+    }
 
     this.updateInterval = null;
     this.isInitializing = false; // ADDED: Prevent concurrent initialization
@@ -180,7 +186,7 @@ class ConsciousnessManager {
     // }
   }
 
-  // Updated preview renderer with robust validation
+  // REFACTORED: Use ConsciousnessTransformer for process formatting
   updateConsciousnessPreview(consciousness) {
     this.logger.debug('updateConsciousnessPreview called with:', consciousness);
 
@@ -209,83 +215,35 @@ class ConsciousnessManager {
     if (!processList) {
       this.logger.warn('Process list element not found in consciousness preview');
       return;
-    }    // Validate consciousness data structure
-    if (!consciousness || typeof consciousness !== 'object') {
-      this.logger.warn('Invalid consciousness data: not an object');
-      processList.innerHTML = '<div class="no-processes">Invalid consciousness data<br><small>Check server connection</small></div>';
-      return;
-    }
-
-    // Try different paths to find the processes array with improved validation
-    let processes = null;
-
-    if (Array.isArray(consciousness.processes)) {
-      processes = consciousness.processes;
-      this.logger.debug('Found processes in consciousness.processes');
-    } else if (consciousness.consciousness && Array.isArray(consciousness.consciousness.processes)) {
-      processes = consciousness.consciousness.processes;
-      this.logger.debug('Found processes in consciousness.consciousness.processes');
-    } else if (consciousness.data && Array.isArray(consciousness.data.processes)) {
-      processes = consciousness.data.processes;
-      this.logger.debug('Found processes in consciousness.data.processes');
-    } else if (consciousness.state && Array.isArray(consciousness.state.processes)) {
-      processes = consciousness.state.processes;
-      this.logger.debug('Found processes in consciousness.state.processes');
-    } else {
-      // No valid processes array found
-      this.logger.warn('No valid processes array found in consciousness data:', consciousness);
-      this.logger.debug('Available keys:', Object.keys(consciousness));
-
-      // Try to extract from nested structures as fallback
-      if (consciousness.consciousness && consciousness.consciousness.processes) {
-        this.logger.debug('Found non-array processes in consciousness.consciousness.processes:', typeof consciousness.consciousness.processes);
-        processes = [];
-      } else {
-        processList.innerHTML = '<div class="no-processes">No processes data available<br><small>Check server connection and character data</small></div>';
-        return;
-      }
-    }
-
-    this.logger.debug(`Found ${processes.length} processes to display`);
-
-    if (processes.length === 0) {
-      processList.innerHTML = '<div class="no-processes">No active processes</div>';
-      return;
     }
 
     try {
-      // Update process list in preview (safely)
+      let processes = [];
+
+      // Use transformer if available for process extraction and formatting
+      if (this.transformer) {
+        processes = this.transformer.extractProcesses(consciousness);
+      } else {
+        // Fallback to legacy process extraction
+        processes = this.extractProcessesLegacy(consciousness);
+      }
+
+      this.logger.debug(`Found ${processes.length} processes to display`);
+
+      if (processes.length === 0) {
+        processList.innerHTML = '<div class="no-processes">No active processes</div>';
+        return;
+      }
+
+      // Render processes using transformer-formatted data
       processList.innerHTML = processes.slice(0, 3).map(process => {
-        // Validate individual process data
-        if (!process || typeof process !== 'object') {
-          return '<div class="process-item invalid">Invalid process data</div>';
+        if (this.transformer) {
+          // Use transformer-formatted process data
+          return this.renderTransformedProcess(process);
+        } else {
+          // Use legacy rendering
+          return this.renderProcessLegacy(process);
         }
-
-        const name = process.name || process.displayName || 'Unknown Process';
-        let statusClass = 'running';
-        let statusText = 'Running';
-
-        if (process.status === 'crashed' || process.status === 'error') {
-          statusClass = 'error';
-          statusText = process.status === 'crashed' ? 'Crashed' : 'Error';
-        } else if (process.status === 'warning' || (process.cpu_usage && process.cpu_usage > 80)) {
-          statusClass = 'warning';
-          statusText = 'Warning';
-        } else if (process.status) {
-          statusText = process.status.charAt(0).toUpperCase() + process.status.slice(1);
-        }
-
-        const cpu = process.cpu_usage || process.cpu || 0;
-        const memory = process.memory_usage || process.memory_mb || process.memory || 0;
-        const usage = `CPU: ${cpu.toFixed(1)}% | MEM: ${memory.toFixed(1)}MB`;
-
-        return `
-          <div class="process-item">
-            <span class="process-name">${this.escapeHtml(name)}</span>
-            <span class="process-status ${statusClass}">${statusText}</span>
-            <span class="process-usage">${usage}</span>
-          </div>
-        `;
       }).join('');
 
       this.logger.debug('Successfully updated consciousness preview');
@@ -295,9 +253,90 @@ class ConsciousnessManager {
     }
   }
 
-  // FIXED: Add robust data validation to handleConsciousnessUpdate
+  // Helper method to render transformer-formatted process
+  renderTransformedProcess(process) {
+    if (!process || typeof process !== 'object') {
+      return '<div class="process-item invalid">Invalid process data</div>';
+    }
+
+    const name = process.name || 'Unknown Process';
+    const statusClass = this.getStatusClass(process.status, process.health);
+    const statusText = this.getStatusText(process.status);
+    const usage = `CPU: ${process.cpu.toFixed(1)}% | MEM: ${process.memory.toFixed(1)}MB`;
+
+    return `
+      <div class="process-item">
+        <span class="process-name">${this.escapeHtml(name)}</span>
+        <span class="process-status ${statusClass}">${statusText}</span>
+        <span class="process-usage">${usage}</span>
+      </div>
+    `;
+  }
+
+  // Helper method for legacy process extraction (fallback)
+  extractProcessesLegacy(consciousness) {
+    // Legacy process extraction logic
+    if (Array.isArray(consciousness.processes)) {
+      return consciousness.processes;
+    } else if (consciousness.consciousness && Array.isArray(consciousness.consciousness.processes)) {
+      return consciousness.consciousness.processes;
+    } else if (consciousness.data && Array.isArray(consciousness.data.processes)) {
+      return consciousness.data.processes;
+    } else if (consciousness.state && Array.isArray(consciousness.state.processes)) {
+      return consciousness.state.processes;
+    }
+    return [];
+  }
+
+  // Helper method for legacy process rendering (fallback)
+  renderProcessLegacy(process) {
+    if (!process || typeof process !== 'object') {
+      return '<div class="process-item invalid">Invalid process data</div>';
+    }
+
+    const name = process.name || process.displayName || 'Unknown Process';
+    let statusClass = 'running';
+    let statusText = 'Running';
+
+    if (process.status === 'crashed' || process.status === 'error') {
+      statusClass = 'error';
+      statusText = process.status === 'crashed' ? 'Crashed' : 'Error';
+    } else if (process.status === 'warning' || (process.cpu_usage && process.cpu_usage > 80)) {
+      statusClass = 'warning';
+      statusText = 'Warning';
+    } else if (process.status) {
+      statusText = process.status.charAt(0).toUpperCase() + process.status.slice(1);
+    }
+
+    const cpu = process.cpu_usage || process.cpu || 0;
+    const memory = process.memory_usage || process.memory_mb || process.memory || 0;
+    const usage = `CPU: ${cpu.toFixed(1)}% | MEM: ${memory.toFixed(1)}MB`;
+
+    return `
+      <div class="process-item">
+        <span class="process-name">${this.escapeHtml(name)}</span>
+        <span class="process-status ${statusClass}">${statusText}</span>
+        <span class="process-usage">${usage}</span>
+      </div>
+    `;
+  }
+
+  // Helper methods for status formatting
+  getStatusClass(status, health) {
+    if (status === 'error' || status === 'crashed') return 'error';
+    if (status === 'warning' || (health && health < 50)) return 'warning';
+    return 'running';
+  }
+
+  getStatusText(status) {
+    if (!status) return 'Running';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
+  // REFACTORED: Use ConsciousnessTransformer for data processing
   handleConsciousnessUpdate(data) {
-    this.logger.debug('[DEBUG] Received consciousness-update:', data); // <--- ADD THIS LINE
+    this.logger.debug('[DEBUG] Received consciousness-update:', data);
+
     // Validate input data
     if (!data) {
       this.logger.warn('Received null/undefined consciousness update data');
@@ -317,8 +356,25 @@ class ConsciousnessManager {
         this.stateManager._processingServerUpdate = true;
       }
 
-      // Extract and validate consciousness data
-      const consciousnessData = this.extractConsciousnessData(data);
+      // Use transformer for data validation and processing
+      let consciousnessData;
+      if (this.transformer) {
+        // Validate update with transformer
+        if (!this.transformer.validateUpdate(data)) {
+          this.logger.warn('Invalid consciousness update data structure');
+          if (this.stateManager) {
+            this.stateManager._processingServerUpdate = false;
+          }
+          return;
+        }
+
+        // Extract consciousness data using transformer (fallback to legacy method)
+        consciousnessData = this.extractConsciousnessData(data);
+      } else {
+        // Fallback to legacy extraction method
+        consciousnessData = this.extractConsciousnessData(data);
+      }
+
       if (!consciousnessData) {
         this.logger.warn('No valid consciousness data found in update');
         if (this.stateManager) {
@@ -333,13 +389,13 @@ class ConsciousnessManager {
       } else {
         this.logger.error('StateManager not available or updateConsciousnessData method missing');
       }
-      
-      // Update UI components with validated data
+
+      // Update UI components with transformed data
       this.updateConsciousnessPreview(consciousnessData);
-      
+
       // Notify other components
       this.notifyComponents('consciousness-updated', consciousnessData);
-      
+
       // Clear the flag
       if (this.stateManager) {
         this.stateManager._processingServerUpdate = false;
@@ -617,6 +673,11 @@ class ConsciousnessManager {
       this.socketClient.off('consciousness-update', this._consciousnessUpdateHandler);
     }
     this.isInitializing = false;
+
+    // Clean up transformer
+    if (this.transformer && typeof this.transformer.destroy === 'function') {
+      this.transformer.destroy();
+    }
 
     // Clear state through StateManager
     if (this.stateManager) {

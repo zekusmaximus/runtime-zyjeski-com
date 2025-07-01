@@ -13,6 +13,7 @@ import Terminal from './terminal.js';
 import DebuggerInterface from './debugger.js';
 import MonitorController from './monitor.js';
 import RuntimeApp from './app.js';
+import { ConsciousnessTransformer } from './utils/ConsciousnessTransformer.js';
 
 const logger = createLogger('Bootstrap');
 
@@ -24,6 +25,7 @@ console.log('📦 Available imports:', {
   GroundStateValidator: typeof GroundStateValidator,
   SocketClient: typeof SocketClient,
   ConsciousnessManager: typeof ConsciousnessManager,
+  ConsciousnessTransformer: typeof ConsciousnessTransformer,
   Terminal: typeof Terminal,
   DebuggerInterface: typeof DebuggerInterface,
   MonitorController: typeof MonitorController,
@@ -56,17 +58,27 @@ try {
   });
   window.socketClient = socketClient;
 
-  // 3. ConsciousnessManager
-  console.log('3. Creating consciousness');
+  // 3. ConsciousnessTransformer
+  console.log('3. Creating consciousnessTransformer');
+  const consciousnessTransformer = new ConsciousnessTransformer({
+    enableCaching: true,
+    cacheTimeout: 60000,
+    maxCacheSize: 100
+  });
+  window.consciousnessTransformer = consciousnessTransformer;
+
+  // 4. ConsciousnessManager
+  console.log('4. Creating consciousness');
   const consciousness = new ConsciousnessManager({
     stateManager: stateManager,
     socketClient: socketClient,
+    transformer: consciousnessTransformer,
     logger: createLogger('Consciousness')
   });
   window.consciousness = consciousness;
 
-  // 4. Terminal
-  console.log('4. Creating terminal');
+  // 5. Terminal
+  console.log('5. Creating terminal');
   const terminal = new Terminal({
     stateManager: stateManager,
     socketClient: socketClient,
@@ -74,8 +86,8 @@ try {
   });
   window.terminal = terminal;
 
-  // 5. DebuggerInterface
-  console.log('5. Creating debugger');
+  // 6. DebuggerInterface
+  console.log('6. Creating debugger');
   const debuggerInterface = new DebuggerInterface({
     stateManager: stateManager,
     consciousness: consciousness,
@@ -83,8 +95,8 @@ try {
   });
   window.debuggerInterface = debuggerInterface;
 
-  // 6. MonitorController
-  console.log('6. Creating monitor');
+  // 7. MonitorController
+  console.log('7. Creating monitor');
   const monitor = new MonitorController({
     stateManager: stateManager,
     socketClient: socketClient,
@@ -93,8 +105,8 @@ try {
   });
   window.monitor = monitor;
 
-  // 7. RuntimeApp
-  console.log('7. Creating app');
+  // 8. RuntimeApp
+  console.log('8. Creating app');
   const app = new RuntimeApp({
     stateManager: stateManager,
     socketClient: socketClient,
@@ -110,7 +122,7 @@ try {
 
   // Fire app ready event
   const event = new CustomEvent('app:ready', {
-    detail: { modules: ['stateManager', 'socketClient', 'consciousness', 'terminal', 'debugger', 'monitor', 'app'] }
+    detail: { modules: ['stateManager', 'socketClient', 'consciousnessTransformer', 'consciousness', 'terminal', 'debugger', 'monitor', 'app'] }
   });
   document.dispatchEvent(event);
   console.log('🎉 App ready event fired!');
@@ -123,7 +135,7 @@ try {
 // Export bootstrap info for debugging
 const bootstrap = {
   initialized: true,
-  modules: ['stateManager', 'socketClient', 'consciousness', 'terminal', 'debuggerInterface', 'monitor', 'app']
+  modules: ['stateManager', 'socketClient', 'consciousnessTransformer', 'consciousness', 'terminal', 'debuggerInterface', 'monitor', 'app']
 };
 
 export default bootstrap;
