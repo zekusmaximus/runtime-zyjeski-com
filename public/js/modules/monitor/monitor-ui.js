@@ -1,22 +1,26 @@
 // public/js/modules/monitor/monitor-ui.js
 // Fixed implementation that handles the actual data structure from the server
 
+import { ProcessList } from '../../components/ProcessList.js';
+
 class MonitorUI {
   constructor() {
     this.elements = {};
     this.isInitialized = false;
+    this.processList = null; // ProcessList component instance
     // Inject CSS once for flash effects
     this.addFlashCSS();
   }
 
   initialize(controller) {
     if (this.isInitialized) return;
-    
+
     this.controller = controller;
     this.cacheElements();
     this.setupEventListeners();
+    this._initializeProcessList();
     this.isInitialized = true;
-    
+
     console.log('Monitor UI initialized');
   }
 
@@ -224,9 +228,269 @@ class MonitorUI {
     this.elements.resourceMeters.innerHTML = html;
   }
 
+  /**
+   * Initialize ProcessList component
+   * @private
+   */
+  _initializeProcessList() {
+    if (!this.elements.processTable) {
+      console.warn('ProcessList: processTable element not found, skipping initialization');
+      return;
+    }
+
+    try {
+      // Create ProcessList component with monitor-appropriate options
+      this.processList = new ProcessList(this.elements.processTable, {
+        showHealth: true,
+        showWarnings: true,
+        showResources: true,
+        showDescription: false, // Use tooltips only
+        interactive: true,
+        selectable: true,
+        multiSelect: false,
+        virtualScroll: true,
+        rowHeight: 48,
+        visibleRows: 12,
+        theme: 'dark',
+        compactMode: false
+      });
+
+      // Set up event handlers for monitor integration
+      this._setupProcessListEvents();
+
+      console.log('ProcessList component initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize ProcessList component:', error);
+      // Fallback to legacy implementation
+      this._useLegacyProcessTable = true;
+    }
+  }
+
+  /**
+   * Set up ProcessList event handlers
+   * @private
+   */
+  _setupProcessListEvents() {
+    if (!this.processList) return;
+
+    // Handle process clicks for debugging
+    this.processList.on('process-click', (data) => {
+      console.log('Process clicked for debugging:', data.process);
+
+      // Emit event for debugger integration
+      if (this.controller && this.controller.onProcessSelected) {
+        this.controller.onProcessSelected(data.process);
+      }
+
+      // Global event for other components
+      window.dispatchEvent(new CustomEvent('monitor:process-selected', {
+        detail: { process: data.process, event: data.event }
+      }));
+    });
+
+    // Handle process context menu for interventions
+    this.processList.on('process-context-menu', (data) => {
+      console.log('Process context menu:', data.process);
+
+      // Emit event for intervention system
+      window.dispatchEvent(new CustomEvent('monitor:process-context-menu', {
+        detail: { process: data.process, event: data.event }
+      }));
+    });
+
+    // Handle selection changes
+    this.processList.on('selection-change', (data) => {
+      console.log('Process selection changed:', data.selected);
+
+      // Update UI state based on selection
+      this._updateProcessActions(data.selected);
+    });
+
+    // Handle process hover for tooltips
+    this.processList.on('process-hover', (data) => {
+      // Show process description in tooltip if available
+      if (data.process.description) {
+        data.event.target.closest('.process-row').title = data.process.description;
+      }
+    });
+  }
+
+  /**
+   * Update process actions based on selection
+   * @private
+   * @param {Array} selectedPids - Array of selected process PIDs
+   */
+  _updateProcessActions(selectedPids) {
+    // Update action buttons or context menus based on selection
+    // This can be extended for future process management features
+    const hasSelection = selectedPids.length > 0;
+
+    // Example: Enable/disable action buttons
+    const actionButtons = document.querySelectorAll('.process-action-btn');
+    actionButtons.forEach(btn => {
+      btn.disabled = !hasSelection;
+    });
+  }
+
   updateProcessTable(processes) {
     console.log('🔄 Updating process table:', processes);
-    
+
+    // Use ProcessList component if available, otherwise fallback to legacy
+    if (this.processList && !this._useLegacyProcessTable) {
+      this._updateProcessListComponent(processes);
+    } else {
+      this._updateLegacyProcessTable(processes);
+    }
+  }
+
+  /**
+   * Update ProcessList component with transformed data
+   * @private
+   * @param {Array} processes - Raw process data from monitor state
+   */
+  _updateProcessListComponent(processes) {
+    if (!this.processList) return;
+
+    try {
+      // Transform process data using ConsciousnessTransformer if available
+      let transformedProcesses = processes;
+
+      if (window.consciousnessTransformer && processes && processes.length > 0) {
+        // Create consciousness data structure for transformer
+        const consciousnessData = {
+          timestamp: new Date().toISOString(),
+          processes: processes
+        };
+
+        transformedProcesses = window.consciousnessTransformer.extractProcesses(consciousnessData);
+        console.log('🔄 Transformed processes for ProcessList:', transformedProcesses);
+      } else {
+        // Fallback transformation for compatibility
+        transformedProcesses = this._transformProcessesForProcessList(processes);
+      }
+
+      // Update ProcessList component
+      this.processList.update(transformedProcesses);
+
+    } catch (error) {
+      console.error('Error updating ProcessList component:', error);
+      // Fallback to legacy implementation
+      this._updateLegacyProcessTable(processes);
+    }
+  }
+
+  /**
+   * Fallback transformation when ConsciousnessTransformer is not available
+   * @private
+   * @param {Array} processes - Raw process data
+   * @returns {Array} Transformed process data
+   */
+  _transformProcessesForProcessList(processes) {
+    if (!Array.isArray(processes)) return [];
+
+    return processes.map(process => ({
+      pid: process.pid || -1,
+      name: process.name || 'Unknown Process',
+      status: process.status || 'unknown',
+      health: this._calculateProcessHealth(process),
+      indicator: this._generateProcessIndicator(process),
+      warnings: this._extractProcessWarnings(process),
+      trend: 'stable',
+      cpu: process.cpu_usage || process.cpuUsage || 0,
+      memory: process.memory_mb || process.memoryUsage || 0,
+      threads: process.threads || process.threadCount || 0,
+      priority: process.priority || 'normal',
+      lifetime: process.lifetime || 0,
+      debuggable: process.debuggable !== false,
+      description: process.description || `${process.name} - ${process.status}`
+    }));
+  }
+
+  /**
+   * Calculate process health for fallback transformation
+   * @private
+   * @param {Object} process - Process data
+   * @returns {number} Health percentage (0-100)
+   */
+  _calculateProcessHealth(process) {
+    const stability = process.stability || 1.0;
+    const cpuUsage = process.cpu_usage || process.cpuUsage || 0;
+    const memoryUsage = process.memory_mb || process.memoryUsage || 0;
+
+    // Simple health calculation based on stability and resource usage
+    let health = stability * 100;
+
+    // Reduce health for high resource usage
+    if (cpuUsage > 80) health -= 20;
+    if (memoryUsage > 1000) health -= 15;
+
+    // Status-based adjustments
+    switch (process.status) {
+      case 'error':
+      case 'crashed':
+        health = Math.min(health, 10);
+        break;
+      case 'blocked':
+      case 'warning':
+        health = Math.min(health, 50);
+        break;
+      case 'terminated':
+        health = 0;
+        break;
+    }
+
+    return Math.max(0, Math.min(100, Math.round(health)));
+  }
+
+  /**
+   * Generate process indicator for fallback transformation
+   * @private
+   * @param {Object} process - Process data
+   * @returns {Object} Indicator object with color, icon, and pulse
+   */
+  _generateProcessIndicator(process) {
+    const status = process.status || 'unknown';
+
+    const indicators = {
+      running: { color: '#4CAF50', icon: 'activity', pulse: false },
+      blocked: { color: '#FF9800', icon: 'pause', pulse: true },
+      terminated: { color: '#757575', icon: 'stop', pulse: false },
+      error: { color: '#F44336', icon: 'error', pulse: true },
+      crashed: { color: '#F44336', icon: 'error', pulse: true },
+      warning: { color: '#FFC107', icon: 'warning', pulse: true }
+    };
+
+    return indicators[status] || { color: '#757575', icon: 'activity', pulse: false };
+  }
+
+  /**
+   * Extract process warnings for fallback transformation
+   * @private
+   * @param {Object} process - Process data
+   * @returns {Array} Array of warning strings
+   */
+  _extractProcessWarnings(process) {
+    const warnings = [];
+
+    const cpuUsage = process.cpu_usage || process.cpuUsage || 0;
+    const memoryUsage = process.memory_mb || process.memoryUsage || 0;
+
+    if (cpuUsage > 80) warnings.push('high_cpu_usage');
+    if (memoryUsage > 1000) warnings.push('high_memory_usage');
+    if (process.status === 'warning') warnings.push('process_warning');
+    if (process.currentIssues && process.currentIssues.length > 0) {
+      warnings.push('process_issues');
+    }
+
+    return warnings;
+  }
+
+  /**
+   * Legacy process table implementation (fallback)
+   * @private
+   * @param {Array} processes - Process data
+   */
+  _updateLegacyProcessTable(processes) {
     if (!this.elements.processTable || !processes || processes.length === 0) {
       if (this.elements.processTable) {
         this.elements.processTable.innerHTML = '<div class="empty-state">No processes running.</div>';
@@ -251,7 +515,7 @@ class MonitorUI {
     for (const process of processes) {
       const cpuPercent = process.cpu_usage || process.cpuUsage || 0;
       const memoryMB = process.memory_mb || process.memoryUsage || 0;
-      
+
       html += `
         <tr class="process-row ${process.status}">
           <td class="process-pid">${process.pid || 'N/A'}</td>
@@ -500,6 +764,22 @@ class MonitorUI {
     const flashClass = `flash-${type}`;
     container.classList.add(flashClass);
     setTimeout(() => container.classList.remove(flashClass), 300);
+  }
+
+  /**
+   * Clean up MonitorUI and destroy ProcessList component
+   */
+  destroy() {
+    if (this.processList) {
+      this.processList.destroy();
+      this.processList = null;
+    }
+
+    // Clear elements cache
+    this.elements = {};
+    this.isInitialized = false;
+
+    console.log('MonitorUI destroyed');
   }
 
   // Injects the required flash CSS once per page load

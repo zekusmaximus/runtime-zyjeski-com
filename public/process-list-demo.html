@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProcessList Component Demo - Runtime.zyjeski.com</title>
+    
+    <!-- ProcessList Component CSS -->
+    <link rel="stylesheet" href="/css/components/process-list.css">
+    
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border: #404040;
+            --accent: #2196F3;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .demo-header h1 {
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+        
+        .demo-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .demo-section h2 {
+            color: var(--accent);
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        
+        .demo-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+        }
+        
+        .demo-control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .demo-control-group label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        button, select, input {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        button:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .process-list-container {
+            height: 400px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .performance-stats {
+            background: var(--bg-primary);
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        
+        .performance-stats h3 {
+            margin-top: 0;
+            color: var(--accent);
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+        
+        .event-log {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .event-log .event {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+        
+        .event-log .event.click { color: #4CAF50; }
+        .event-log .event.selection { color: #2196F3; }
+        .event-log .event.hover { color: #FF9800; }
+        .event-log .event.context { color: #F44336; }
+        
+        @media (max-width: 768px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .demo-controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>ProcessList Component Demo</h1>
+            <p>Interactive demonstration of the ProcessList component for runtime.zyjeski.com</p>
+        </div>
+
+        <!-- Basic Demo -->
+        <div class="demo-section">
+            <h2>Basic ProcessList</h2>
+            <div class="demo-controls">
+                <div class="demo-control-group">
+                    <label>Process Count</label>
+                    <select id="processCount">
+                        <option value="5">5 Processes</option>
+                        <option value="25" selected>25 Processes</option>
+                        <option value="100">100 Processes</option>
+                        <option value="500">500 Processes</option>
+                        <option value="1000">1000 Processes</option>
+                    </select>
+                </div>
+                <div class="demo-control-group">
+                    <label>Theme</label>
+                    <select id="theme">
+                        <option value="dark" selected>Dark</option>
+                        <option value="light">Light</option>
+                    </select>
+                </div>
+                <div class="demo-control-group">
+                    <label>Actions</label>
+                    <button id="generateData">Generate New Data</button>
+                </div>
+                <div class="demo-control-group">
+                    <label>Selection</label>
+                    <button id="selectAll">Select All</button>
+                    <button id="clearSelection">Clear Selection</button>
+                </div>
+            </div>
+            <div id="basicDemo" class="process-list-container"></div>
+            
+            <div class="performance-stats">
+                <h3>Performance Metrics</h3>
+                <div class="stat-item">
+                    <span>Last Update Time:</span>
+                    <span id="updateTime" class="stat-value">-</span>
+                </div>
+                <div class="stat-item">
+                    <span>Total Updates:</span>
+                    <span id="updateCount" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Selected Processes:</span>
+                    <span id="selectedCount" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Visible Processes:</span>
+                    <span id="visibleCount" class="stat-value">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Comparison -->
+        <div class="demo-section">
+            <h2>Feature Comparison</h2>
+            <div class="demo-grid">
+                <div>
+                    <h3>Compact Mode</h3>
+                    <div id="compactDemo" class="process-list-container"></div>
+                </div>
+                <div>
+                    <h3>Virtual Scrolling Disabled</h3>
+                    <div id="noVirtualDemo" class="process-list-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Updates -->
+        <div class="demo-section">
+            <h2>Real-time Updates</h2>
+            <div class="demo-controls">
+                <div class="demo-control-group">
+                    <label>Update Interval</label>
+                    <select id="updateInterval">
+                        <option value="0">Stopped</option>
+                        <option value="100">100ms</option>
+                        <option value="500">500ms</option>
+                        <option value="1000" selected>1 second</option>
+                        <option value="2000">2 seconds</option>
+                    </select>
+                </div>
+                <div class="demo-control-group">
+                    <label>Update Type</label>
+                    <select id="updateType">
+                        <option value="cpu" selected>CPU Changes</option>
+                        <option value="memory">Memory Changes</option>
+                        <option value="status">Status Changes</option>
+                        <option value="all">All Changes</option>
+                    </select>
+                </div>
+                <div class="demo-control-group">
+                    <label>Controls</label>
+                    <button id="startUpdates">Start Updates</button>
+                    <button id="stopUpdates">Stop Updates</button>
+                </div>
+            </div>
+            <div id="realtimeDemo" class="process-list-container"></div>
+        </div>
+
+        <!-- Event Monitoring -->
+        <div class="demo-section">
+            <h2>Event Monitoring</h2>
+            <p>Interact with the ProcessList above to see events logged below:</p>
+            <div id="eventLog" class="event-log"></div>
+            <div style="margin-top: 10px;">
+                <button id="clearLog">Clear Log</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ProcessList Component -->
+    <script type="module">
+        import { ProcessList } from '/js/components/ProcessList.js';
+
+        // Demo state
+        let basicProcessList = null;
+        let compactProcessList = null;
+        let noVirtualProcessList = null;
+        let realtimeProcessList = null;
+        let updateInterval = null;
+        let updateCount = 0;
+
+        // Generate mock process data
+        function generateProcessData(count) {
+            const processNames = [
+                'Grief_Manager.exe', 'Memory_Allocator.dll', 'Emotion_Parser.exe',
+                'Relationship_Handler.exe', 'Temporal_Sync.dll', 'Search_Protocol.exe',
+                'Identity_Validator.exe', 'Dream_Processor.exe', 'Anxiety_Monitor.exe',
+                'Hope_Generator.exe', 'Fear_Analyzer.exe', 'Love_Compiler.exe',
+                'Consciousness_Core.exe', 'Reality_Anchor.dll', 'Self_Identity.exe'
+            ];
+            
+            const statuses = ['running', 'blocked', 'terminated', 'error'];
+            const priorities = ['low', 'normal', 'high', 'critical'];
+            
+            return Array.from({ length: count }, (_, i) => ({
+                pid: 1000 + i,
+                name: processNames[i % processNames.length],
+                status: statuses[Math.floor(Math.random() * statuses.length)],
+                health: Math.floor(Math.random() * 100),
+                indicator: {
+                    color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+                    icon: 'activity',
+                    pulse: Math.random() > 0.8
+                },
+                warnings: Math.random() > 0.7 ? ['high_memory_usage'] : [],
+                trend: 'stable',
+                cpu: Math.random() * 100,
+                memory: Math.floor(Math.random() * 1024),
+                threads: Math.floor(Math.random() * 8) + 1,
+                priority: priorities[Math.floor(Math.random() * priorities.length)],
+                lifetime: Math.floor(Math.random() * 10000),
+                debuggable: true,
+                description: `Process handling ${processNames[i % processNames.length].replace('.exe', '').replace('.dll', '').replace('_', ' ').toLowerCase()}`
+            }));
+        }
+
+        // Event logging
+        function logEvent(type, message) {
+            const eventLog = document.getElementById('eventLog');
+            const event = document.createElement('div');
+            event.className = `event ${type}`;
+            event.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            eventLog.appendChild(event);
+            eventLog.scrollTop = eventLog.scrollHeight;
+            
+            // Keep only last 50 events
+            while (eventLog.children.length > 50) {
+                eventLog.removeChild(eventLog.firstChild);
+            }
+        }
+
+        // Setup event handlers for a ProcessList
+        function setupEventHandlers(processList, name) {
+            processList.on('process-click', (data) => {
+                logEvent('click', `${name}: Clicked process ${data.process.name} (PID: ${data.process.pid})`);
+            });
+
+            processList.on('selection-change', (data) => {
+                logEvent('selection', `${name}: Selection changed - ${data.selected.length} processes selected`);
+                document.getElementById('selectedCount').textContent = data.selected.length;
+            });
+
+            processList.on('process-hover', (data) => {
+                logEvent('hover', `${name}: Hovered over ${data.process.name}`);
+            });
+
+            processList.on('process-context-menu', (data) => {
+                logEvent('context', `${name}: Context menu for ${data.process.name}`);
+            });
+
+            processList.on('update', (data) => {
+                updateCount++;
+                document.getElementById('updateCount').textContent = updateCount;
+                document.getElementById('updateTime').textContent = `${processList._lastUpdateTime?.toFixed(2) || 0}ms`;
+                document.getElementById('visibleCount').textContent = processList.processes.length;
+            });
+        }
+
+        // Initialize demo
+        function initDemo() {
+            // Basic demo
+            basicProcessList = new ProcessList(document.getElementById('basicDemo'), {
+                showHealth: true,
+                showWarnings: true,
+                showResources: true,
+                interactive: true,
+                selectable: true,
+                multiSelect: true,
+                virtualScroll: true,
+                theme: 'dark'
+            });
+            setupEventHandlers(basicProcessList, 'Basic');
+
+            // Compact demo
+            compactProcessList = new ProcessList(document.getElementById('compactDemo'), {
+                showHealth: true,
+                showWarnings: true,
+                showResources: true,
+                interactive: true,
+                selectable: false,
+                compactMode: true,
+                virtualScroll: true,
+                rowHeight: 32,
+                theme: 'dark'
+            });
+            setupEventHandlers(compactProcessList, 'Compact');
+
+            // No virtual scrolling demo
+            noVirtualProcessList = new ProcessList(document.getElementById('noVirtualDemo'), {
+                showHealth: true,
+                showWarnings: false,
+                showResources: false,
+                interactive: true,
+                selectable: true,
+                virtualScroll: false,
+                theme: 'dark'
+            });
+            setupEventHandlers(noVirtualProcessList, 'NoVirtual');
+
+            // Real-time demo
+            realtimeProcessList = new ProcessList(document.getElementById('realtimeDemo'), {
+                showHealth: true,
+                showWarnings: true,
+                showResources: true,
+                interactive: true,
+                selectable: true,
+                multiSelect: true,
+                virtualScroll: true,
+                theme: 'dark'
+            });
+            setupEventHandlers(realtimeProcessList, 'Realtime');
+
+            // Generate initial data
+            updateProcessData();
+        }
+
+        // Update process data
+        function updateProcessData() {
+            const count = parseInt(document.getElementById('processCount').value);
+            const processes = generateProcessData(count);
+            
+            basicProcessList.update(processes);
+            compactProcessList.update(processes.slice(0, Math.min(count, 20)));
+            noVirtualProcessList.update(processes.slice(0, Math.min(count, 15)));
+            realtimeProcessList.update(processes);
+        }
+
+        // Event handlers
+        document.getElementById('generateData').addEventListener('click', updateProcessData);
+        
+        document.getElementById('processCount').addEventListener('change', updateProcessData);
+        
+        document.getElementById('theme').addEventListener('change', (e) => {
+            const theme = e.target.value;
+            [basicProcessList, compactProcessList, noVirtualProcessList, realtimeProcessList].forEach(list => {
+                if (list) {
+                    list.container.className = list.container.className.replace(/process-list-theme-\w+/, `process-list-theme-${theme}`);
+                }
+            });
+        });
+
+        document.getElementById('selectAll').addEventListener('click', () => {
+            basicProcessList.selectAll();
+        });
+
+        document.getElementById('clearSelection').addEventListener('click', () => {
+            basicProcessList.clearSelection();
+        });
+
+        document.getElementById('startUpdates').addEventListener('click', () => {
+            const interval = parseInt(document.getElementById('updateInterval').value);
+            if (interval > 0) {
+                updateInterval = setInterval(() => {
+                    const processes = realtimeProcessList.processes.map(p => {
+                        const updated = { ...p };
+                        const updateType = document.getElementById('updateType').value;
+                        
+                        switch (updateType) {
+                            case 'cpu':
+                                updated.cpu = Math.random() * 100;
+                                break;
+                            case 'memory':
+                                updated.memory = Math.floor(Math.random() * 1024);
+                                break;
+                            case 'status':
+                                const statuses = ['running', 'blocked', 'terminated', 'error'];
+                                updated.status = statuses[Math.floor(Math.random() * statuses.length)];
+                                break;
+                            case 'all':
+                                updated.cpu = Math.random() * 100;
+                                updated.memory = Math.floor(Math.random() * 1024);
+                                updated.health = Math.floor(Math.random() * 100);
+                                break;
+                        }
+                        
+                        return updated;
+                    });
+                    
+                    realtimeProcessList.update(processes);
+                }, interval);
+            }
+        });
+
+        document.getElementById('stopUpdates').addEventListener('click', () => {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+        });
+
+        document.getElementById('clearLog').addEventListener('click', () => {
+            document.getElementById('eventLog').innerHTML = '';
+        });
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initDemo);
+        } else {
+            initDemo();
+        }
+    </script>
+</body>
+</html>

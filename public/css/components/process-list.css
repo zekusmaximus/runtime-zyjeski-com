@@ -1,0 +1,602 @@
+/* public/css/components/process-list.css */
+/* ProcessList component styling for runtime.zyjeski.com */
+/* Supports dark/light themes, animations, and accessibility */
+
+/* CSS Custom Properties for theming */
+:root {
+  /* Dark theme (default) */
+  --process-list-bg-primary: #1a1a1a;
+  --process-list-bg-secondary: #2d2d2d;
+  --process-list-bg-tertiary: #3a3a3a;
+  --process-list-text-primary: #ffffff;
+  --process-list-text-secondary: #b0b0b0;
+  --process-list-text-muted: #808080;
+  --process-list-border: #404040;
+  --process-list-border-light: #505050;
+  
+  /* Status colors */
+  --status-running: #4CAF50;
+  --status-blocked: #FF9800;
+  --status-terminated: #757575;
+  --status-error: #F44336;
+  --status-warning: #FFC107;
+  
+  /* Health colors */
+  --health-excellent: #4CAF50;
+  --health-good: #8BC34A;
+  --health-fair: #FFC107;
+  --health-poor: #FF9800;
+  --health-critical: #F44336;
+  
+  /* Resource colors */
+  --resource-low: #4CAF50;
+  --resource-medium: #FF9800;
+  --resource-high: #F44336;
+  
+  /* Interactive states */
+  --hover-bg: rgba(255, 255, 255, 0.05);
+  --selected-bg: rgba(33, 150, 243, 0.2);
+  --selected-border: #2196F3;
+  --highlighted-bg: rgba(255, 193, 7, 0.3);
+  
+  /* Animations */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+  --pulse-duration: 2s;
+}
+
+/* Light theme overrides */
+.process-list-theme-light {
+  --process-list-bg-primary: #ffffff;
+  --process-list-bg-secondary: #f5f5f5;
+  --process-list-bg-tertiary: #eeeeee;
+  --process-list-text-primary: #212121;
+  --process-list-text-secondary: #424242;
+  --process-list-text-muted: #757575;
+  --process-list-border: #e0e0e0;
+  --process-list-border-light: #f0f0f0;
+  
+  --hover-bg: rgba(0, 0, 0, 0.04);
+  --selected-bg: rgba(33, 150, 243, 0.1);
+  --highlighted-bg: rgba(255, 193, 7, 0.2);
+}
+
+/* Main container */
+.process-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--process-list-bg-primary);
+  border: 1px solid var(--process-list-border);
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--process-list-text-primary);
+}
+
+/* Header */
+.process-list-header {
+  display: flex;
+  background: var(--process-list-bg-secondary);
+  border-bottom: 2px solid var(--process-list-border);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.process-list-header .column {
+  display: flex;
+  align-items: center;
+  padding: 12px 8px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--process-list-text-secondary);
+  border-right: 1px solid var(--process-list-border);
+  position: relative;
+  user-select: none;
+}
+
+.process-list-header .column:last-child {
+  border-right: none;
+}
+
+.process-list-header .column.sortable {
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.process-list-header .column.sortable:hover {
+  background: var(--hover-bg);
+}
+
+.process-list-header .column.sortable .sort-indicator {
+  margin-left: 4px;
+  opacity: 0.5;
+  transition: opacity var(--transition-fast);
+}
+
+.process-list-header .column.sortable .sort-indicator::after {
+  content: '↕';
+}
+
+.process-list-header .column.sort-asc .sort-indicator::after {
+  content: '↑';
+  opacity: 1;
+}
+
+.process-list-header .column.sort-desc .sort-indicator::after {
+  content: '↓';
+  opacity: 1;
+}
+
+/* Column widths */
+.column-status { width: 60px; min-width: 60px; }
+.column-name { flex: 1; min-width: 150px; }
+.column-health { width: 80px; min-width: 80px; }
+.column-cpu { width: 80px; min-width: 80px; }
+.column-memory { width: 100px; min-width: 100px; }
+
+/* Viewport and scrolling */
+.process-list-viewport {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.process-list-viewport::-webkit-scrollbar {
+  width: 8px;
+}
+
+.process-list-viewport::-webkit-scrollbar-track {
+  background: var(--process-list-bg-secondary);
+}
+
+.process-list-viewport::-webkit-scrollbar-thumb {
+  background: var(--process-list-border);
+  border-radius: 4px;
+}
+
+.process-list-viewport::-webkit-scrollbar-thumb:hover {
+  background: var(--process-list-border-light);
+}
+
+.process-list-scroller {
+  position: relative;
+  width: 100%;
+}
+
+.process-list-content {
+  position: relative;
+  width: 100%;
+}
+
+/* Process rows */
+.process-row {
+  display: flex;
+  align-items: center;
+  background: var(--process-list-bg-primary);
+  border-bottom: 1px solid var(--process-list-border);
+  transition: background-color var(--transition-fast);
+  cursor: pointer;
+  position: relative;
+}
+
+.process-row:hover {
+  background: var(--hover-bg);
+}
+
+.process-row.selected {
+  background: var(--selected-bg);
+  border-left: 3px solid var(--selected-border);
+  padding-left: calc(8px - 3px);
+}
+
+.process-row.highlighted {
+  background: var(--highlighted-bg);
+  animation: highlight-pulse 1s ease-in-out;
+}
+
+.process-row.hovered {
+  background: var(--hover-bg);
+}
+
+/* Status-based row styling */
+.process-row.status-running {
+  border-left-color: var(--status-running);
+}
+
+.process-row.status-blocked {
+  border-left-color: var(--status-blocked);
+}
+
+.process-row.status-terminated {
+  border-left-color: var(--status-terminated);
+  opacity: 0.7;
+}
+
+.process-row.status-error {
+  border-left-color: var(--status-error);
+}
+
+/* Pulse animation for critical processes */
+.process-row.pulse {
+  animation: process-pulse var(--pulse-duration) infinite;
+}
+
+@keyframes process-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes highlight-pulse {
+  0% { background: var(--highlighted-bg); }
+  50% { background: var(--process-list-bg-primary); }
+  100% { background: var(--highlighted-bg); }
+}
+
+/* Row columns */
+.process-row .column {
+  padding: 8px;
+  border-right: 1px solid var(--process-list-border);
+  display: flex;
+  align-items: center;
+}
+
+.process-row .column:last-child {
+  border-right: none;
+}
+
+/* Status indicator */
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  position: relative;
+}
+
+.status-indicator i {
+  font-size: 8px;
+  color: white;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Process name and info */
+.process-name {
+  font-weight: 600;
+  color: var(--process-list-text-primary);
+  margin-bottom: 2px;
+}
+
+.process-pid {
+  font-size: 10px;
+  color: var(--process-list-text-muted);
+}
+
+.warnings {
+  display: flex;
+  align-items: center;
+  margin-top: 2px;
+  color: var(--status-warning);
+  font-size: 10px;
+}
+
+.warning-count {
+  margin-right: 2px;
+}
+
+.warning-icon {
+  font-size: 8px;
+}
+
+/* Health bar */
+.health-bar {
+  width: 40px;
+  height: 6px;
+  background: var(--process-list-bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-right: 6px;
+}
+
+.health-fill {
+  height: 100%;
+  background: var(--health-excellent);
+  transition: width var(--transition-normal);
+  border-radius: 3px;
+}
+
+.health-value {
+  font-size: 10px;
+  color: var(--process-list-text-secondary);
+}
+
+/* Resource bars */
+.resource-bar {
+  width: 30px;
+  height: 4px;
+  background: var(--process-list-bg-tertiary);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-right: 6px;
+}
+
+.resource-fill {
+  height: 100%;
+  background: var(--resource-low);
+  transition: width var(--transition-normal);
+  border-radius: 2px;
+}
+
+.resource-value {
+  font-size: 10px;
+  color: var(--process-list-text-secondary);
+  min-width: 35px;
+  text-align: right;
+}
+
+/* Dynamic resource colors */
+.column-cpu .resource-fill {
+  background: var(--resource-low);
+}
+
+.column-cpu[data-high] .resource-fill {
+  background: var(--resource-high);
+}
+
+.column-memory .resource-fill {
+  background: var(--resource-low);
+}
+
+.column-memory[data-high] .resource-fill {
+  background: var(--resource-high);
+}
+
+/* Empty state */
+.process-list-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--process-list-text-muted);
+  font-style: italic;
+}
+
+/* Compact mode */
+.process-list-compact .process-row {
+  height: 32px !important;
+}
+
+.process-list-compact .process-row .column {
+  padding: 4px 6px;
+}
+
+.process-list-compact .process-name {
+  font-size: 11px;
+}
+
+.process-list-compact .process-pid {
+  font-size: 9px;
+}
+
+/* Accessibility */
+.process-list:focus {
+  outline: 2px solid var(--selected-border);
+  outline-offset: -2px;
+}
+
+.process-row:focus {
+  outline: 1px solid var(--selected-border);
+  outline-offset: -1px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .process-list {
+    border-width: 2px;
+  }
+  
+  .process-row {
+    border-bottom-width: 2px;
+  }
+  
+  .status-indicator {
+    border: 1px solid var(--process-list-text-primary);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .process-row,
+  .health-fill,
+  .resource-fill,
+  .process-list-header .column {
+    transition: none;
+  }
+  
+  .process-row.pulse {
+    animation: none;
+  }
+  
+  .process-row.highlighted {
+    animation: none;
+    background: var(--highlighted-bg);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .process-list {
+    font-size: 11px;
+  }
+
+  .column-health,
+  .column-cpu,
+  .column-memory {
+    width: 60px;
+    min-width: 60px;
+  }
+
+  .process-row .column {
+    padding: 6px 4px;
+  }
+
+  .resource-bar {
+    width: 20px;
+  }
+
+  .health-bar {
+    width: 30px;
+  }
+}
+
+/* Dynamic health colors based on value */
+.health-fill[style*="width: 0%"],
+.health-fill[style*="width: 1%"],
+.health-fill[style*="width: 2%"] {
+  background: var(--health-critical) !important;
+}
+
+.health-fill[style*="width: 3%"],
+.health-fill[style*="width: 4%"] {
+  background: var(--health-poor) !important;
+}
+
+/* CSS for health ranges 5-19% */
+.health-fill[style*="width: 5%"],
+.health-fill[style*="width: 6%"],
+.health-fill[style*="width: 7%"],
+.health-fill[style*="width: 8%"],
+.health-fill[style*="width: 9%"],
+.health-fill[style*="width: 1"][style*="%"] {
+  background: var(--health-poor) !important;
+}
+
+/* CSS for health ranges 20-49% */
+.health-fill[style*="width: 2"][style*="%"],
+.health-fill[style*="width: 3"][style*="%"],
+.health-fill[style*="width: 4"][style*="%"] {
+  background: var(--health-fair) !important;
+}
+
+/* CSS for health ranges 50-79% */
+.health-fill[style*="width: 5"][style*="%"],
+.health-fill[style*="width: 6"][style*="%"],
+.health-fill[style*="width: 7"][style*="%"] {
+  background: var(--health-good) !important;
+}
+
+/* CSS for health ranges 80-100% */
+.health-fill[style*="width: 8"][style*="%"],
+.health-fill[style*="width: 9"][style*="%"],
+.health-fill[style*="width: 100%"] {
+  background: var(--health-excellent) !important;
+}
+
+/* Dynamic resource colors based on usage */
+.resource-fill[style*="width: 8"][style*="%"],
+.resource-fill[style*="width: 9"][style*="%"],
+.resource-fill[style*="width: 100%"] {
+  background: var(--resource-high) !important;
+}
+
+.resource-fill[style*="width: 5"][style*="%"],
+.resource-fill[style*="width: 6"][style*="%"],
+.resource-fill[style*="width: 7"][style*="%"] {
+  background: var(--resource-medium) !important;
+}
+
+/* Loading state */
+.process-list.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.process-list.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid var(--process-list-border);
+  border-top-color: var(--selected-border);
+  border-radius: 50%;
+  animation: loading-spin 1s linear infinite;
+}
+
+@keyframes loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Tooltip styles for descriptions */
+.process-row[title] {
+  position: relative;
+}
+
+.process-row[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--process-list-bg-tertiary);
+  color: var(--process-list-text-primary);
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--process-list-border);
+  max-width: 300px;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+/* Performance indicators */
+.process-row.performance-warning {
+  background: rgba(255, 193, 7, 0.1);
+}
+
+.process-row.performance-critical {
+  background: rgba(244, 67, 54, 0.1);
+}
+
+/* Selection indicators for keyboard navigation */
+.process-list:focus .process-row.selected {
+  box-shadow: inset 0 0 0 2px var(--selected-border);
+}
+
+/* Icon styles for status indicators */
+.icon-activity::before { content: '●'; }
+.icon-pause::before { content: '⏸'; }
+.icon-stop::before { content: '⏹'; }
+.icon-error::before { content: '✕'; }
+.icon-warning::before { content: '⚠'; }
+
+/* Print styles */
+@media print {
+  .process-list {
+    border: 1px solid #000;
+    background: white;
+    color: black;
+  }
+
+  .process-row {
+    break-inside: avoid;
+  }
+
+  .process-list-header {
+    background: #f0f0f0;
+  }
+}
