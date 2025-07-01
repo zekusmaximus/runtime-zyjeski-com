@@ -54,7 +54,7 @@ describe('ProcessManager KillCommand Integration', () => {
 
         it('throws error for non-existent process (backward compatibility)', async () => {
             await expect(processManager.killProcess('non_existent_process')).rejects.toThrow(
-                'Process non_existent_process not found'
+                'Cannot kill process non_existent_process'
             );
         });
 
