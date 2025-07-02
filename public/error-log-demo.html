@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ErrorLog Component Demo - Runtime.zyjeski.com</title>
+    
+    <!-- Component Styles -->
+    <link rel="stylesheet" href="/css/components/error-log.css">
+    
+    <!-- Demo Styles -->
+    <style>
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            border: 1px solid #404040;
+        }
+        
+        .demo-title {
+            font-size: 2.5em;
+            margin: 0 0 10px 0;
+            color: #2196F3;
+            text-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+        }
+        
+        .demo-subtitle {
+            font-size: 1.2em;
+            color: #b0b0b0;
+            margin: 0;
+            font-style: italic;
+        }
+        
+        .demo-section {
+            margin-bottom: 40px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            border: 1px solid #404040;
+            overflow: hidden;
+        }
+        
+        .demo-section-header {
+            background: #404040;
+            padding: 15px 20px;
+            border-bottom: 1px solid #555;
+        }
+        
+        .demo-section-title {
+            margin: 0;
+            font-size: 1.4em;
+            color: #ffffff;
+        }
+        
+        .demo-section-description {
+            margin: 5px 0 0 0;
+            color: #b0b0b0;
+            font-size: 0.9em;
+        }
+        
+        .demo-content {
+            padding: 20px;
+        }
+        
+        .error-log-demo {
+            height: 400px;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .demo-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .demo-btn {
+            padding: 8px 16px;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            background: #2a2a2a;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .demo-btn:hover {
+            background: #404040;
+            transform: translateY(-1px);
+        }
+        
+        .demo-btn.critical { border-color: #F44336; color: #F44336; }
+        .demo-btn.warning { border-color: #FF9800; color: #FF9800; }
+        .demo-btn.info { border-color: #2196F3; color: #2196F3; }
+        .demo-btn.debug { border-color: #9E9E9E; color: #9E9E9E; }
+        
+        .demo-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #404040;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #b0b0b0;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        
+        .code-example {
+            background: #1a1a1a;
+            border: 1px solid #404040;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .code-example pre {
+            margin: 0;
+            font-size: 0.9em;
+            color: #e0e0e0;
+        }
+        
+        .consciousness-errors {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .consciousness-error {
+            background: #1a1a1a;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .consciousness-error:hover {
+            background: #2a2a2a;
+            transform: translateY(-1px);
+        }
+        
+        .consciousness-error-type {
+            font-weight: bold;
+            color: #2196F3;
+            font-size: 0.9em;
+        }
+        
+        .consciousness-error-desc {
+            color: #b0b0b0;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .demo-controls {
+                justify-content: center;
+            }
+            
+            .demo-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .consciousness-errors {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <!-- Header -->
+        <div class="demo-header">
+            <h1 class="demo-title">ErrorLog Component</h1>
+            <p class="demo-subtitle">Consciousness debugging interface for runtime.zyjeski.com</p>
+        </div>
+        
+        <!-- Basic Demo -->
+        <div class="demo-section">
+            <div class="demo-section-header">
+                <h2 class="demo-section-title">Basic Error Logging</h2>
+                <p class="demo-section-description">Add errors with different severity levels and see real-time updates</p>
+            </div>
+            <div class="demo-content">
+                <div id="basicErrorLog" class="error-log-demo"></div>
+                
+                <div class="demo-controls">
+                    <button class="demo-btn critical" onclick="addSampleError('critical')">Add Critical Error</button>
+                    <button class="demo-btn warning" onclick="addSampleError('warning')">Add Warning</button>
+                    <button class="demo-btn info" onclick="addSampleError('info')">Add Info</button>
+                    <button class="demo-btn debug" onclick="addSampleError('debug')">Add Debug</button>
+                    <button class="demo-btn" onclick="clearAllErrors()">Clear All</button>
+                    <button class="demo-btn" onclick="exportErrors()">Export JSON</button>
+                </div>
+                
+                <div class="demo-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Errors</div>
+                        <div class="stat-value" id="totalErrors">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Critical Errors</div>
+                        <div class="stat-value" id="criticalErrors">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Last Update</div>
+                        <div class="stat-value" id="lastUpdate">Never</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Performance</div>
+                        <div class="stat-value" id="performance">Good</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Consciousness Errors Demo -->
+        <div class="demo-section">
+            <div class="demo-section-header">
+                <h2 class="demo-section-title">Consciousness-as-Code Errors</h2>
+                <p class="demo-section-description">Specialized error types representing mental states and consciousness glitches</p>
+            </div>
+            <div class="demo-content">
+                <div id="consciousnessErrorLog" class="error-log-demo"></div>
+                
+                <div class="consciousness-errors">
+                    <div class="consciousness-error" onclick="addConsciousnessError('memory_leak')">
+                        <div class="consciousness-error-type">memory_leak</div>
+                        <div class="consciousness-error-desc">Unprocessed emotions accumulating</div>
+                    </div>
+                    <div class="consciousness-error" onclick="addConsciousnessError('stack_overflow')">
+                        <div class="consciousness-error-type">stack_overflow</div>
+                        <div class="consciousness-error-desc">Recursive thoughts/anxiety loops</div>
+                    </div>
+                    <div class="consciousness-error" onclick="addConsciousnessError('null_reference')">
+                        <div class="consciousness-error-type">null_reference</div>
+                        <div class="consciousness-error-desc">Lost memories or connections</div>
+                    </div>
+                    <div class="consciousness-error" onclick="addConsciousnessError('timeout_error')">
+                        <div class="consciousness-error-type">timeout_error</div>
+                        <div class="consciousness-error-desc">Delayed emotional processing</div>
+                    </div>
+                    <div class="consciousness-error" onclick="addConsciousnessError('permission_denied')">
+                        <div class="consciousness-error-type">permission_denied</div>
+                        <div class="consciousness-error-desc">Repressed memories/emotions</div>
+                    </div>
+                    <div class="consciousness-error" onclick="addConsciousnessError('deadlock')">
+                        <div class="consciousness-error-type">deadlock</div>
+                        <div class="consciousness-error-desc">Conflicting desires/beliefs</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Performance Demo -->
+        <div class="demo-section">
+            <div class="demo-section-header">
+                <h2 class="demo-section-title">Performance & Virtual Scrolling</h2>
+                <p class="demo-section-description">Test performance with large numbers of errors and virtual scrolling</p>
+            </div>
+            <div class="demo-content">
+                <div id="performanceErrorLog" class="error-log-demo"></div>
+                
+                <div class="demo-controls">
+                    <button class="demo-btn" onclick="addManyErrors(10)">Add 10 Errors</button>
+                    <button class="demo-btn" onclick="addManyErrors(50)">Add 50 Errors</button>
+                    <button class="demo-btn" onclick="addManyErrors(100)">Add 100 Errors</button>
+                    <button class="demo-btn" onclick="performanceTest()">Performance Test</button>
+                    <button class="demo-btn" onclick="clearPerformanceErrors()">Clear All</button>
+                </div>
+                
+                <div class="code-example">
+                    <pre id="performanceResults">Performance results will appear here...</pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Usage Example -->
+        <div class="demo-section">
+            <div class="demo-section-header">
+                <h2 class="demo-section-title">Usage Example</h2>
+                <p class="demo-section-description">How to integrate ErrorLog into your consciousness debugging interface</p>
+            </div>
+            <div class="demo-content">
+                <div class="code-example">
+                    <pre>// Initialize ErrorLog with custom options
+const errorLog = new ErrorLog(container, {
+  maxErrors: 100,
+  autoDismiss: true,
+  dismissDelay: 30000,
+  groupSimilar: true,
+  customFormatters: {
+    'memory_leak': (error) => {
+      return `Memory leak of &lt;strong&gt;${error.details.size}&lt;/strong&gt; detected in &lt;em&gt;${error.details.processId}&lt;/em&gt;`;
+    }
+  },
+  onErrorClick: (error) => {
+    console.log('Error clicked:', error);
+  }
+});
+
+// Add consciousness-specific errors
+errorLog.addError({
+  severity: 'critical',
+  type: 'memory_leak',
+  message: 'Unprocessed grief accumulating',
+  details: {
+    processId: 'Grief_Manager.exe',
+    memoryAddress: '0x7FFF8E3A',
+    size: '2.4MB',
+    duration: '5m 32s'
+  },
+  stackTrace: [
+    'at MemoryManager.allocate (memory.js:142)',
+    'at Process.run (process.js:88)',
+    'at ConsciousnessEngine.tick (engine.js:234)'
+  ],
+  context: {
+    character: 'Alexander Kane',
+    emotionalLoad: 0.89,
+    systemHealth: 0.45
+  }
+});</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ErrorLog Component -->
+    <script type="module">
+        import ErrorLog from '/js/components/ErrorLog.js';
+
+        // Initialize demo instances
+        let basicErrorLog, consciousnessErrorLog, performanceErrorLog;
+        let errorCounter = 0;
+        let performanceStats = {
+            totalErrors: 0,
+            criticalErrors: 0,
+            lastUpdate: null,
+            performance: 'Good'
+        };
+
+        // Sample error messages for different types
+        const sampleErrors = {
+            critical: [
+                'System core memory corruption detected',
+                'Reality anchor disconnection imminent',
+                'Consciousness fragmentation in progress',
+                'Critical emotional overflow in grief processing'
+            ],
+            warning: [
+                'Memory allocation approaching threshold',
+                'Temporal sync drift detected',
+                'Relationship handler experiencing delays',
+                'Attention resource contention warning'
+            ],
+            info: [
+                'Process optimization completed successfully',
+                'Memory defragmentation in progress',
+                'Consciousness state checkpoint saved',
+                'Emotional processing queue updated'
+            ],
+            debug: [
+                'Debug trace: Memory allocation request',
+                'Debug trace: Process state transition',
+                'Debug trace: Consciousness tick completed',
+                'Debug trace: Emotional weight calculation'
+            ]
+        };
+
+        // Initialize demo
+        function initDemo() {
+            // Basic ErrorLog
+            basicErrorLog = new ErrorLog(document.getElementById('basicErrorLog'), {
+                maxErrors: 50,
+                onErrorAdd: updateStats,
+                onErrorDismiss: updateStats
+            });
+
+            // Consciousness ErrorLog with custom formatters
+            consciousnessErrorLog = new ErrorLog(document.getElementById('consciousnessErrorLog'), {
+                maxErrors: 30,
+                customFormatters: {
+                    'memory_leak': (error) => `Memory leak of <strong>${error.details?.size || 'unknown size'}</strong> detected in <em>${error.details?.processId || 'unknown process'}</em>`,
+                    'stack_overflow': (error) => `Recursive thought pattern at depth <strong>${error.details?.depth || 'unknown'}</strong>`,
+                    'null_reference': (error) => `Lost connection to <em>${error.details?.target || 'unknown memory'}</em>`,
+                    'timeout_error': (error) => `Processing timeout after <strong>${error.details?.duration || 'unknown time'}</strong>`,
+                    'permission_denied': (error) => `Access denied to <em>${error.details?.resource || 'protected memory'}</em>`,
+                    'deadlock': (error) => `Conflicting processes: <strong>${error.details?.process1 || 'A'}</strong> vs <strong>${error.details?.process2 || 'B'}</strong>`
+                }
+            });
+
+            // Performance ErrorLog with virtual scrolling
+            performanceErrorLog = new ErrorLog(document.getElementById('performanceErrorLog'), {
+                maxErrors: 200,
+                virtualScroll: true,
+                rowHeight: 80,
+                visibleRows: 5
+            });
+
+            updateStats();
+        }
+
+        // Global functions for demo buttons
+        window.addSampleError = function(severity) {
+            const messages = sampleErrors[severity];
+            const message = messages[Math.floor(Math.random() * messages.length)];
+            
+            basicErrorLog.addError({
+                severity: severity,
+                type: `system_${severity}`,
+                message: message,
+                details: {
+                    processId: `proc_${++errorCounter}`,
+                    timestamp: new Date().toISOString(),
+                    systemLoad: Math.random() * 100
+                },
+                stackTrace: severity === 'critical' ? [
+                    'at SystemCore.process (core.js:' + Math.floor(Math.random() * 1000) + ')',
+                    'at ConsciousnessEngine.tick (engine.js:' + Math.floor(Math.random() * 500) + ')',
+                    'at Runtime.main (runtime.js:' + Math.floor(Math.random() * 100) + ')'
+                ] : []
+            });
+        };
+
+        window.clearAllErrors = function() {
+            basicErrorLog.clearAll();
+        };
+
+        window.exportErrors = function() {
+            const jsonData = basicErrorLog.export('json');
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'error-log-demo.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        window.addConsciousnessError = function(type) {
+            const errorData = getConsciousnessErrorData(type);
+            consciousnessErrorLog.addError(errorData);
+        };
+
+        window.addManyErrors = function(count) {
+            const startTime = performance.now();
+            
+            for (let i = 0; i < count; i++) {
+                const severities = ['critical', 'warning', 'info', 'debug'];
+                const severity = severities[Math.floor(Math.random() * severities.length)];
+                const messages = sampleErrors[severity];
+                
+                performanceErrorLog.addError({
+                    severity: severity,
+                    type: `perf_test_${i}`,
+                    message: messages[Math.floor(Math.random() * messages.length)] + ` #${i}`,
+                    details: {
+                        batchId: Date.now(),
+                        index: i,
+                        randomValue: Math.random()
+                    }
+                });
+            }
+            
+            const endTime = performance.now();
+            const duration = endTime - startTime;
+            
+            document.getElementById('performanceResults').textContent = 
+                `Added ${count} errors in ${duration.toFixed(2)}ms (${(duration/count).toFixed(2)}ms per error)`;
+        };
+
+        window.clearPerformanceErrors = function() {
+            performanceErrorLog.clearAll();
+            document.getElementById('performanceResults').textContent = 'Performance results will appear here...';
+        };
+
+        window.performanceTest = function() {
+            const testSizes = [10, 50, 100];
+            const results = [];
+            
+            testSizes.forEach(size => {
+                performanceErrorLog.clearAll();
+                
+                const startTime = performance.now();
+                
+                for (let i = 0; i < size; i++) {
+                    performanceErrorLog.addError({
+                        severity: 'info',
+                        message: `Performance test error ${i}`,
+                        type: 'perf_test'
+                    });
+                }
+                
+                const endTime = performance.now();
+                const duration = endTime - startTime;
+                
+                results.push(`${size} errors: ${duration.toFixed(2)}ms (${(duration/size).toFixed(2)}ms each)`);
+            });
+            
+            document.getElementById('performanceResults').textContent = results.join('\n');
+        };
+
+        function getConsciousnessErrorData(type) {
+            const baseData = {
+                timestamp: Date.now(),
+                context: {
+                    character: 'Alexander Kane',
+                    emotionalLoad: Math.random(),
+                    systemHealth: Math.random()
+                }
+            };
+
+            switch (type) {
+                case 'memory_leak':
+                    return {
+                        ...baseData,
+                        severity: 'critical',
+                        type: 'memory_leak',
+                        message: 'Unprocessed emotions accumulating in grief processing module',
+                        details: {
+                            processId: 'Grief_Manager.exe',
+                            size: `${(Math.random() * 5 + 1).toFixed(1)}MB`,
+                            duration: `${Math.floor(Math.random() * 10 + 1)}m ${Math.floor(Math.random() * 60)}s`
+                        },
+                        stackTrace: [
+                            'at EmotionProcessor.process (emotion.js:142)',
+                            'at GriefManager.handleLoss (grief.js:88)',
+                            'at ConsciousnessEngine.tick (engine.js:234)'
+                        ]
+                    };
+                    
+                case 'stack_overflow':
+                    return {
+                        ...baseData,
+                        severity: 'critical',
+                        type: 'stack_overflow',
+                        message: 'Recursive thought pattern detected in anxiety processing',
+                        details: {
+                            depth: Math.floor(Math.random() * 1000 + 100),
+                            pattern: 'worry_loop',
+                            trigger: 'future_uncertainty'
+                        }
+                    };
+                    
+                case 'null_reference':
+                    return {
+                        ...baseData,
+                        severity: 'warning',
+                        type: 'null_reference',
+                        message: 'Attempted to access disconnected memory fragment',
+                        details: {
+                            target: 'childhood_memory_0x7A3F',
+                            lastAccess: '2019-03-15',
+                            fragmentSize: '0.8KB'
+                        }
+                    };
+                    
+                case 'timeout_error':
+                    return {
+                        ...baseData,
+                        severity: 'warning',
+                        type: 'timeout_error',
+                        message: 'Emotional processing timeout in relationship handler',
+                        details: {
+                            duration: `${Math.floor(Math.random() * 30 + 5)}s`,
+                            expectedDuration: '2s',
+                            processId: 'Relationship_Handler.exe'
+                        }
+                    };
+                    
+                case 'permission_denied':
+                    return {
+                        ...baseData,
+                        severity: 'info',
+                        type: 'permission_denied',
+                        message: 'Access denied to protected memory region',
+                        details: {
+                            resource: 'traumatic_memory_vault',
+                            requester: 'Conscious_Access.dll',
+                            protectionLevel: 'HIGH'
+                        }
+                    };
+                    
+                case 'deadlock':
+                    return {
+                        ...baseData,
+                        severity: 'critical',
+                        type: 'deadlock',
+                        message: 'Conflicting desires causing system deadlock',
+                        details: {
+                            process1: 'Career_Ambition.exe',
+                            process2: 'Family_Time.exe',
+                            lockDuration: `${Math.floor(Math.random() * 60 + 10)}m`
+                        }
+                    };
+                    
+                default:
+                    return {
+                        ...baseData,
+                        severity: 'info',
+                        type: 'unknown',
+                        message: 'Unknown consciousness error occurred'
+                    };
+            }
+        }
+
+        function updateStats() {
+            performanceStats.totalErrors = basicErrorLog.getErrorCount();
+            performanceStats.criticalErrors = basicErrorLog.getErrors().filter(e => e.severity === 'critical').length;
+            performanceStats.lastUpdate = new Date().toLocaleTimeString();
+            
+            // Update performance based on error count
+            if (performanceStats.totalErrors > 20) {
+                performanceStats.performance = 'Poor';
+            } else if (performanceStats.totalErrors > 10) {
+                performanceStats.performance = 'Fair';
+            } else {
+                performanceStats.performance = 'Good';
+            }
+            
+            // Update DOM
+            document.getElementById('totalErrors').textContent = performanceStats.totalErrors;
+            document.getElementById('criticalErrors').textContent = performanceStats.criticalErrors;
+            document.getElementById('lastUpdate').textContent = performanceStats.lastUpdate;
+            document.getElementById('performance').textContent = performanceStats.performance;
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initDemo);
+    </script>
+</body>
+</html>

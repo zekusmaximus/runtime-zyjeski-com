@@ -1,5 +1,6 @@
 // Complete Debugger Interface Module for Runtime.zyjeski.com
 import { createLogger } from './logger.js';
+import ErrorLog from './components/ErrorLog.js';
 
 class DebuggerInterface {
   constructor(dependencies = {}) {
@@ -13,6 +14,7 @@ class DebuggerInterface {
     this.consciousnessState = null;  // Store real consciousness state
     this.debugSession = null;
     this.codeLines = [];
+    this.errorLog = null; // ErrorLog component instance
 
     this.init();
   }
@@ -81,14 +83,68 @@ class DebuggerInterface {
     this.stepOverBtn = document.getElementById('stepOver');
     this.continueBtn = document.getElementById('continue');
     this.breakAllBtn = document.getElementById('breakAll');
-    
+
     // Debug panels
     this.breakpointsList = document.getElementById('breakpointsList');
     this.callStackElement = document.getElementById('callStack');
     this.variablesView = document.getElementById('variablesView');
     this.codeEditor = document.getElementById('codeEditor');
-    
+
+    // Initialize ErrorLog component
+    this.setupErrorLog();
+
     this.setupDebugControls();
+  }
+
+  setupErrorLog() {
+    const errorLogContainer = document.getElementById('errorLog');
+    if (errorLogContainer && !this.errorLog) {
+      this.errorLog = new ErrorLog(errorLogContainer, {
+        maxErrors: 50,
+        autoDismiss: true,
+        dismissDelay: 60000, // 1 minute for debugging context
+        groupSimilar: true,
+        customFormatters: {
+          'memory_leak': (error) => {
+            return `Memory leak of <strong>${error.details?.size || 'unknown size'}</strong> detected in <em>${error.details?.processId || 'unknown process'}</em>`;
+          },
+          'stack_overflow': (error) => {
+            return `Recursive thought pattern at depth <strong>${error.details?.depth || 'unknown'}</strong>`;
+          },
+          'null_reference': (error) => {
+            return `Lost connection to <em>${error.details?.target || 'unknown memory'}</em>`;
+          },
+          'timeout_error': (error) => {
+            return `Processing timeout after <strong>${error.details?.duration || 'unknown time'}</strong>`;
+          },
+          'permission_denied': (error) => {
+            return `Access denied to <em>${error.details?.resource || 'protected memory'}</em>`;
+          },
+          'resource_exhaustion': (error) => {
+            return `Resource exhaustion: <strong>${error.details?.resource || 'unknown'}</strong> at <em>${error.details?.percentage || 'unknown'}%</em>`;
+          },
+          'segmentation_fault': (error) => {
+            return `Memory fragmentation in <em>${error.details?.segment || 'unknown segment'}</em>`;
+          },
+          'deadlock': (error) => {
+            return `Deadlock between <strong>${error.details?.process1 || 'Process A'}</strong> and <strong>${error.details?.process2 || 'Process B'}</strong>`;
+          }
+        },
+        onErrorClick: (error) => {
+          // Navigate to relevant process or memory location if available
+          if (error.details?.processId) {
+            this.highlightProcess(error.details.processId);
+          }
+          if (error.details?.lineNumber) {
+            this.navigateToLine(error.details.lineNumber);
+          }
+        },
+        onErrorAdd: (error) => {
+          // Log error addition for debugging
+          this.logger?.info('Error added to log:', error.type, error.message);
+        }
+      });
+    }
   }
 
   setupDebugControls() {
@@ -687,7 +743,19 @@ class DebuggerInterface {
     
     if (data.result.error) {
       this.logger.error(`Debug Error: ${data.result.error}`);
-      // Note: Notification would be handled by app when it's available
+
+      // Add error to ErrorLog component
+      this.addSystemError({
+        severity: 'critical',
+        type: 'debug_error',
+        message: data.result.error,
+        details: {
+          command: data.command,
+          timestamp: new Date().toISOString(),
+          debugSession: this.debugSession?.id
+        }
+      });
+
       return;
     }
     
@@ -768,7 +836,19 @@ class DebuggerInterface {
     // Check if intervention was successful
     if (data.error) {
       this.logger.error('Intervention error:', data.error);
-      // Note: Notification would be handled by app when it's available
+
+      // Add intervention error to ErrorLog
+      this.addSystemError({
+        severity: 'critical',
+        type: 'intervention_error',
+        message: `Intervention failed: ${data.error}`,
+        details: {
+          interventionType: data.type,
+          target: data.target,
+          timestamp: new Date().toISOString()
+        }
+      });
+
       return;
     }
 
@@ -848,8 +928,113 @@ class DebuggerInterface {
       'Memory_Allocator': 10,
       'Process_Manager': 20
     };
-    
+
     return targetLineMap[target] || 1;
+  }
+
+  // Error logging methods for ErrorLog integration
+  addSystemError(errorData) {
+    if (!this.errorLog) return;
+
+    try {
+      const error = {
+        id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+        timestamp: Date.now(),
+        severity: errorData.severity || 'info',
+        type: errorData.type || 'system_error',
+        message: errorData.message || 'Unknown system error',
+        details: {
+          ...errorData.details,
+          character: this.currentCharacter?.name,
+          debugSession: this.debugSession?.id,
+          systemState: this.executionState
+        },
+        stackTrace: errorData.stackTrace || [],
+        context: {
+          debuggerActive: this.isActive,
+          currentLine: this.currentLine,
+          ...errorData.context
+        }
+      };
+
+      this.errorLog.addError(error);
+
+    } catch (error) {
+      console.error('Failed to add system error to ErrorLog:', error);
+    }
+  }
+
+  addProcessError(processId, errorType, message, details = {}) {
+    this.addSystemError({
+      severity: 'warning',
+      type: errorType,
+      message: `Process ${processId}: ${message}`,
+      details: {
+        processId,
+        ...details
+      }
+    });
+  }
+
+  addMemoryError(memoryAddress, errorType, message, details = {}) {
+    this.addSystemError({
+      severity: 'critical',
+      type: errorType,
+      message: `Memory error at ${memoryAddress}: ${message}`,
+      details: {
+        memoryAddress,
+        ...details
+      }
+    });
+  }
+
+  addConsciousnessError(errorType, message, details = {}) {
+    const severityMap = {
+      'memory_leak': 'critical',
+      'stack_overflow': 'critical',
+      'deadlock': 'critical',
+      'null_reference': 'warning',
+      'timeout_error': 'warning',
+      'permission_denied': 'info',
+      'resource_exhaustion': 'critical',
+      'segmentation_fault': 'critical'
+    };
+
+    this.addSystemError({
+      severity: severityMap[errorType] || 'info',
+      type: errorType,
+      message: message,
+      details: {
+        consciousnessState: this.consciousnessState,
+        emotionalLoad: details.emotionalLoad || Math.random(),
+        systemHealth: details.systemHealth || Math.random(),
+        ...details
+      }
+    });
+  }
+
+  highlightProcess(processId) {
+    // Method to highlight a process in the debugger interface
+    console.log(`Highlighting process: ${processId}`);
+
+    // Try to find and highlight the process in the code editor
+    if (this.codeEditor) {
+      const codeContent = this.codeEditor.textContent || '';
+      const processIndex = codeContent.indexOf(processId);
+      if (processIndex !== -1) {
+        console.log(`Found process ${processId} at position ${processIndex}`);
+      }
+    }
+  }
+
+  navigateToLine(lineNumber) {
+    // Method to navigate to a specific line in the code editor
+    console.log(`Navigating to line: ${lineNumber}`);
+
+    if (this.stateManager) {
+      this.stateManager.setDebuggerCurrentLine(lineNumber);
+      this.renderCodeEditor();
+    }
   }
 }
 
