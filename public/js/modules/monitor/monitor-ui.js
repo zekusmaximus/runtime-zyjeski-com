@@ -2,12 +2,24 @@
 // Fixed implementation that handles the actual data structure from the server
 
 import { ProcessList } from '../../components/ProcessList.js';
+import ResourceMeter from '../../components/ResourceMeter.js';
 
 class MonitorUI {
   constructor() {
     this.elements = {};
     this.isInitialized = false;
     this.processList = null; // ProcessList component instance
+
+    // ResourceMeter component instances
+    this.resourceMeters = {
+      cpu: null,
+      memory: null,
+      threads: null
+    };
+
+    // Memory allocation meter
+    this.memoryMeter = null;
+
     // Inject CSS once for flash effects
     this.addFlashCSS();
   }
@@ -19,6 +31,7 @@ class MonitorUI {
     this.cacheElements();
     this.setupEventListeners();
     this._initializeProcessList();
+    this._initializeResourceMeters();
     this.isInitialized = true;
 
     console.log('Monitor UI initialized');
@@ -192,40 +205,50 @@ class MonitorUI {
 
   updateResourceMeters(resources) {
     console.log('💻 Updating resource meters:', resources);
-    
+
     if (!this.elements.resourceMeters || !resources) return;
-    
+
     // Handle both formats: direct resources or nested in data
     const cpu = resources.cpu || { currentLoad: 0, percentage: 0, used: 0, total: 100 };
     const cpuPercentage = cpu.percentage || (cpu.currentLoad * 100) || 0;
     const memory = resources.memory || { percentage: 0, used: 0, total: 10000 };
+    const memoryPercentage = memory.percentage || ((memory.used || 0) / (memory.total || 10000)) * 100;
     const threads = resources.threads || { percentage: 0, used: 0, total: 32 };
-    
-    const html = `
-      <div class="resource-meter">
-        <div class="resource-label">CPU Usage</div>
-        <div class="resource-bar">
-          <div class="resource-fill" style="width: ${cpuPercentage}%"></div>
-</div>
-<div class="resource-value">${cpuPercentage.toFixed(1)}%</div>
-      </div>
-      <div class="resource-meter">
-        <div class="resource-label">Memory</div>
-        <div class="resource-bar">
-          <div class="resource-fill" style="width: ${memory.percentage || 0}%"></div>
+    const threadCount = threads.used || threads.active || 0;
+
+    // Update ResourceMeter components if available
+    if (this.resourceMeters.cpu && !this._useLegacyResourceMeters) {
+      this.resourceMeters.cpu.update(cpuPercentage);
+      this.resourceMeters.memory.update(memoryPercentage);
+      this.resourceMeters.threads.update(threadCount);
+    } else {
+      // Fallback to legacy HTML implementation
+      const html = `
+        <div class="resource-meter">
+          <div class="resource-label">CPU Usage</div>
+          <div class="resource-bar">
+            <div class="resource-fill" style="width: ${cpuPercentage}%"></div>
+          </div>
+          <div class="resource-value">${cpuPercentage.toFixed(1)}%</div>
         </div>
-        <div class="resource-value">${memory.used || 0} / ${memory.total || 0} MB</div>
-      </div>
-      <div class="resource-meter">
-        <div class="resource-label">Threads</div>
-        <div class="resource-bar">
-          <div class="resource-fill" style="width: ${threads.percentage || 0}%"></div>
+        <div class="resource-meter">
+          <div class="resource-label">Memory</div>
+          <div class="resource-bar">
+            <div class="resource-fill" style="width: ${memoryPercentage}%"></div>
+          </div>
+          <div class="resource-value">${memory.used || 0} / ${memory.total || 0} MB</div>
         </div>
-        <div class="resource-value">${threads.used || 0} / ${threads.total || 0}</div>
-      </div>
-    `;
-    
-    this.elements.resourceMeters.innerHTML = html;
+        <div class="resource-meter">
+          <div class="resource-label">Threads</div>
+          <div class="resource-bar">
+            <div class="resource-fill" style="width: ${threads.percentage || 0}%"></div>
+          </div>
+          <div class="resource-value">${threadCount} / ${threads.total || 32}</div>
+        </div>
+      `;
+
+      this.elements.resourceMeters.innerHTML = html;
+    }
   }
 
   /**
@@ -263,6 +286,69 @@ class MonitorUI {
       console.error('Failed to initialize ProcessList component:', error);
       // Fallback to legacy implementation
       this._useLegacyProcessTable = true;
+    }
+  }
+
+  /**
+   * Initialize ResourceMeter components
+   * @private
+   */
+  _initializeResourceMeters() {
+    if (!this.elements.resourceMeters) {
+      console.warn('ResourceMeters: resourceMeters element not found, skipping initialization');
+      return;
+    }
+
+    try {
+      // Clear existing content and create containers for each meter
+      this.elements.resourceMeters.innerHTML = `
+        <div class="resource-meter-grid">
+          <div class="resource-meter-item">
+            <h4>Mental Processing Load</h4>
+            <div id="cpu-meter-container" class="meter-container"></div>
+          </div>
+          <div class="resource-meter-item">
+            <h4>Emotional Weight Capacity</h4>
+            <div id="memory-meter-container" class="meter-container"></div>
+          </div>
+          <div class="resource-meter-item">
+            <h4>Concurrent Thought Streams</h4>
+            <div id="threads-meter-container" class="meter-container"></div>
+          </div>
+        </div>
+      `;
+
+      // Create ResourceMeter instances
+      this.resourceMeters.cpu = new ResourceMeter(document.getElementById('cpu-meter-container'), {
+        type: 'circular',
+        metric: 'cpu',
+        size: { width: 150, height: 150 },
+        labelFormat: (value) => `${value.toFixed(1)}% Load`,
+        thresholds: { low: 30, medium: 70, high: 90 }
+      });
+
+      this.resourceMeters.memory = new ResourceMeter(document.getElementById('memory-meter-container'), {
+        type: 'circular',
+        metric: 'memory',
+        size: { width: 150, height: 150 },
+        labelFormat: (value) => `${value.toFixed(1)}% Full`,
+        thresholds: { low: 40, medium: 75, high: 90 }
+      });
+
+      this.resourceMeters.threads = new ResourceMeter(document.getElementById('threads-meter-container'), {
+        type: 'circular',
+        metric: 'threads',
+        size: { width: 150, height: 150 },
+        max: 32,
+        labelFormat: (value) => `${value.toFixed(0)} Streams`,
+        thresholds: { low: 8, medium: 20, high: 28 }
+      });
+
+      console.log('ResourceMeter components initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize ResourceMeter components:', error);
+      // Fallback to legacy HTML implementation
+      this._useLegacyResourceMeters = true;
     }
   }
 
@@ -567,9 +653,31 @@ class MonitorUI {
       return;
     }
 
-    // Handle the memory structure from the server
-    let html = '<div class="memory-blocks">';
+    // Create container for ResourceMeter and detailed memory blocks
+    let html = '<div class="memory-overview">';
     let hasData = false;
+
+    // Add ResourceMeter for overall memory allocation if we have capacity data
+    if (memoryData.capacity && typeof memoryData.capacity === 'object') {
+      const capacity = memoryData.capacity;
+      const usedPercent = capacity.total ? ((capacity.allocated || 0) / capacity.total * 100) : 0;
+
+      html += `
+        <div class="memory-meter-container">
+          <div class="memory-meter-header">
+            <h4>Memory Allocation</h4>
+            <span class="memory-meter-stats">${capacity.allocated || 0} MB / ${capacity.total || 0} MB (${usedPercent.toFixed(1)}%)</span>
+          </div>
+          <div class="memory-meter" id="memoryMeter"></div>
+        </div>
+      `;
+      hasData = true;
+    }
+
+    html += '</div>';
+
+    // Handle the detailed memory structure from the server
+    html += '<div class="memory-blocks">';
     
     // Show memory regions (detailed memory blocks)
     if (memoryData.regions && Array.isArray(memoryData.regions) && memoryData.regions.length > 0) {
@@ -657,8 +765,60 @@ class MonitorUI {
     
     if (hasData) {
       this.elements.memoryVisualization.innerHTML = html;
+
+      // Create ResourceMeter for memory allocation if we have capacity data
+      if (memoryData.capacity && typeof memoryData.capacity === 'object') {
+        this.createMemoryResourceMeter(memoryData.capacity);
+      }
     } else {
       this.elements.memoryVisualization.innerHTML = '<div class="empty-state">No memory data available.</div>';
+    }
+  }
+
+  createMemoryResourceMeter(capacity) {
+    const meterContainer = document.getElementById('memoryMeter');
+    if (!meterContainer) {
+      console.warn('Memory meter container not found');
+      return;
+    }
+
+    // Clean up any existing meter
+    if (this.memoryMeter) {
+      this.memoryMeter.destroy();
+    }
+
+    try {
+      const usedPercent = capacity.total ? ((capacity.allocated || 0) / capacity.total * 100) : 0;
+
+      this.memoryMeter = new ResourceMeter(meterContainer, {
+        type: 'linear',
+        value: usedPercent,
+        max: 100,
+        unit: '%',
+        label: 'Memory Usage',
+        thresholds: {
+          low: 60,    // Green below 60%
+          medium: 80  // Yellow 60-80%, Red above 80%
+        },
+        colors: {
+          low: '#4CAF50',     // Green
+          medium: '#FF9800',  // Orange
+          high: '#F44336'     // Red
+        },
+        animation: true,
+        showTooltip: true,
+        tooltipFormat: (value) => `Memory: ${capacity.allocated || 0} MB / ${capacity.total || 0} MB (${value.toFixed(1)}%)`
+      });
+
+      console.log('✅ Memory ResourceMeter created successfully');
+    } catch (error) {
+      console.error('❌ Failed to create memory ResourceMeter:', error);
+      // Fallback to simple progress bar
+      meterContainer.innerHTML = `
+        <div class="simple-progress-bar">
+          <div class="progress-fill" style="width: ${usedPercent.toFixed(1)}%"></div>
+        </div>
+      `;
     }
   }
 
@@ -773,6 +933,26 @@ class MonitorUI {
     if (this.processList) {
       this.processList.destroy();
       this.processList = null;
+    }
+
+    // Destroy ResourceMeter components
+    if (this.resourceMeters) {
+      Object.values(this.resourceMeters).forEach(meter => {
+        if (meter && typeof meter.destroy === 'function') {
+          meter.destroy();
+        }
+      });
+      this.resourceMeters = {
+        cpu: null,
+        memory: null,
+        threads: null
+      };
+    }
+
+    // Destroy memory allocation meter
+    if (this.memoryMeter && typeof this.memoryMeter.destroy === 'function') {
+      this.memoryMeter.destroy();
+      this.memoryMeter = null;
     }
 
     // Clear elements cache

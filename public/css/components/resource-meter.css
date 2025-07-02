@@ -1,0 +1,337 @@
+/* ResourceMeter Component Styles - runtime.zyjeski.com */
+/* Canvas-based resource visualization component styling */
+
+/* CSS Custom Properties for theming */
+:root {
+  /* ResourceMeter colors */
+  --resource-meter-bg: #1a1a1a;
+  --resource-meter-border: #404040;
+  --resource-meter-text: #ffffff;
+  --resource-meter-text-secondary: #b0b0b0;
+  
+  /* Threshold colors */
+  --resource-low: #4CAF50;
+  --resource-medium: #FF9800;
+  --resource-high: #F44336;
+  --resource-track: #404040;
+  
+  /* Animation timing */
+  --resource-meter-transition: all 0.3s ease;
+}
+
+/* Light theme overrides */
+[data-theme="light"] {
+  --resource-meter-bg: #ffffff;
+  --resource-meter-border: #e0e0e0;
+  --resource-meter-text: #333333;
+  --resource-meter-text-secondary: #666666;
+  --resource-track: #e0e0e0;
+}
+
+/* Container styling */
+.resource-meter-container {
+  position: relative;
+  display: inline-block;
+  background: var(--resource-meter-bg);
+  border: 1px solid var(--resource-meter-border);
+  border-radius: 8px;
+  padding: 12px;
+  transition: var(--resource-meter-transition);
+  overflow: hidden;
+}
+
+.resource-meter-container:hover {
+  border-color: var(--resource-low);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.resource-meter-container:focus-within {
+  outline: 2px solid var(--resource-low);
+  outline-offset: 2px;
+}
+
+/* Canvas element styling */
+.resource-meter-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  transition: var(--resource-meter-transition);
+}
+
+.resource-meter-canvas:focus {
+  outline: 2px solid var(--resource-low);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Tooltip styling */
+.resource-meter-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+}
+
+.resource-meter-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Size variants */
+.resource-meter-small {
+  width: 120px;
+  height: 120px;
+}
+
+.resource-meter-medium {
+  width: 200px;
+  height: 200px;
+}
+
+.resource-meter-large {
+  width: 300px;
+  height: 300px;
+}
+
+/* Linear meter specific styling */
+.resource-meter-linear {
+  width: 300px;
+  height: 80px;
+}
+
+.resource-meter-linear.compact {
+  height: 60px;
+}
+
+/* Arc meter specific styling */
+.resource-meter-arc {
+  width: 200px;
+  height: 120px;
+}
+
+/* Type-specific containers */
+.resource-meter-type-circular {
+  aspect-ratio: 1;
+}
+
+.resource-meter-type-linear {
+  aspect-ratio: 4 / 1;
+  min-height: 60px;
+}
+
+.resource-meter-type-arc {
+  aspect-ratio: 2 / 1;
+  min-height: 100px;
+}
+
+/* Metric-specific styling */
+.resource-meter-metric-cpu {
+  border-color: var(--resource-low);
+}
+
+.resource-meter-metric-memory {
+  border-color: var(--resource-medium);
+}
+
+.resource-meter-metric-threads {
+  border-color: var(--resource-high);
+}
+
+.resource-meter-metric-custom {
+  border-color: var(--resource-meter-border);
+}
+
+/* Status indicators */
+.resource-meter-status-low {
+  border-color: var(--resource-low);
+}
+
+.resource-meter-status-medium {
+  border-color: var(--resource-medium);
+}
+
+.resource-meter-status-high {
+  border-color: var(--resource-high);
+  animation: pulse-warning 2s infinite;
+}
+
+/* Warning pulse animation */
+@keyframes pulse-warning {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(244, 67, 54, 0);
+  }
+}
+
+/* Loading state */
+.resource-meter-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.resource-meter-loading .resource-meter-canvas {
+  filter: blur(1px);
+}
+
+/* Error state */
+.resource-meter-error {
+  border-color: var(--resource-high);
+  background: rgba(244, 67, 54, 0.1);
+}
+
+.resource-meter-error .resource-meter-canvas {
+  opacity: 0.5;
+}
+
+/* Disabled state */
+.resource-meter-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(100%);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .resource-meter-container {
+    padding: 8px;
+  }
+  
+  .resource-meter-large {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .resource-meter-medium {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .resource-meter-linear {
+    width: 250px;
+    height: 60px;
+  }
+  
+  .resource-meter-tooltip {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .resource-meter-large,
+  .resource-meter-medium {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .resource-meter-linear {
+    width: 200px;
+    height: 50px;
+  }
+  
+  .resource-meter-arc {
+    width: 150px;
+    height: 90px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .resource-meter-container {
+    border-width: 2px;
+  }
+  
+  .resource-meter-canvas:focus {
+    outline-width: 3px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .resource-meter-container,
+  .resource-meter-canvas,
+  .resource-meter-tooltip {
+    transition: none;
+  }
+  
+  .resource-meter-status-high {
+    animation: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .resource-meter-container {
+    border: 2px solid #000;
+    background: #fff;
+  }
+  
+  .resource-meter-tooltip {
+    display: none;
+  }
+}
+
+/* Focus management for keyboard navigation */
+.resource-meter-canvas[tabindex="0"]:focus {
+  outline: 2px solid var(--resource-low);
+  outline-offset: 2px;
+}
+
+/* Container grid layouts */
+.resource-meters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 16px;
+}
+
+.resource-meters-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.resource-meters-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Utility classes */
+.resource-meter-hidden {
+  display: none;
+}
+
+.resource-meter-invisible {
+  visibility: hidden;
+}
+
+.resource-meter-no-animation {
+  transition: none !important;
+}
+
+.resource-meter-no-animation * {
+  transition: none !important;
+  animation: none !important;
+}

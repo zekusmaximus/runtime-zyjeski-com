@@ -1,5 +1,9 @@
 /* Complete Monitor CSS - Runtime.zyjeski.com */
 /* VS Code Dark Theme Colors */
+
+/* Import ResourceMeter component styles */
+@import url('./components/resource-meter.css');
+
 :root {
   --bg-primary: #1e1e1e;
   --bg-secondary: #252526;
@@ -227,6 +231,48 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+/* ResourceMeter component grid layout */
+.resource-meter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 10px;
+}
+
+.resource-meter-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.resource-meter-item:hover {
+  border-color: var(--accent-blue);
+  transform: translateY(-2px);
+}
+
+.resource-meter-item h4 {
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.meter-container {
+  width: 150px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .resource-meter {

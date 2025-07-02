@@ -15,6 +15,9 @@
     <link rel="stylesheet" href="/css/context-menu.css">
     <link rel="stylesheet" href="/css/help.css">
     <link rel="stylesheet" href="/css/intervention.css">
+
+    <!-- Component CSS Files -->
+    <link rel="stylesheet" href="/css/components/process-list.css">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -213,6 +216,11 @@
                             <span class="btn-icon">↻</span>
                             Refresh
                         </button>
+
+                        <button class="btn btn-small" id="testMemoryBtn" onclick="injectTestMemoryData()">
+                            <span class="btn-icon">🧠</span>
+                            Test Memory
+                        </button>
                     </div>
                 </div>
                 <div class="monitor-grid">
@@ -220,31 +228,28 @@
                         <h3>System Resources</h3>
                         <div class="resource-meters" id="resourceMeters">
                             <!-- Resource meters will be populated dynamically -->
-                            <div class="empty-state">No consciousness connected</div>
-                            <div class="empty-state-hint">Select a character profile to begin monitoring</div>
+                            <div class="empty-state">Waiting for data...</div>
                         </div>
                     </div>
                     <div class="monitor-panel">
                         <h3>Active Processes</h3>
-                        <div class="process-table-container" id="processTable">
+                        <div class="process-table" id="processTable">
                             <!-- Process table will be populated dynamically -->
-                            <div class="empty-state">No consciousness connected</div>
-                            <div class="empty-state-hint">Select a character profile to view active processes</div>
+                            <div class="empty-state">Waiting for process data...</div>
                         </div>
                     </div>
                     <div class="monitor-panel">
                         <h3>Memory Allocation</h3>
                         <div class="memory-visualization" id="memoryVisualization">
                             <!-- Memory visualization will be rendered here -->
-                            <div class="empty-state">No consciousness connected</div>
-                            <div class="empty-state-hint">Select a character profile to view memory allocation</div>
+                            <div class="empty-state">Waiting for memory data...</div>
                         </div>
                     </div>
                     <div class="monitor-panel">
                         <h3>Error Log <button id="clearErrors" class="btn btn-small">Clear</button></h3>
                         <div class="error-log" id="errorLog">
                             <!-- Error log will be populated dynamically -->
-                            <div class="empty-state">No consciousness connected</div>
+                            <div class="empty-state">No errors detected</div>
                         </div>
                     </div>
                 </div>
@@ -358,5 +363,86 @@
     <script type="module" src="/js/home-manual.js"></script>
     <script type="module" src="/js/narrative-integration.js"></script>
     <script type="module" src="js/intervention-system.js"></script>
+
+    <script>
+    // Test function to inject sample memory data
+    function injectTestMemoryData() {
+        console.log('🧠 Injecting test memory data...');
+
+        // Get the monitor UI instance
+        const monitorUI = window.monitor?.ui;
+        if (!monitorUI) {
+            console.error('Monitor UI not found');
+            alert('Monitor UI not initialized. Please wait for the page to load completely.');
+            return;
+        }
+
+        // Sample memory data structure that matches what the server sends
+        const testMemoryData = {
+            capacity: {
+                total: 2048,
+                allocated: 1536,
+                free: 512,
+                reserved: 256
+            },
+            blocks: [
+                {
+                    id: 'mem_001',
+                    type: 'shortTerm',
+                    size: 128,
+                    content: 'Recent conversation fragments',
+                    timestamp: Date.now() - 300000,
+                    priority: 'high'
+                },
+                {
+                    id: 'mem_002',
+                    type: 'longTerm',
+                    size: 256,
+                    content: 'Core personality traits',
+                    timestamp: Date.now() - 86400000,
+                    priority: 'critical'
+                },
+                {
+                    id: 'mem_003',
+                    type: 'traumatic',
+                    size: 64,
+                    content: 'Suppressed childhood memory',
+                    timestamp: Date.now() - 31536000000,
+                    priority: 'low'
+                },
+                {
+                    id: 'mem_004',
+                    type: 'procedural',
+                    size: 192,
+                    content: 'Language processing routines',
+                    timestamp: Date.now() - 2592000000,
+                    priority: 'medium'
+                }
+            ],
+            stats: {
+                totalBlocks: 4,
+                fragmentationLevel: 0.23,
+                compressionRatio: 0.67,
+                accessFrequency: 0.89
+            }
+        };
+
+        // Update the memory visualization
+        monitorUI.updateMemoryVisualization(testMemoryData);
+
+        // Show success message
+        const testBtn = document.getElementById('testMemoryBtn');
+        const originalText = testBtn.innerHTML;
+        testBtn.innerHTML = '<span class="btn-icon">✅</span>Loaded!';
+        testBtn.style.background = '#4CAF50';
+
+        setTimeout(() => {
+            testBtn.innerHTML = originalText;
+            testBtn.style.background = '';
+        }, 2000);
+
+        console.log('✅ Test memory data injected successfully');
+    }
+    </script>
 </body>
 </html>

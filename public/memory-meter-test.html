@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Allocation ResourceMeter Test</title>
+    <link rel="stylesheet" href="css/components/resource-meter.css">
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3d3d3d;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border-color: #404040;
+            --accent-blue: #2196F3;
+            --accent-blue-light: #64B5F6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--accent-blue);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .test-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .memory-meter-container {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .memory-meter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .memory-meter-header h4 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .memory-meter-stats {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .memory-meter {
+            height: 24px;
+            width: 100%;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--accent-blue-light);
+        }
+
+        .info {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-blue);
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Memory Allocation ResourceMeter Test</h1>
+        
+        <div class="test-section">
+            <h3>Test 1: Low Memory Usage (30%)</h3>
+            <div class="memory-meter-container">
+                <div class="memory-meter-header">
+                    <h4>Memory Allocation</h4>
+                    <span class="memory-meter-stats">2457 MB / 8192 MB (30.0%)</span>
+                </div>
+                <div class="memory-meter" id="memoryMeter1"></div>
+            </div>
+            <div class="info">
+                This should show a green linear bar at 30% capacity.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2: Medium Memory Usage (75%)</h3>
+            <div class="memory-meter-container">
+                <div class="memory-meter-header">
+                    <h4>Memory Allocation</h4>
+                    <span class="memory-meter-stats">6144 MB / 8192 MB (75.0%)</span>
+                </div>
+                <div class="memory-meter" id="memoryMeter2"></div>
+            </div>
+            <div class="info">
+                This should show an orange linear bar at 75% capacity.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3: High Memory Usage (90%)</h3>
+            <div class="memory-meter-container">
+                <div class="memory-meter-header">
+                    <h4>Memory Allocation</h4>
+                    <span class="memory-meter-stats">7373 MB / 8192 MB (90.0%)</span>
+                </div>
+                <div class="memory-meter" id="memoryMeter3"></div>
+            </div>
+            <div class="info">
+                This should show a red linear bar at 90% capacity.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 4: Dynamic Memory Usage</h3>
+            <div class="memory-meter-container">
+                <div class="memory-meter-header">
+                    <h4>Memory Allocation</h4>
+                    <span class="memory-meter-stats" id="dynamicStats">4096 MB / 8192 MB (50.0%)</span>
+                </div>
+                <div class="memory-meter" id="memoryMeter4"></div>
+            </div>
+            <div class="controls">
+                <button class="btn" onclick="updateDynamicMeter(20)">20%</button>
+                <button class="btn" onclick="updateDynamicMeter(50)">50%</button>
+                <button class="btn" onclick="updateDynamicMeter(70)">70%</button>
+                <button class="btn" onclick="updateDynamicMeter(85)">85%</button>
+                <button class="btn" onclick="updateDynamicMeter(95)">95%</button>
+            </div>
+            <div class="info">
+                Click the buttons to test dynamic updates with smooth animations.
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import ResourceMeter from './js/components/ResourceMeter.js';
+
+        // Test 1: Low usage (30%)
+        const meter1 = new ResourceMeter(document.getElementById('memoryMeter1'), {
+            type: 'linear',
+            value: 30,
+            max: 100,
+            unit: '%',
+            label: 'Memory Usage',
+            thresholds: {
+                low: 60,
+                medium: 80
+            },
+            colors: {
+                low: '#4CAF50',
+                medium: '#FF9800',
+                high: '#F44336'
+            },
+            animation: true,
+            showTooltip: true,
+            tooltipFormat: (value) => `Memory: 2457 MB / 8192 MB (${value.toFixed(1)}%)`
+        });
+
+        // Test 2: Medium usage (75%)
+        const meter2 = new ResourceMeter(document.getElementById('memoryMeter2'), {
+            type: 'linear',
+            value: 75,
+            max: 100,
+            unit: '%',
+            label: 'Memory Usage',
+            thresholds: {
+                low: 60,
+                medium: 80
+            },
+            colors: {
+                low: '#4CAF50',
+                medium: '#FF9800',
+                high: '#F44336'
+            },
+            animation: true,
+            showTooltip: true,
+            tooltipFormat: (value) => `Memory: 6144 MB / 8192 MB (${value.toFixed(1)}%)`
+        });
+
+        // Test 3: High usage (90%)
+        const meter3 = new ResourceMeter(document.getElementById('memoryMeter3'), {
+            type: 'linear',
+            value: 90,
+            max: 100,
+            unit: '%',
+            label: 'Memory Usage',
+            thresholds: {
+                low: 60,
+                medium: 80
+            },
+            colors: {
+                low: '#4CAF50',
+                medium: '#FF9800',
+                high: '#F44336'
+            },
+            animation: true,
+            showTooltip: true,
+            tooltipFormat: (value) => `Memory: 7373 MB / 8192 MB (${value.toFixed(1)}%)`
+        });
+
+        // Test 4: Dynamic meter
+        const meter4 = new ResourceMeter(document.getElementById('memoryMeter4'), {
+            type: 'linear',
+            value: 50,
+            max: 100,
+            unit: '%',
+            label: 'Memory Usage',
+            thresholds: {
+                low: 60,
+                medium: 80
+            },
+            colors: {
+                low: '#4CAF50',
+                medium: '#FF9800',
+                high: '#F44336'
+            },
+            animation: true,
+            showTooltip: true,
+            tooltipFormat: (value) => {
+                const allocated = Math.round(8192 * value / 100);
+                return `Memory: ${allocated} MB / 8192 MB (${value.toFixed(1)}%)`;
+            }
+        });
+
+        // Make updateDynamicMeter available globally
+        window.updateDynamicMeter = function(percentage) {
+            meter4.setValue(percentage);
+            const allocated = Math.round(8192 * percentage / 100);
+            document.getElementById('dynamicStats').textContent = 
+                `${allocated} MB / 8192 MB (${percentage.toFixed(1)}%)`;
+        };
+
+        console.log('Memory allocation ResourceMeter test page loaded successfully!');
+    </script>
+</body>
+</html>
