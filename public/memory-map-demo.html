@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemoryMap Component Demo - Runtime.zyjeski.com</title>
+    
+    <!-- MemoryMap Component CSS -->
+    <link rel="stylesheet" href="/css/components/memory-map.css">
+    
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border: #404040;
+            --accent: #2196F3;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --error: #F44336;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .demo-header h1 {
+            color: var(--accent);
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .demo-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .demo-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .demo-section h2 {
+            color: var(--accent);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .demo-section p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        
+        .memory-map-container {
+            width: 100%;
+            height: 500px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .control-group label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        button, select, input {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        button:hover, select:hover {
+            border-color: var(--accent);
+            background: var(--bg-secondary);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .stats-panel {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .stat-value {
+            color: var(--text-primary);
+            font-weight: bold;
+            font-family: 'Consolas', monospace;
+        }
+        
+        .search-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .search-container input {
+            flex: 1;
+        }
+        
+        .search-results {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .search-result {
+            padding: 5px;
+            margin: 2px 0;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .search-result:hover {
+            background: var(--border);
+        }
+        
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .metric {
+            text-align: center;
+            padding: 10px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+        }
+        
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent);
+            font-family: 'Consolas', monospace;
+        }
+        
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        
+        .consciousness-theme {
+            background: linear-gradient(135deg, 
+                rgba(255, 107, 107, 0.1) 0%, 
+                rgba(132, 94, 194, 0.1) 50%, 
+                rgba(78, 131, 151, 0.1) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .performance-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>MemoryMap Component Demo</h1>
+            <p>Interactive memory visualization for consciousness debugging - Explore Alexander Kane's mental address space</p>
+        </div>
+        
+        <div class="demo-section consciousness-theme">
+            <h2>🧠 Alexander Kane's Memory Space</h2>
+            <p>Visualize consciousness as executable code. Each memory block represents thoughts, emotions, and experiences stored in Alexander's mental address space.</p>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label>View Mode</label>
+                    <select id="viewMode">
+                        <option value="type">Memory Type</option>
+                        <option value="access">Access Frequency</option>
+                        <option value="fragmentation">Fragmentation</option>
+                        <option value="age">Memory Age</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>Zoom</label>
+                    <div style="display: flex; gap: 5px;">
+                        <button id="zoomIn">Zoom In</button>
+                        <button id="zoomOut">Zoom Out</button>
+                        <button id="zoomFit">Fit to View</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Features</label>
+                    <div style="display: flex; gap: 5px;">
+                        <button id="toggleMinimap">Toggle Minimap</button>
+                        <button id="toggleTooltip">Toggle Tooltip</button>
+                        <button id="clearHighlights">Clear Highlights</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Simulation</label>
+                    <div style="display: flex; gap: 5px;">
+                        <button id="simulateAllocation">Allocate Memory</button>
+                        <button id="simulateAccess">Access Memory</button>
+                        <button id="simulateFragmentation">Fragment Memory</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search memory contents, addresses, or process IDs...">
+                <button id="searchButton">Search</button>
+            </div>
+            
+            <div id="memoryMapContainer" class="memory-map-container"></div>
+            
+            <div id="searchResults" class="search-results" style="display: none;"></div>
+            
+            <div class="stats-panel">
+                <h3>Memory Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Memory</span>
+                        <span class="stat-value" id="totalMemory">0 KB</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Used Memory</span>
+                        <span class="stat-value" id="usedMemory">0 KB</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Free Memory</span>
+                        <span class="stat-value" id="freeMemory">0 KB</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Fragmentation</span>
+                        <span class="stat-value" id="fragmentation">0%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Memory Blocks</span>
+                        <span class="stat-value" id="blockCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Utilization</span>
+                        <span class="stat-value" id="utilization">0%</span>
+                    </div>
+                </div>
+                
+                <h4 style="margin-top: 20px;">Performance Metrics</h4>
+                <div class="performance-metrics">
+                    <div class="metric">
+                        <div class="metric-value" id="renderTime">0ms</div>
+                        <div class="metric-label">Render Time</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="renderCount">0</div>
+                        <div class="metric-label">Render Count</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="zoomLevel">1x</div>
+                        <div class="metric-label">Zoom Level</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="highlightCount">0</div>
+                        <div class="metric-label">Highlights</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="/js/components/MemoryMap.js"></script>
+    <script type="module">
+        import MemoryMap from '/js/components/MemoryMap.js';
+
+        // Alexander Kane's consciousness memory data
+        const consciousnessMemoryData = {
+            totalSize: 2048,
+            usedSize: 1456,
+            blocks: [
+                {
+                    address: '0x0000',
+                    size: 8,
+                    type: 'emotion',
+                    processId: 'Grief_Manager.exe',
+                    content: {
+                        description: 'First day without Sarah - overwhelming loss',
+                        intensity: 0.95,
+                        age: 432000,
+                        accessCount: 127,
+                        lastAccess: Date.now() - 1000,
+                        fragmented: false,
+                        linked: ['0x0040', '0x0080', '0x00C0']
+                    },
+                    metadata: {
+                        created: Date.now() - 432000,
+                        modified: Date.now() - 1000,
+                        protected: false,
+                        compressed: false
+                    }
+                },
+                {
+                    address: '0x0010',
+                    size: 4,
+                    type: 'trauma',
+                    processId: 'Memory_Leak_Handler.dll',
+                    content: {
+                        description: 'Car accident - fragmented memory',
+                        intensity: 0.8,
+                        age: 2592000000,
+                        accessCount: 23,
+                        lastAccess: Date.now() - 86400000,
+                        fragmented: true,
+                        linked: ['0x0020', '0x0030']
+                    },
+                    metadata: {
+                        created: Date.now() - 2592000000,
+                        modified: Date.now() - 86400000,
+                        protected: true,
+                        compressed: false
+                    }
+                },
+                {
+                    address: '0x0040',
+                    size: 6,
+                    type: 'relationship',
+                    processId: 'Relationship_Handler.exe',
+                    content: {
+                        description: 'Sarah - wedding day memories',
+                        intensity: 0.9,
+                        age: 157680000000,
+                        accessCount: 89,
+                        lastAccess: Date.now() - 3600000,
+                        fragmented: false,
+                        linked: ['0x0000', '0x0080']
+                    },
+                    metadata: {
+                        created: Date.now() - 157680000000,
+                        modified: Date.now() - 3600000,
+                        protected: false,
+                        compressed: true
+                    }
+                },
+                {
+                    address: '0x0080',
+                    size: 3,
+                    type: 'system',
+                    processId: 'Reality_Anchor.dll',
+                    content: {
+                        description: 'Core identity - Alexander Kane',
+                        intensity: 1.0,
+                        age: 1051200000000,
+                        accessCount: 1247,
+                        lastAccess: Date.now() - 100,
+                        fragmented: false,
+                        linked: ['0x0000', '0x0040']
+                    },
+                    metadata: {
+                        created: Date.now() - 1051200000000,
+                        modified: Date.now() - 100,
+                        protected: true,
+                        compressed: false
+                    }
+                },
+                {
+                    address: '0x00C0',
+                    size: 2,
+                    type: 'emotion',
+                    processId: 'Guilt_Processor.exe',
+                    content: {
+                        description: 'Survivor guilt - why not me?',
+                        intensity: 0.7,
+                        age: 432000,
+                        accessCount: 67,
+                        lastAccess: Date.now() - 7200000,
+                        fragmented: true,
+                        linked: ['0x0000']
+                    },
+                    metadata: {
+                        created: Date.now() - 432000,
+                        modified: Date.now() - 7200000,
+                        protected: false,
+                        compressed: false
+                    }
+                }
+            ],
+            fragmentation: 0.34,
+            layout: 'segmented'
+        };
+
+        // Initialize MemoryMap
+        const container = document.getElementById('memoryMapContainer');
+        const memoryMap = new MemoryMap(container, {
+            gridSize: { width: 64, height: 32 },
+            blockSize: 12,
+            viewMode: 'type',
+            enableZoom: true,
+            enablePan: true,
+            enableTooltip: true,
+            enableMinimap: true,
+            animateAllocations: true,
+            onBlockClick: (block) => {
+                console.log('Memory block clicked:', block);
+                updateBlockInfo(block);
+            },
+            onBlockHover: (block) => {
+                console.log('Memory block hovered:', block);
+            }
+        });
+
+        // Load initial data
+        memoryMap.update(consciousnessMemoryData);
+        updateStats();
+
+        // Control handlers
+        document.getElementById('viewMode').addEventListener('change', (e) => {
+            memoryMap.setViewMode(e.target.value);
+            updateStats();
+        });
+
+        document.getElementById('zoomIn').addEventListener('click', () => {
+            memoryMap.zoomIn();
+            updateStats();
+        });
+
+        document.getElementById('zoomOut').addEventListener('click', () => {
+            memoryMap.zoomOut();
+            updateStats();
+        });
+
+        document.getElementById('zoomFit').addEventListener('click', () => {
+            memoryMap.zoomToFit();
+            updateStats();
+        });
+
+        document.getElementById('toggleMinimap').addEventListener('click', () => {
+            const enabled = memoryMap.options.enableMinimap;
+            memoryMap.setFeatureEnabled('minimap', !enabled);
+        });
+
+        document.getElementById('toggleTooltip').addEventListener('click', () => {
+            const enabled = memoryMap.options.enableTooltip;
+            memoryMap.setFeatureEnabled('tooltip', !enabled);
+        });
+
+        document.getElementById('clearHighlights').addEventListener('click', () => {
+            memoryMap.clearHighlights();
+            updateStats();
+        });
+
+        // Search functionality
+        document.getElementById('searchButton').addEventListener('click', performSearch);
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performSearch();
+        });
+
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+
+            const results = memoryMap.search(query);
+            displaySearchResults(results);
+            updateStats();
+        }
+
+        function displaySearchResults(results) {
+            const container = document.getElementById('searchResults');
+
+            if (results.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            container.innerHTML = `
+                <h4>Search Results (${results.length} found)</h4>
+                ${results.map(address => {
+                    const block = consciousnessMemoryData.blocks.find(b => b.address === address);
+                    return `
+                        <div class="search-result" onclick="centerOnBlock('${address}')">
+                            <strong>${address}</strong> - ${block?.content?.description || 'Unknown'}
+                        </div>
+                    `;
+                }).join('')}
+            `;
+        }
+
+        window.centerOnBlock = (address) => {
+            memoryMap.centerOn(address);
+            memoryMap.highlightBlock(address, { color: '#00FF00', width: 3, overlay: true });
+            updateStats();
+        };
+
+        // Simulation functions
+        document.getElementById('simulateAllocation').addEventListener('click', () => {
+            const address = '0x0200';
+            memoryMap.animateAllocation(address, 2);
+
+            // Add new block to data
+            consciousnessMemoryData.blocks.push({
+                address: address,
+                size: 2,
+                type: 'emotion',
+                processId: 'New_Memory.exe',
+                content: {
+                    description: 'Newly allocated memory block',
+                    intensity: 0.5,
+                    age: 0,
+                    accessCount: 1,
+                    lastAccess: Date.now(),
+                    fragmented: false,
+                    linked: []
+                },
+                metadata: {
+                    created: Date.now(),
+                    modified: Date.now(),
+                    protected: false,
+                    compressed: false
+                }
+            });
+
+            consciousnessMemoryData.usedSize += 2;
+            memoryMap.update(consciousnessMemoryData);
+            updateStats();
+        });
+
+        document.getElementById('simulateAccess').addEventListener('click', () => {
+            const block = consciousnessMemoryData.blocks[0];
+            block.content.accessCount++;
+            block.content.lastAccess = Date.now();
+
+            memoryMap.highlightBlock(block.address, {
+                color: '#FFFFFF',
+                width: 2,
+                overlay: true
+            });
+
+            memoryMap.update(consciousnessMemoryData);
+            updateStats();
+        });
+
+        document.getElementById('simulateFragmentation').addEventListener('click', () => {
+            const block = consciousnessMemoryData.blocks[2];
+            block.content.fragmented = true;
+            consciousnessMemoryData.fragmentation += 0.05;
+
+            memoryMap.update(consciousnessMemoryData);
+            updateStats();
+        });
+
+        function updateStats() {
+            const stats = memoryMap.getMemoryStats();
+            const metrics = memoryMap.getPerformanceMetrics();
+
+            document.getElementById('totalMemory').textContent = `${stats.totalSize} blocks`;
+            document.getElementById('usedMemory').textContent = `${stats.usedSize} blocks`;
+            document.getElementById('freeMemory').textContent = `${stats.freeSize} blocks`;
+            document.getElementById('fragmentation').textContent = `${(stats.fragmentation * 100).toFixed(1)}%`;
+            document.getElementById('blockCount').textContent = stats.blockCount;
+            document.getElementById('utilization').textContent = `${stats.utilizationPercent.toFixed(1)}%`;
+
+            document.getElementById('renderTime').textContent = `${metrics.lastRenderTime.toFixed(1)}ms`;
+            document.getElementById('renderCount').textContent = metrics.renderCount;
+            document.getElementById('zoomLevel').textContent = `${memoryMap.getCurrentZoom()}x`;
+            document.getElementById('highlightCount').textContent = metrics.highlightCount;
+        }
+
+        function updateBlockInfo(block) {
+            console.log('Selected memory block:', {
+                address: block.address,
+                type: block.type,
+                size: block.size,
+                description: block.content?.description,
+                intensity: block.content?.intensity,
+                accessCount: block.content?.accessCount,
+                fragmented: block.content?.fragmented,
+                protected: block.metadata?.protected
+            });
+        }
+
+        // Auto-update stats every second
+        setInterval(updateStats, 1000);
+
+        // Simulate real-time memory activity
+        setInterval(() => {
+            if (Math.random() > 0.7) {
+                const randomBlock = consciousnessMemoryData.blocks[
+                    Math.floor(Math.random() * consciousnessMemoryData.blocks.length)
+                ];
+                randomBlock.content.accessCount++;
+                randomBlock.content.lastAccess = Date.now();
+                memoryMap.update(consciousnessMemoryData);
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

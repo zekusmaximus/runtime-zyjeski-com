@@ -1,0 +1,383 @@
+/* MemoryMap Component Styles - runtime.zyjeski.com */
+/* Canvas-based memory visualization component styling */
+
+/* CSS Custom Properties for theming */
+:root {
+  /* MemoryMap colors */
+  --memory-map-bg: #1a1a1a;
+  --memory-map-border: #404040;
+  --memory-map-text: #ffffff;
+  --memory-map-text-secondary: #b0b0b0;
+  
+  /* Memory type colors */
+  --memory-emotion: #FF6B6B;
+  --memory-trauma: #845EC2;
+  --memory-relationship: #4E8397;
+  --memory-system: #B39CD0;
+  --memory-free: #2C2C2C;
+  --memory-fragmented: #FFB800;
+  
+  /* Interactive colors */
+  --memory-highlight: #FFFF00;
+  --memory-search: #00FF00;
+  --memory-linked: #FF8800;
+  --memory-protected: #FFD700;
+  --memory-compressed: #00FFFF;
+  
+  /* Animation timing */
+  --memory-map-transition: all 0.3s ease;
+  --memory-map-hover-transition: all 0.15s ease;
+}
+
+/* Light theme overrides */
+[data-theme="light"] {
+  --memory-map-bg: #ffffff;
+  --memory-map-border: #e0e0e0;
+  --memory-map-text: #333333;
+  --memory-map-text-secondary: #666666;
+  --memory-free: #f5f5f5;
+}
+
+/* Main component container */
+.memory-map {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--memory-map-bg);
+  border: 1px solid var(--memory-map-border);
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  user-select: none;
+}
+
+/* Canvas container */
+.memory-map__canvas-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  overflow: hidden;
+}
+
+.memory-map__canvas-container:active {
+  cursor: grabbing;
+}
+
+/* Canvas layers */
+.memory-map__canvas--base,
+.memory-map__canvas--interactive,
+.memory-map__canvas--overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.memory-map__canvas--interactive,
+.memory-map__canvas--overlay {
+  pointer-events: auto;
+}
+
+/* Mini-map */
+.memory-map__minimap {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--memory-map-border);
+  border-radius: 4px;
+  padding: 4px;
+  backdrop-filter: blur(4px);
+  transition: var(--memory-map-transition);
+}
+
+.memory-map__minimap:hover {
+  background: rgba(0, 0, 0, 0.9);
+  border-color: var(--memory-highlight);
+  box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
+}
+
+.memory-map__minimap-canvas {
+  display: block;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+/* Tooltip */
+.memory-map__tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.95);
+  color: var(--memory-map-text);
+  border: 1px solid var(--memory-map-border);
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  max-width: 300px;
+  z-index: 1000;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  transition: var(--memory-map-hover-transition);
+}
+
+.memory-map__tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--memory-map-border);
+}
+
+.memory-map__tooltip-header strong {
+  color: var(--memory-highlight);
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+}
+
+.memory-map__tooltip-type {
+  background: var(--memory-system);
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.memory-map__tooltip-type[data-type="emotion"] {
+  background: var(--memory-emotion);
+}
+
+.memory-map__tooltip-type[data-type="trauma"] {
+  background: var(--memory-trauma);
+}
+
+.memory-map__tooltip-type[data-type="relationship"] {
+  background: var(--memory-relationship);
+}
+
+.memory-map__tooltip-type[data-type="system"] {
+  background: var(--memory-system);
+}
+
+.memory-map__tooltip-body {
+  font-size: 11px;
+}
+
+.memory-map__tooltip-body > div {
+  margin-bottom: 4px;
+}
+
+.memory-map__tooltip-body > div:last-child {
+  margin-bottom: 0;
+}
+
+.memory-map__tooltip-warning {
+  color: var(--memory-fragmented);
+  font-weight: bold;
+}
+
+.memory-map__tooltip-protected {
+  color: var(--memory-protected);
+  font-weight: bold;
+}
+
+.memory-map__tooltip-compressed {
+  color: var(--memory-compressed);
+  font-weight: bold;
+}
+
+/* Loading state */
+.memory-map--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--memory-map-bg);
+}
+
+.memory-map__loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--memory-map-border);
+  border-top: 3px solid var(--memory-highlight);
+  border-radius: 50%;
+  animation: memory-map-spin 1s linear infinite;
+}
+
+@keyframes memory-map-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.memory-map__loading-text {
+  margin-top: 16px;
+  color: var(--memory-map-text-secondary);
+  font-size: 14px;
+}
+
+/* Error state */
+.memory-map--error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--memory-map-bg);
+  color: var(--memory-emotion);
+  text-align: center;
+  padding: 20px;
+}
+
+.memory-map__error-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.memory-map__error-message {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.memory-map__error-details {
+  font-size: 12px;
+  color: var(--memory-map-text-secondary);
+  max-width: 400px;
+}
+
+/* Accessibility */
+.memory-map:focus {
+  outline: 2px solid var(--memory-highlight);
+  outline-offset: 2px;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .memory-map {
+    border-width: 2px;
+  }
+  
+  .memory-map__tooltip {
+    border-width: 2px;
+    background: #000000;
+  }
+  
+  .memory-map__minimap {
+    border-width: 2px;
+    background: #000000;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .memory-map__tooltip,
+  .memory-map__minimap {
+    transition: none;
+  }
+  
+  .memory-map__loading-spinner {
+    animation: none;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .memory-map__minimap {
+    top: 5px;
+    right: 5px;
+    padding: 2px;
+  }
+  
+  .memory-map__tooltip {
+    max-width: 250px;
+    font-size: 11px;
+    padding: 8px;
+  }
+  
+  .memory-map__tooltip-header strong {
+    font-size: 12px;
+  }
+  
+  .memory-map__tooltip-body {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .memory-map__minimap {
+    display: none; /* Hide minimap on very small screens */
+  }
+  
+  .memory-map__tooltip {
+    max-width: 200px;
+    font-size: 10px;
+    padding: 6px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .memory-map__tooltip,
+  .memory-map__minimap {
+    display: none;
+  }
+  
+  .memory-map {
+    border: 1px solid #000;
+    background: #fff;
+  }
+}
+
+/* Dark theme specific enhancements */
+@media (prefers-color-scheme: dark) {
+  .memory-map__tooltip {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+  }
+  
+  .memory-map__minimap:hover {
+    box-shadow: 0 0 15px rgba(255, 255, 0, 0.4);
+  }
+}
+
+/* Consciousness-as-code aesthetic enhancements */
+.memory-map__canvas-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(132, 94, 194, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(78, 131, 151, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Glowing effect for active elements */
+.memory-map__minimap-canvas:hover {
+  filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.6));
+}
+
+/* Subtle animation for consciousness theme */
+@keyframes memory-pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+.memory-map__canvas-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 49%, rgba(255, 255, 255, 0.01) 50%, transparent 51%);
+  animation: memory-pulse 4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}

@@ -93,6 +93,9 @@ class DebuggerInterface {
     // Initialize ErrorLog component
     this.setupErrorLog();
 
+    // Initialize MemoryMap component
+    this.setupMemoryMap();
+
     this.setupDebugControls();
   }
 
@@ -144,6 +147,226 @@ class DebuggerInterface {
           this.logger?.info('Error added to log:', error.type, error.message);
         }
       });
+    }
+  }
+
+  /**
+   * Set up MemoryMap component for memory visualization
+   * @private
+   */
+  async setupMemoryMap() {
+    try {
+      // Import MemoryMap component
+      const { default: MemoryMap } = await import('./components/MemoryMap.js');
+
+      // Find memory map container
+      const memoryMapContainer = document.getElementById('memoryMapContainer');
+      if (!memoryMapContainer) {
+        console.warn('MemoryMap container not found - memory visualization disabled');
+        return;
+      }
+
+      // Initialize MemoryMap with consciousness-specific options
+      this.memoryMap = new MemoryMap(memoryMapContainer, {
+        gridSize: { width: 64, height: 32 },
+        blockSize: 8, // Smaller blocks for debugger view
+        viewMode: 'type',
+        enableZoom: true,
+        enablePan: true,
+        enableTooltip: true,
+        enableMinimap: true,
+        animateAllocations: true,
+        colorScheme: {
+          emotion: '#FF6B6B',      // Red for emotional memories
+          trauma: '#845EC2',       // Purple for traumatic memories
+          relationship: '#4E8397', // Blue for relationship memories
+          system: '#B39CD0',       // Light purple for system memories
+          free: '#2C2C2C',        // Dark gray for free space
+          fragmented: '#FFB800'    // Yellow for fragmented blocks
+        },
+        onBlockClick: (block) => {
+          this.handleMemoryBlockClick(block);
+        },
+        onBlockHover: (block) => {
+          this.handleMemoryBlockHover(block);
+        }
+      });
+
+      console.log('MemoryMap component initialized for debugger');
+
+    } catch (error) {
+      console.error('Failed to initialize MemoryMap component:', error);
+    }
+  }
+
+/**
+ * Update memory visualization with consciousness data
+ * @private
+ */
+updateMemoryVisualization(consciousnessData) {
+  if (!this.memoryMap || !consciousnessData) return;
+
+  try {
+    // Convert consciousness data to memory map format
+    const memoryData = this.convertConsciousnessToMemoryData(consciousnessData);
+
+    // Update memory map
+    this.memoryMap.update(memoryData);
+
+    console.log('Memory visualization updated with consciousness data');
+
+  } catch (error) {
+    console.error('Failed to update memory visualization:', error);
+  }
+}
+
+/**
+ * Convert consciousness data to MemoryMap format
+ * @private
+ */
+convertConsciousnessToMemoryData(consciousnessData) {
+  const blocks = [];
+  let addressCounter = 0;
+
+  // Convert processes to memory blocks
+  if (consciousnessData.processes) {
+    consciousnessData.processes.forEach(process => {
+      const address = `0x${addressCounter.toString(16).padStart(4, '0')}`;
+      const size = Math.max(1, Math.floor((process.memoryUsage || 1024) / 1024)); // Convert to blocks
+
+      let type = 'system';
+      if (process.name.toLowerCase().includes('grief')) type = 'emotion';
+      else if (process.name.toLowerCase().includes('trauma')) type = 'trauma';
+      else if (process.name.toLowerCase().includes('relationship')) type = 'relationship';
+
+      blocks.push({
+        address: address,
+        size: size,
+        type: type,
+        processId: process.name,
+        content: {
+          description: process.description || `Process: ${process.name}`,
+          intensity: (process.cpuUsage || 0) / 100,
+          age: Date.now() - (process.startTime || Date.now()),
+          accessCount: process.accessCount || Math.floor(Math.random() * 100),
+          lastAccess: process.lastAccess || Date.now(),
+          fragmented: process.status === 'error' || process.status === 'crashed',
+          linked: []
+        },
+        metadata: {
+          created: process.startTime || Date.now(),
+          modified: process.lastAccess || Date.now(),
+          protected: process.name.includes('System') || process.name.includes('Reality'),
+          compressed: false
+        }
+      });
+
+      addressCounter += size;
+    });
+  }
+
+  // Add memory-specific blocks if available
+  if (consciousnessData.memory) {
+    Object.entries(consciousnessData.memory).forEach(([key, value]) => {
+      if (typeof value === 'object' && value !== null) {
+        const address = `0x${addressCounter.toString(16).padStart(4, '0')}`;
+        const size = Math.max(1, Math.floor(JSON.stringify(value).length / 100));
+
+        blocks.push({
+          address: address,
+          size: size,
+          type: 'emotion', // Default to emotion for memory entries
+          processId: 'Memory_Manager.dll',
+          content: {
+            description: `Memory: ${key}`,
+            intensity: value.intensity || 0.5,
+            age: value.age || 0,
+            accessCount: value.accessCount || 1,
+            lastAccess: value.lastAccess || Date.now(),
+            fragmented: value.fragmented || false,
+            linked: []
+          },
+          metadata: {
+            created: value.created || Date.now(),
+            modified: value.modified || Date.now(),
+            protected: false,
+            compressed: false
+          }
+        });
+
+        addressCounter += size;
+      }
+    });
+  }
+
+  const totalSize = Math.max(2048, addressCounter * 2); // Ensure minimum size
+  const usedSize = addressCounter;
+
+  return {
+    totalSize: totalSize,
+    usedSize: usedSize,
+    blocks: blocks,
+    fragmentation: blocks.filter(b => b.content.fragmented).length / blocks.length,
+    layout: 'segmented'
+  };
+}
+
+  /**
+   * Handle memory block click in debugger
+   * @private
+   */
+  handleMemoryBlockClick(block) {
+    console.log('Memory block clicked in debugger:', block);
+
+    // Add system error for memory inspection
+    this.addSystemError({
+      severity: 'info',
+      type: 'memory_inspection',
+      message: `Inspecting memory at ${block.address}: ${block.content?.description || 'Unknown memory block'}`,
+      details: {
+        address: block.address,
+        type: block.type,
+        size: block.size,
+        processId: block.processId,
+        intensity: block.content?.intensity,
+        accessCount: block.content?.accessCount,
+        fragmented: block.content?.fragmented,
+        protected: block.metadata?.protected
+      }
+    });
+
+    // Highlight related processes if available
+    if (block.processId && this.stateManager) {
+      const processes = this.stateManager.getProcesses() || [];
+      const relatedProcess = processes.find(p => p.name === block.processId);
+      if (relatedProcess) {
+        this.highlightProcess(relatedProcess.pid);
+      }
+    }
+
+    // Navigate to relevant code line if available
+    const lineMap = {
+      'Grief_Manager.exe': 15,
+      'Memory_Leak_Handler.dll': 25,
+      'Relationship_Handler.exe': 35,
+      'Reality_Anchor.dll': 45,
+      'Guilt_Processor.exe': 55
+    };
+
+    const targetLine = lineMap[block.processId];
+    if (targetLine) {
+      this.navigateToLine(targetLine);
+    }
+  }
+
+  /**
+   * Handle memory block hover in debugger
+   * @private
+   */
+  handleMemoryBlockHover(block) {
+    // Update status or show additional info
+    if (this.logger) {
+      this.logger.info(`Memory: ${block.address} - ${block.content?.description || 'Unknown'}`);
     }
   }
 
@@ -801,6 +1024,9 @@ class DebuggerInterface {
       this.updateVariablesFromCharacter({ consciousness: data.state?.consciousness || data.consciousness });
       this.updateVariablesView();
       this.updateCallStack();
+
+    // Update memory visualization
+    this.updateMemoryVisualization(data.state?.consciousness || data.consciousness);
       
       console.log('✅ Debugger interface updated with real consciousness state');
     }

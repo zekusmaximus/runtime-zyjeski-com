@@ -321,14 +321,14 @@ describe('ResourceMeter', () => {
       expect(cancelAnimationFrame).toHaveBeenCalledWith(firstAnimationId);
     });
 
-    it('should complete animation and clear animation state', (done) => {
+    it('should complete animation and clear animation state', async () => {
       meter.update(50);
 
-      setTimeout(() => {
-        expect(meter.animationId).toBeNull();
-        expect(meter.animationStartTime).toBeNull();
-        done();
-      }, 150);
+      // Wait for animation to complete
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      expect(meter.animationId).toBeNull();
+      expect(meter.animationStartTime).toBeNull();
     });
   });
 
