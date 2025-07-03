@@ -769,7 +769,7 @@ export class ProcessList {
 
     // Add status classes
     row.classList.add(`status-${process.status}`);
-    if (process.indicator.pulse) {
+    if (process.indicator && process.indicator.pulse) {
       row.classList.add('pulse');
     }
 

@@ -14,6 +14,7 @@ import DebuggerInterface from './debugger.js';
 import MonitorController from './monitor.js';
 import RuntimeApp from './app.js';
 import { ConsciousnessTransformer } from './utils/ConsciousnessTransformer.js';
+import ResourceMeter from './components/ResourceMeter.js';
 
 const logger = createLogger('Bootstrap');
 
@@ -29,7 +30,8 @@ console.log('📦 Available imports:', {
   Terminal: typeof Terminal,
   DebuggerInterface: typeof DebuggerInterface,
   MonitorController: typeof MonitorController,
-  RuntimeApp: typeof RuntimeApp
+  RuntimeApp: typeof RuntimeApp,
+  ResourceMeter: typeof ResourceMeter
 });
 
 // Simplified Bootstrap - Direct Module Creation with Dependency Injection
@@ -105,8 +107,12 @@ try {
   });
   window.monitor = monitor;
 
-  // 8. RuntimeApp
-  console.log('8. Creating app');
+  // 8. Make ResourceMeter available globally
+  console.log('8. Making ResourceMeter available globally');
+  window.ResourceMeter = ResourceMeter;
+
+  // 9. RuntimeApp
+  console.log('9. Creating app');
   const app = new RuntimeApp({
     stateManager: stateManager,
     socketClient: socketClient,

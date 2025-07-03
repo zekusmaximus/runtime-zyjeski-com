@@ -216,6 +216,21 @@ class MonitorUI {
     const threads = resources.threads || { percentage: 0, used: 0, total: 32 };
     const threadCount = threads.used || threads.active || 0;
 
+    // Create ResourceMeter instances if not already created and monitor is visible
+    if (!this.resourceMeters.cpu && !this._useLegacyResourceMeters) {
+      // Small delay to ensure DOM layout is complete
+      setTimeout(() => {
+        this._createResourceMeterInstances();
+        // Re-update with current data after creation
+        if (this.resourceMeters.cpu) {
+          this.resourceMeters.cpu.update(cpuPercentage);
+          this.resourceMeters.memory.update(memoryPercentage);
+          this.resourceMeters.threads.update(threadCount);
+        }
+      }, 100);
+      return; // Skip update this time, will update after creation
+    }
+
     // Update ResourceMeter components if available
     if (this.resourceMeters.cpu && !this._useLegacyResourceMeters) {
       this.resourceMeters.cpu.update(cpuPercentage);
@@ -299,31 +314,51 @@ class MonitorUI {
       return;
     }
 
-    try {
-      // Clear existing content and create containers for each meter
-      this.elements.resourceMeters.innerHTML = `
-        <div class="resource-meter-grid">
-          <div class="resource-meter-item">
-            <h4>Mental Processing Load</h4>
-            <div id="cpu-meter-container" class="meter-container"></div>
-          </div>
-          <div class="resource-meter-item">
-            <h4>Emotional Weight Capacity</h4>
-            <div id="memory-meter-container" class="meter-container"></div>
-          </div>
-          <div class="resource-meter-item">
-            <h4>Concurrent Thought Streams</h4>
-            <div id="threads-meter-container" class="meter-container"></div>
-          </div>
+    // Only create the HTML structure, defer ResourceMeter creation until monitor is visible
+    this.elements.resourceMeters.innerHTML = `
+      <div class="resource-meter-grid">
+        <div class="resource-meter-item">
+          <h4>Mental Processing Load</h4>
+          <div id="cpu-meter-container" class="meter-container"></div>
         </div>
-      `;
+        <div class="resource-meter-item">
+          <h4>Emotional Weight Capacity</h4>
+          <div id="memory-meter-container" class="meter-container"></div>
+        </div>
+        <div class="resource-meter-item">
+          <h4>Concurrent Thought Streams</h4>
+          <div id="threads-meter-container" class="meter-container"></div>
+        </div>
+      </div>
+    `;
 
+    console.log('ResourceMeter containers created, meters will be initialized when monitor becomes visible');
+  }
+
+  /**
+   * Create ResourceMeter instances when monitor is visible
+   * @private
+   */
+  _createResourceMeterInstances() {
+    // Check if monitor section is visible
+    const monitorSection = document.getElementById('monitor');
+    if (!monitorSection || !monitorSection.classList.contains('active')) {
+      console.log('Monitor section not active, skipping ResourceMeter creation');
+      return false;
+    }
+
+    // Check if already created
+    if (this.resourceMeters.cpu && this.resourceMeters.memory && this.resourceMeters.threads) {
+      return true;
+    }
+
+    try {
       // Create ResourceMeter instances
       this.resourceMeters.cpu = new ResourceMeter(document.getElementById('cpu-meter-container'), {
         type: 'circular',
         metric: 'cpu',
         size: { width: 150, height: 150 },
-        labelFormat: (value) => `${value.toFixed(1)}% Load`,
+        labelFormat: (value, metric) => `Mental Processing: ${value.toFixed(1)}% Load`,
         thresholds: { low: 30, medium: 70, high: 90 }
       });
 
@@ -331,7 +366,7 @@ class MonitorUI {
         type: 'circular',
         metric: 'memory',
         size: { width: 150, height: 150 },
-        labelFormat: (value) => `${value.toFixed(1)}% Full`,
+        labelFormat: (value, metric) => `Emotional Weight: ${value.toFixed(1)}% Full`,
         thresholds: { low: 40, medium: 75, high: 90 }
       });
 
@@ -340,15 +375,22 @@ class MonitorUI {
         metric: 'threads',
         size: { width: 150, height: 150 },
         max: 32,
-        labelFormat: (value) => `${value.toFixed(0)} Streams`,
+        labelFormat: (value, metric) => `Thought Streams: ${value.toFixed(0)} Active`,
         thresholds: { low: 8, medium: 20, high: 28 }
       });
 
-      console.log('ResourceMeter components initialized successfully');
+      // Give initial values to ensure they render
+      this.resourceMeters.cpu.update(0);
+      this.resourceMeters.memory.update(0);
+      this.resourceMeters.threads.update(0);
+
+      console.log('ResourceMeter instances created successfully');
+      return true;
     } catch (error) {
-      console.error('Failed to initialize ResourceMeter components:', error);
+      console.error('Failed to create ResourceMeter instances:', error);
       // Fallback to legacy HTML implementation
       this._useLegacyResourceMeters = true;
+      return false;
     }
   }
 
@@ -622,13 +664,6 @@ class MonitorUI {
     console.log('🧠 Memory data type:', typeof memoryData);
     console.log('🧠 Memory data keys:', memoryData ? Object.keys(memoryData) : 'none');
     
-    // Ensure monitor section is active before trying to access elements
-    const monitorSection = document.getElementById('monitor');
-    if (monitorSection && !monitorSection.classList.contains('active')) {
-      console.log('🧠 Monitor section not active, making it active...');
-      monitorSection.classList.add('active');
-    }
-    
     if (!this.elements.memoryVisualization) {
       console.log('🧠 Memory visualization element not found in cache, re-caching...');
       // Re-cache all elements as monitor section might have become active
@@ -637,6 +672,7 @@ class MonitorUI {
       if (!this.elements.memoryVisualization) {
         console.error('❌ Memory visualization element still not found!');
         console.log('Current page URL:', window.location.href);
+        const monitorSection = document.getElementById('monitor');
         console.log('Monitor section active:', monitorSection?.classList.contains('active'));
         console.log('Available elements with "memory" in ID or class:');
         const memoryElements = document.querySelectorAll('[id*="memory"], [class*="memory"]');
@@ -782,6 +818,26 @@ class MonitorUI {
       return;
     }
 
+    // Check if monitor section is visible
+    const monitorSection = document.getElementById('monitor');
+    if (!monitorSection || !monitorSection.classList.contains('active')) {
+      console.log('Monitor section not active, skipping memory meter creation');
+      return;
+    }
+
+    // Small delay to ensure DOM layout is complete
+    setTimeout(() => {
+      this._createMemoryMeterInstance(capacity);
+    }, 100);
+  }
+
+  _createMemoryMeterInstance(capacity) {
+    const meterContainer = document.getElementById('memoryMeter');
+    if (!meterContainer) {
+      console.warn('Memory meter container not found during delayed creation');
+      return;
+    }
+
     // Clean up any existing meter
     if (this.memoryMeter) {
       this.memoryMeter.destroy();
@@ -809,6 +865,9 @@ class MonitorUI {
         showTooltip: true,
         tooltipFormat: (value) => `Memory: ${capacity.allocated || 0} MB / ${capacity.total || 0} MB (${value.toFixed(1)}%)`
       });
+
+      // Update with the current value to ensure it renders
+      this.memoryMeter.update(usedPercent);
 
       console.log('✅ Memory ResourceMeter created successfully');
     } catch (error) {

@@ -295,17 +295,22 @@ class RuntimeApp {
       // Add click handler if not already present
       if (!link.hasAttribute('data-navigation-enabled')) {
         link.addEventListener('click', (e) => {
+          const section = link.dataset.section;
+
+          // Handle external links (like Components page) differently
+          if (!section) {
+            // Allow default behavior for external links
+            return;
+          }
+
           e.preventDefault();
-          
+
           // Update navigation active state
           navLinks.forEach(l => l.classList.remove('active'));
           link.classList.add('active');
-          
-          const section = link.dataset.section;
-          if (section) {
-            GroundStateValidator.validateUserAction('navigation', { section });
-            this.navigateToSection(section);
-          }
+
+          GroundStateValidator.validateUserAction('navigation', { section });
+          this.navigateToSection(section);
         });
         link.setAttribute('data-navigation-enabled', 'true');
       }

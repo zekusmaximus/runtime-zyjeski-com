@@ -568,6 +568,10 @@ class ComponentShowcase {
       // Initialize components
       await this.initializeComponents();
 
+      // Initialize throttling for events
+      this._lastThresholdErrors = new Map();
+      this._thresholdErrorCooldown = 5000; // 5 second cooldown per metric
+
       // Setup event listeners
       this.setupEventListeners();
 
@@ -1565,6 +1569,16 @@ class ComponentShowcase {
       const meter = this.components.get(rmName);
       if (meter) {
         meter.on('threshold-exceeded', (data) => {
+          // Throttle error creation to prevent loops
+          const now = Date.now();
+          const lastError = this._lastThresholdErrors.get(data.metric) || 0;
+
+          if (now - lastError < this._thresholdErrorCooldown) {
+            return; // Skip if too recent
+          }
+
+          this._lastThresholdErrors.set(data.metric, now);
+
           // Visual feedback for communication
           this.showCommunicationIndicator('resource-to-error');
 

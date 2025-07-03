@@ -95,10 +95,13 @@ export default class ErrorLog {
     this.lastUpdateTime = 0;
     this.updateCount = 0;
     this.renderCount = 0;
-    
+
+    // Event system
+    this._eventListeners = new Map();
+
     // DOM elements (will be set in init)
     this.elements = {};
-    
+
     // Bind methods
     this.handleScroll = this.handleScroll.bind(this);
     this.handleResize = this.handleResize.bind(this);
@@ -357,6 +360,9 @@ export default class ErrorLog {
     if (this.options.onErrorClick) {
       this.options.onErrorClick(error, event);
     }
+
+    // Emit error-clicked event
+    this.emit('error-clicked', error);
   }
 
   handleStackToggle(_errorId, toggleBtn) {
@@ -468,6 +474,9 @@ export default class ErrorLog {
         console.warn(`ErrorLog: addError took ${addTime.toFixed(2)}ms (target: <5ms)`);
       }
 
+      // Emit error-added event
+      this.emit('error-added', error);
+
       return id;
 
     } catch (error) {
@@ -499,6 +508,9 @@ export default class ErrorLog {
     if (this.options.onErrorDismiss) {
       this.options.onErrorDismiss(error);
     }
+
+    // Emit error-dismissed event
+    this.emit('error-dismissed', id);
 
     return true;
   }
@@ -1003,5 +1015,79 @@ export default class ErrorLog {
       text: 'text/plain'
     };
     return mimeTypes[format] || 'text/plain';
+  }
+
+  /**
+   * Add event listener
+   * @param {string} event - Event name
+   * @param {Function} callback - Event callback
+   */
+  on(event, callback) {
+    if (!this._eventListeners.has(event)) {
+      this._eventListeners.set(event, []);
+    }
+    this._eventListeners.get(event).push(callback);
+  }
+
+  /**
+   * Remove event listener
+   * @param {string} event - Event name
+   * @param {Function} callback - Event callback to remove
+   */
+  off(event, callback) {
+    if (!this._eventListeners.has(event)) return;
+
+    const listeners = this._eventListeners.get(event);
+    const index = listeners.indexOf(callback);
+    if (index > -1) {
+      listeners.splice(index, 1);
+    }
+  }
+
+  /**
+   * Emit custom event
+   * @param {string} event - Event name
+   * @param {*} data - Event data
+   */
+  emit(event, data) {
+    if (!this._eventListeners.has(event)) return;
+
+    const listeners = this._eventListeners.get(event);
+    listeners.forEach(callback => {
+      try {
+        callback(data);
+      } catch (error) {
+        console.error(`ErrorLog: Event handler error for ${event}`, error);
+      }
+    });
+  }
+
+  /**
+   * Destroy the component and clean up resources
+   */
+  destroy() {
+    // Clear auto-dismiss timers
+    this.dismissTimers.forEach(timerId => clearTimeout(timerId));
+    this.dismissTimers.clear();
+
+    // Remove event listeners
+    if (this.elements.viewport) {
+      this.elements.viewport.removeEventListener('scroll', this.handleScroll);
+    }
+
+    window.removeEventListener('resize', this.handleResize);
+
+    // Clear event listeners
+    this._eventListeners.clear();
+
+    // Clear data
+    this.errors.clear();
+    this.filteredErrors = [];
+    this.selectedErrors.clear();
+
+    // Remove DOM
+    if (this.container && this.container.parentNode) {
+      this.container.parentNode.removeChild(this.container);
+    }
   }
 }

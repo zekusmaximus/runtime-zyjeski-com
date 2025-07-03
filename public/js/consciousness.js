@@ -186,71 +186,12 @@ class ConsciousnessManager {
     // }
   }
 
-  // REFACTORED: Use ConsciousnessTransformer for process formatting
+  // DISABLED: Consciousness preview feature removed as requested
   updateConsciousnessPreview(consciousness) {
-    this.logger.debug('updateConsciousnessPreview called with:', consciousness);
-
-    // Validate input data
-    if (!consciousness || typeof consciousness !== 'object') {
-      this.logger.warn('Invalid consciousness data provided to updateConsciousnessPreview:', consciousness);
-
-      // Show error message in preview
-      const preview = document.getElementById('consciousnessPreview');
-      if (preview) {
-        const processList = preview.querySelector('.process-list');
-        if (processList) {
-          processList.innerHTML = '<div class="no-processes">Error: Invalid consciousness data</div>';
-        }
-      }
-      return;
-    }
-
-    const preview = document.getElementById('consciousnessPreview');
-    if (!preview) {
-      this.logger.warn('Consciousness preview element not found');
-      return;
-    }
-
-    const processList = preview.querySelector('.process-list');
-    if (!processList) {
-      this.logger.warn('Process list element not found in consciousness preview');
-      return;
-    }
-
-    try {
-      let processes = [];
-
-      // Use transformer if available for process extraction and formatting
-      if (this.transformer) {
-        processes = this.transformer.extractProcesses(consciousness);
-      } else {
-        // Fallback to legacy process extraction
-        processes = this.extractProcessesLegacy(consciousness);
-      }
-
-      this.logger.debug(`Found ${processes.length} processes to display`);
-
-      if (processes.length === 0) {
-        processList.innerHTML = '<div class="no-processes">No active processes</div>';
-        return;
-      }
-
-      // Render processes using transformer-formatted data
-      processList.innerHTML = processes.slice(0, 3).map(process => {
-        if (this.transformer) {
-          // Use transformer-formatted process data
-          return this.renderTransformedProcess(process);
-        } else {
-          // Use legacy rendering
-          return this.renderProcessLegacy(process);
-        }
-      }).join('');
-
-      this.logger.debug('Successfully updated consciousness preview');
-    } catch (error) {
-      this.logger.error('Error updating consciousness preview:', error);
-      processList.innerHTML = '<div class="process-item error">Error displaying processes - check console</div>';
-    }
+    // Feature disabled - consciousness preview updates are no longer needed
+    // All consciousness monitoring is available on the dedicated Monitor page
+    this.logger.debug('Consciousness preview update skipped - feature disabled');
+    return;
   }
 
   // Helper method to render transformer-formatted process

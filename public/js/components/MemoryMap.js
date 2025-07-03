@@ -87,7 +87,10 @@ export default class MemoryMap {
     // Performance tracking
     this.renderCount = 0;
     this.lastRenderTime = 0;
-    
+
+    // Event system
+    this._eventListeners = new Map();
+
     // Canvas contexts
     this.baseCanvas = null;
     this.baseCtx = null;
@@ -904,6 +907,9 @@ export default class MemoryMap {
         this.options.onBlockClick(block);
       }
 
+      // Emit block-clicked event
+      this.emit('block-clicked', block);
+
       this.requestRender();
     }
   }
@@ -1519,10 +1525,58 @@ export default class MemoryMap {
     this.canvasContainer?.removeEventListener('wheel', this.handleWheel);
     window.removeEventListener('resize', this.handleResize);
     
+    // Clear event listeners
+    this._eventListeners.clear();
+
     // Clear container
     this.container.innerHTML = '';
     this.container.classList.remove('memory-map');
-    
+
     console.log('MemoryMap: Component destroyed');
+  }
+
+  /**
+   * Add event listener
+   * @param {string} event - Event name
+   * @param {Function} callback - Event callback
+   */
+  on(event, callback) {
+    if (!this._eventListeners.has(event)) {
+      this._eventListeners.set(event, []);
+    }
+    this._eventListeners.get(event).push(callback);
+  }
+
+  /**
+   * Remove event listener
+   * @param {string} event - Event name
+   * @param {Function} callback - Event callback to remove
+   */
+  off(event, callback) {
+    if (!this._eventListeners.has(event)) return;
+
+    const listeners = this._eventListeners.get(event);
+    const index = listeners.indexOf(callback);
+    if (index > -1) {
+      listeners.splice(index, 1);
+    }
+  }
+
+  /**
+   * Emit custom event
+   * @param {string} event - Event name
+   * @param {*} data - Event data
+   */
+  emit(event, data) {
+    if (!this._eventListeners.has(event)) return;
+
+    const listeners = this._eventListeners.get(event);
+    listeners.forEach(callback => {
+      try {
+        callback(data);
+      } catch (error) {
+        console.error(`MemoryMap: Event handler error for ${event}`, error);
+      }
+    });
   }
 }

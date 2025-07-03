@@ -83,12 +83,19 @@ export default class ResourceMeter {
     this.animationStartTime = null;
     this.animationStartValue = 0;
     this.isDestroyed = false;
-    
+
+    // Event system
+    this._eventListeners = new Map();
+    this._lastThresholdEmit = 0;
+    this._thresholdEmitCooldown = 1000; // 1 second cooldown
+    this._lastValueEmit = 0;
+    this._valueEmitCooldown = 100; // 100ms cooldown for value changes
+
     // Canvas elements
     this.canvas = null;
     this.ctx = null;
     this.tooltip = null;
-    
+
     // Bind methods
     this.handleResize = this.handleResize.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
@@ -203,6 +210,12 @@ export default class ResourceMeter {
     const rect = this.container.getBoundingClientRect();
     const dpr = this.options.devicePixelRatio;
 
+    // Ensure we have valid dimensions
+    if (rect.width <= 0 || rect.height <= 0) {
+      console.warn('ResourceMeter: Invalid container dimensions, skipping resize');
+      return;
+    }
+
     // Set actual canvas size in memory (scaled for device pixel ratio)
     this.canvas.width = rect.width * dpr;
     this.canvas.height = rect.height * dpr;
@@ -295,16 +308,33 @@ export default class ResourceMeter {
     
     // Interpolate between start and target values
     const valueDiff = this.targetValue - this.animationStartValue;
+    const previousValue = this.currentValue;
     this.currentValue = this.animationStartValue + (valueDiff * easedProgress);
-    
+
     this.render();
     this.updateAccessibilityLabel();
-    
+
+    // Emit value-changed event during animation (throttled)
+    const now = Date.now();
+    if (Math.abs(previousValue - this.currentValue) > 0.1 &&
+        now - this._lastValueEmit > this._valueEmitCooldown) {
+      this._lastValueEmit = now;
+      this.emit('value-changed', this.currentValue);
+    }
+
     if (progress < 1) {
       this.animationId = requestAnimationFrame(this.animate);
     } else {
       this.animationId = null;
       this.animationStartTime = null;
+
+      // Emit final value and check thresholds when animation completes
+      const now = Date.now();
+      if (now - this._lastValueEmit > this._valueEmitCooldown) {
+        this._lastValueEmit = now;
+        this.emit('value-changed', this.currentValue);
+      }
+      this.checkThresholds(this.currentValue);
     }
   }
 
@@ -317,6 +347,7 @@ export default class ResourceMeter {
 
     // Clamp value to valid range
     const clampedValue = Math.max(0, Math.min(this.options.max, value));
+    const previousValue = this.currentValue;
 
     if (this.options.animate && typeof requestAnimationFrame !== 'undefined') {
       // Cancel existing animation
@@ -335,6 +366,52 @@ export default class ResourceMeter {
       this.targetValue = clampedValue;
       this.render();
       this.updateAccessibilityLabel();
+
+      // Emit value-changed event for immediate updates (throttled)
+      if (previousValue !== clampedValue) {
+        const now = Date.now();
+        if (now - this._lastValueEmit > this._valueEmitCooldown) {
+          this._lastValueEmit = now;
+          this.emit('value-changed', clampedValue);
+        }
+        this.checkThresholds(clampedValue);
+      }
+    }
+  }
+
+  /**
+   * Check if value exceeds thresholds and emit events
+   * @private
+   * @param {number} value - Current value to check
+   */
+  checkThresholds(value) {
+    const percentage = (value / this.options.max) * 100;
+    const now = Date.now();
+
+    // Throttle threshold events to prevent loops
+    if (now - this._lastThresholdEmit < this._thresholdEmitCooldown) {
+      return;
+    }
+
+    // Check high threshold
+    if (percentage >= this.options.thresholds.high) {
+      this._lastThresholdEmit = now;
+      this.emit('threshold-exceeded', {
+        metric: this.options.metric,
+        value: percentage,
+        threshold: 'high',
+        rawValue: value
+      });
+    }
+    // Check medium threshold
+    else if (percentage >= this.options.thresholds.medium) {
+      this._lastThresholdEmit = now;
+      this.emit('threshold-exceeded', {
+        metric: this.options.metric,
+        value: percentage,
+        threshold: 'medium',
+        rawValue: value
+      });
     }
   }
 
@@ -381,8 +458,14 @@ export default class ResourceMeter {
   renderCircular() {
     const centerX = this.logicalWidth / 2;
     const centerY = this.logicalHeight / 2;
-    const radius = Math.min(centerX, centerY) - 20;
+    const radius = Math.max(0, Math.min(centerX, centerY) - 20);
     const lineWidth = 12;
+
+    // Skip rendering if radius is too small
+    if (radius < 10) {
+      console.warn('ResourceMeter: Container too small for circular rendering, skipping render');
+      return;
+    }
 
     // Calculate angles (270 degrees total, starting from top)
     const startAngle = -Math.PI * 0.75; // -135 degrees
@@ -448,14 +531,33 @@ export default class ResourceMeter {
     const barHeight = 20;
     const barY = (this.logicalHeight - barHeight) / 2;
     const barWidth = this.logicalWidth - (padding * 2);
+
+    // Validate values before calculating fillWidth
+    if (!isFinite(barWidth) || !isFinite(this.currentValue) || !isFinite(this.options.max) || this.options.max === 0) {
+      console.warn('ResourceMeter: Invalid values for linear rendering', {
+        barWidth,
+        currentValue: this.currentValue,
+        max: this.options.max,
+        logicalWidth: this.logicalWidth,
+        logicalHeight: this.logicalHeight
+      });
+      return;
+    }
+
     const fillWidth = (barWidth * this.currentValue) / this.options.max;
+
+    // Skip rendering if bar width is too small
+    if (barWidth <= 0) {
+      console.warn('ResourceMeter: Container too small for linear rendering, skipping render');
+      return;
+    }
 
     // Draw background track
     this.ctx.fillStyle = this.options.colors.track;
     this.ctx.fillRect(padding, barY, barWidth, barHeight);
 
     // Draw value fill
-    if (this.currentValue > 0) {
+    if (this.currentValue > 0 && isFinite(fillWidth) && fillWidth > 0) {
       const gradient = this.ctx.createLinearGradient(padding, 0, padding + fillWidth, 0);
       const color = this.getValueColor(this.currentValue);
       gradient.addColorStop(0, color);
@@ -500,8 +602,14 @@ export default class ResourceMeter {
   renderArc() {
     const centerX = this.logicalWidth / 2;
     const centerY = this.logicalHeight - 20;
-    const radius = Math.min(centerX, centerY) - 10;
+    const radius = Math.max(0, Math.min(centerX, centerY) - 10);
     const lineWidth = 16;
+
+    // Skip rendering if radius is too small
+    if (radius < 10) {
+      console.warn('ResourceMeter: Container too small for arc rendering, skipping render');
+      return;
+    }
 
     // Calculate angles (180 degrees, from left to right)
     const startAngle = Math.PI;
@@ -668,10 +776,58 @@ export default class ResourceMeter {
       this.tooltip.parentNode.removeChild(this.tooltip);
     }
 
+    // Clear event listeners
+    this._eventListeners.clear();
+
     // Clear references
     this.canvas = null;
     this.ctx = null;
     this.tooltip = null;
     this.container = null;
+  }
+
+  /**
+   * Add event listener
+   * @param {string} event - Event name
+   * @param {Function} callback - Event callback
+   */
+  on(event, callback) {
+    if (!this._eventListeners.has(event)) {
+      this._eventListeners.set(event, []);
+    }
+    this._eventListeners.get(event).push(callback);
+  }
+
+  /**
+   * Remove event listener
+   * @param {string} event - Event name
+   * @param {Function} callback - Event callback to remove
+   */
+  off(event, callback) {
+    if (!this._eventListeners.has(event)) return;
+
+    const listeners = this._eventListeners.get(event);
+    const index = listeners.indexOf(callback);
+    if (index > -1) {
+      listeners.splice(index, 1);
+    }
+  }
+
+  /**
+   * Emit custom event
+   * @param {string} event - Event name
+   * @param {*} data - Event data
+   */
+  emit(event, data) {
+    if (!this._eventListeners.has(event)) return;
+
+    const listeners = this._eventListeners.get(event);
+    listeners.forEach(callback => {
+      try {
+        callback(data);
+      } catch (error) {
+        console.error(`ResourceMeter: Event handler error for ${event}`, error);
+      }
+    });
   }
 }
