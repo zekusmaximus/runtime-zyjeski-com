@@ -6,6 +6,7 @@ import { ProcessList } from '/js/components/ProcessList.js';
 import ResourceMeter from '/js/components/ResourceMeter.js';
 import ErrorLog from '/js/components/ErrorLog.js';
 import MemoryMap from '/js/components/MemoryMap.js';
+import { ConsciousnessTransformer } from '/js/utils/ConsciousnessTransformer.js';
 
 /**
  * Data Simulation System
@@ -569,6 +570,7 @@ class ComponentShowcase {
     this.dataSimulator = new DataSimulator();
     this.performanceMonitor = new PerformanceMonitor();
     this.configManager = new ConfigurationManager();
+    this.consciousnessTransformer = new ConsciousnessTransformer();
 
     this.currentTheme = 'dark';
     this.isInitialized = false;
@@ -1794,12 +1796,17 @@ class ComponentShowcase {
    * Update all components with new data
    */
   updateComponentsWithData(data) {
+    // Transform raw process data to UI format using ConsciousnessTransformer
+    const transformedProcesses = data.processes ?
+      data.processes.map(process => this.consciousnessTransformer.formatProcessForUI(process)) :
+      [];
+
     // Update ProcessLists
     ['processListDemo', 'unifiedProcessList'].forEach(name => {
       const component = this.components.get(name);
       if (component && component.update) {
         const startTime = performance.now();
-        component.update(data.processes);
+        component.update(transformedProcesses);
         const renderTime = performance.now() - startTime;
         this.performanceMonitor.recordRenderTime(name, renderTime);
       }

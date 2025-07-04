@@ -63,6 +63,16 @@
   overflow-x: hidden; /* Prevent horizontal overflow */
 }
 
+/* Memory Map Container in Debugger */
+.debugger-panel .memory-map-container {
+  height: 250px;
+  min-height: 200px;
+  padding: 0.5rem;
+  background-color: var(--bg-primary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
 /* Code Editor - FIXED LAYOUT */
 .debugger-main {
   display: flex;
