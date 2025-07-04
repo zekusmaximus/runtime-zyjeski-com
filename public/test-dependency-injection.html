@@ -116,6 +116,21 @@
                 </div>`
             ).join('');
             
+            // HTML Escaping Utility for XSS Prevention
+            function escapeHtml(unsafe) {
+                if (typeof unsafe !== 'string') {
+                    return String(unsafe || '');
+                }
+
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;")
+                    .replace(/\//g, "&#x2F;");
+            }
+
             // Update module status
             const modules = ['stateManager', 'socketClient', 'consciousness', 'terminal', 'debugger', 'monitor', 'app'];
             statusDiv.innerHTML = modules.map(module => {
@@ -123,11 +138,11 @@
                 const hasCorrectType = exists && typeof window[module] === 'object';
                 const status = hasCorrectType ? 'ok' : 'error';
                 const statusText = hasCorrectType ? '✅ OK' : '❌ Missing';
-                
+
                 return `<div class="module-status">
-                    <span>${module}</span>
-                    <span class="status-${status}">${statusText}</span>
-                    <span>${exists ? typeof window[module] : 'undefined'}</span>
+                    <span>${escapeHtml(module)}</span>
+                    <span class="status-${escapeHtml(status)}">${escapeHtml(statusText)}</span>
+                    <span>${escapeHtml(exists ? typeof window[module] : 'undefined')}</span>
                 </div>`;
             }).join('');
             

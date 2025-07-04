@@ -3,6 +3,7 @@ import { createLogger } from './logger.js';
 const logger = createLogger('App');
 
 import GroundStateValidator from './ground-state-validator.js';
+import HTMLEscaper from './utils/html-escaper.js';
 
 // Note: All dependencies will be injected by bootstrap - no direct imports needed
 
@@ -182,11 +183,12 @@ class RuntimeApp {
     const characterGrid = document.getElementById('characterGrid');
     if (!characterGrid) return;
 
+    // XSS Prevention: Escape all dynamic content before inserting into DOM
     characterGrid.innerHTML = characters.map(character => `
-      <div class="character-card" data-character-id="${character.id}">
-        <div class="character-name">${character.name}</div>
-        <div class="character-status">${character.status}</div>
-        <div class="character-description">${character.description}</div>
+      <div class="character-card" data-character-id="${HTMLEscaper.escape(character.id)}">
+        <div class="character-name">${HTMLEscaper.escape(character.name)}</div>
+        <div class="character-status">${HTMLEscaper.escape(character.status)}</div>
+        <div class="character-description">${HTMLEscaper.escape(character.description)}</div>
       </div>
     `).join('');
   }
@@ -401,7 +403,8 @@ class RuntimeApp {
     const status = document.getElementById('appStatus');
     if (status) {
       status.className = 'app-status loading';
-      status.textContent = message;
+      // XSS Prevention: Use textContent for user-provided messages
+      status.textContent = HTMLEscaper.escape(message);
       status.style.display = 'block';
     }
   }
@@ -417,7 +420,8 @@ class RuntimeApp {
     const status = document.getElementById('appStatus');
     if (status) {
       status.className = 'app-status error';
-      status.textContent = message;
+      // XSS Prevention: Use textContent for user-provided error messages
+      status.textContent = HTMLEscaper.escape(message);
       status.style.display = 'block';
       setTimeout(() => this.hideLoading(), 5000);
     }
@@ -427,7 +431,8 @@ class RuntimeApp {
     const status = document.getElementById('appStatus');
     if (status) {
       status.className = 'app-status success';
-      status.textContent = message;
+      // XSS Prevention: Use textContent for user-provided success messages
+      status.textContent = HTMLEscaper.escape(message);
       status.style.display = 'block';
       setTimeout(() => this.hideLoading(), 3000);
     }

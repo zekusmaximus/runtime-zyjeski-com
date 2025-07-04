@@ -2,6 +2,28 @@
 import { createLogger } from './logger.js';
 import ErrorLog from './components/ErrorLog.js';
 
+// HTML Escaping Utility for XSS Prevention
+class HTMLEscaper {
+  /**
+   * Escape HTML entities to prevent XSS attacks
+   * @param {string} unsafe - The unsafe string to escape
+   * @returns {string} The escaped string
+   */
+  static escape(unsafe) {
+    if (typeof unsafe !== 'string') {
+      return String(unsafe || '');
+    }
+
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;")
+      .replace(/\//g, "&#x2F;"); // Extra safety for attributes
+  }
+}
+
 class DebuggerInterface {
   constructor(dependencies = {}) {
     // Dependency injection - accept dependencies instead of global access
@@ -639,15 +661,17 @@ convertConsciousnessToMemoryData(consciousnessData) {
       const lineNumber = index + 1;
       const hasBreakpoint = this.breakpoints.has(`line_${lineNumber}`);
       const isCurrentLine = lineNumber === this.currentLine;
-      
+
       const lineClass = [
         'code-line',
         hasBreakpoint ? 'has-breakpoint' : '',
         isCurrentLine ? 'current-line' : ''
       ].filter(Boolean).join(' ');
-      
-      const highlightedLine = this.syntaxHighlight(line);
-      
+
+      // XSS Prevention: Escape the line content before syntax highlighting
+      const escapedLine = HTMLEscaper.escape(line);
+      const highlightedLine = this.syntaxHighlight(escapedLine);
+
       return `
         <div class="${lineClass}">
           <span class="line-number" data-line="${lineNumber}">${lineNumber}</span>
@@ -655,13 +679,15 @@ convertConsciousnessToMemoryData(consciousnessData) {
         </div>
       `;
     }).join('');
-    
+
     this.codeEditor.innerHTML = codeContent;
     this._renderPending = false;
   });
 }
 
   // Basic syntax highlighting
+  // XSS Prevention: This function processes code content for display
+  // The input 'code' should already be escaped before calling this function
   syntaxHighlight(code) {
     return code
       .replace(/\b(include|int|try|catch|while|return|Process|MemoryAllocator|ProcessManager)\b/g, '<span class="keyword">$1</span>')

@@ -1,5 +1,24 @@
 // public/js/intervention-system.js
 class InterventionSystem {
+
+  /**
+   * Escape HTML entities to prevent XSS attacks
+   * @param {string} unsafe - The unsafe string to escape
+   * @returns {string} The escaped string
+   */
+  escapeHtml(unsafe) {
+    if (typeof unsafe !== 'string') {
+      return String(unsafe || '');
+    }
+
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;")
+      .replace(/\//g, "&#x2F;"); // Extra safety for attributes
+  }
   constructor() {
     this.activeInterventions = new Map();
     this.interventionHistory = [];
@@ -289,6 +308,7 @@ class InterventionSystem {
     if (!listElement) return;
     
     if (interventions.length === 0) {
+      // XSS Prevention: Static HTML content - safe to use innerHTML
       listElement.innerHTML = `
         <div class="no-interventions">
           <p>No interventions available for current consciousness state.</p>
@@ -298,20 +318,21 @@ class InterventionSystem {
       return;
     }
     
+    // XSS Prevention: Escape all dynamic content before inserting into DOM
     listElement.innerHTML = interventions.map(intervention => {
       const impact = this.calculateImpact(intervention, consciousnessData);
       const riskLevel = this.calculateRisk(intervention);
-      
+
       return `
-        <div class="intervention-item" data-intervention-id="${intervention.id}">
+        <div class="intervention-item" data-intervention-id="${this.escapeHtml(intervention.id)}">
           <div class="intervention-header">
-            <span class="intervention-title">${intervention.name}</span>
-            <span class="intervention-impact impact-${intervention.impact}">${intervention.impact}</span>
+            <span class="intervention-title">${this.escapeHtml(intervention.name)}</span>
+            <span class="intervention-impact impact-${this.escapeHtml(intervention.impact)}">${this.escapeHtml(intervention.impact)}</span>
           </div>
-          <div class="intervention-target">Target: ${intervention.target}</div>
+          <div class="intervention-target">Target: ${this.escapeHtml(intervention.target)}</div>
           <div class="intervention-metrics">
             <span class="impact-score">Impact: ${Math.round(impact * 100)}%</span>
-            <span class="risk-level risk-${riskLevel}">Risk: ${riskLevel}</span>
+            <span class="risk-level risk-${this.escapeHtml(riskLevel)}">Risk: ${this.escapeHtml(riskLevel)}</span>
           </div>
         </div>
       `;
@@ -369,10 +390,12 @@ class InterventionSystem {
       
       // Requirements
       const reqList = detailsPanel.querySelector('.requirements-list');
+      // XSS Prevention: formatRequirements returns HTML with escaped content
       reqList.innerHTML = this.formatRequirements(intervention.requirements);
-      
+
       // Effects
       const effectsList = detailsPanel.querySelector('.effects-list');
+      // XSS Prevention: formatEffects returns HTML with escaped content
       effectsList.innerHTML = this.formatEffects(intervention.effects);
       
       // Enable apply button
@@ -384,7 +407,7 @@ class InterventionSystem {
 
   formatRequirements(requirements) {
     const items = [];
-    
+
     for (const [key, value] of Object.entries(requirements)) {
       let text = '';
       switch (key) {
@@ -409,9 +432,10 @@ class InterventionSystem {
         default:
           text = `${key}: ${JSON.stringify(value)}`;
       }
-      items.push(`<li>${text}</li>`);
+      // XSS Prevention: Escape the text content before wrapping in HTML
+      items.push(`<li>${this.escapeHtml(text)}</li>`);
     }
-    
+
     return items.join('');
   }
 
@@ -452,9 +476,10 @@ class InterventionSystem {
           className = key.includes('risk') || key.includes('loss') ? 'negative' : 'positive';
       }
       
-      items.push(`<li class="${className}">${text}</li>`);
+      // XSS Prevention: Escape the text content and className before wrapping in HTML
+      items.push(`<li class="${this.escapeHtml(className)}">${this.escapeHtml(text)}</li>`);
     }
-    
+
     return items.join('');
   }
 
@@ -560,23 +585,25 @@ class InterventionSystem {
     if (!historyElement) return;
     
     if (this.interventionHistory.length === 0) {
+      // XSS Prevention: Static HTML content - safe to use innerHTML
       historyElement.innerHTML = '<p class="no-history">No interventions applied yet.</p>';
       return;
     }
-    
+
+    // XSS Prevention: Escape all dynamic content before inserting into DOM
     historyElement.innerHTML = this.interventionHistory
       .slice(-5) // Show last 5 interventions
       .reverse()
       .map(record => `
-        <div class="history-item ${record.result}">
+        <div class="history-item ${this.escapeHtml(record.result)}">
           <div class="history-header">
-            <span class="history-name">${record.name}</span>
-            <span class="history-time">${this.formatTime(record.timestamp)}</span>
+            <span class="history-name">${this.escapeHtml(record.name)}</span>
+            <span class="history-time">${this.escapeHtml(this.formatTime(record.timestamp))}</span>
           </div>
-          <div class="history-result">Result: ${record.result}</div>
+          <div class="history-result">Result: ${this.escapeHtml(record.result)}</div>
           ${record.storyChanges.length > 0 ? `
             <div class="history-impact">
-              Story impact: ${record.storyChanges.join(', ')}
+              Story impact: ${this.escapeHtml(record.storyChanges.join(', '))}
             </div>
           ` : ''}
         </div>
@@ -613,17 +640,18 @@ class InterventionSystem {
     const message = result.success
       ? `Intervention successful! ${result.message || 'Consciousness state updated.'}`
       : `Intervention failed: ${result.error || 'Unknown error'}`;
-    
+
     // Create notification
     const notification = document.createElement('div');
     notification.className = `intervention-notification ${result.success ? 'success' : 'error'}`;
+    // XSS Prevention: Escape all dynamic content before inserting into DOM
     notification.innerHTML = `
       <div class="notification-content">
-        <div class="notification-message">${message}</div>
+        <div class="notification-message">${this.escapeHtml(message)}</div>
         ${result.effects ? `
           <div class="notification-effects">
-            ${Object.entries(result.effects).map(([key, value]) => 
-              `<span class="effect-item">${key}: ${value}</span>`
+            ${Object.entries(result.effects).map(([key, value]) =>
+              `<span class="effect-item">${this.escapeHtml(key)}: ${this.escapeHtml(String(value))}</span>`
             ).join(' ')}
           </div>
         ` : ''}

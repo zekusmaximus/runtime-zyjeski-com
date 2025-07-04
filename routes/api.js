@@ -83,7 +83,7 @@ router.put('/process/:pid/kill', async (req, res) => {
   try {
     const pid = parseInt(req.params.pid);
     const { characterId } = req.body;
-    
+
     // In a real implementation, this would update the character's state
     res.json({
       success: true,
@@ -93,7 +93,8 @@ router.put('/process/:pid/kill', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (err) {
-    error('Error killing process', { error: err, characterId, processId });
+    // Fixed: Changed 'processId' to 'pid' to match the actual variable name
+    error('Error killing process', { error: err, characterId, pid: req.params.pid });
     res.status(500).json({ error: 'Failed to kill process' });
   }
 });

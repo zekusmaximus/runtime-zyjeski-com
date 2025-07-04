@@ -8,6 +8,28 @@ import ErrorLog from '/js/components/ErrorLog.js';
 import MemoryMap from '/js/components/MemoryMap.js';
 import { ConsciousnessTransformer } from '/js/utils/ConsciousnessTransformer.js';
 
+// HTML Escaping Utility for XSS Prevention
+class HTMLEscaper {
+  /**
+   * Escape HTML entities to prevent XSS attacks
+   * @param {string} unsafe - The unsafe string to escape
+   * @returns {string} The escaped string
+   */
+  static escape(unsafe) {
+    if (typeof unsafe !== 'string') {
+      return String(unsafe || '');
+    }
+
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;")
+      .replace(/\//g, "&#x2F;"); // Extra safety for attributes
+  }
+}
+
 /**
  * Data Simulation System
  * Generates realistic consciousness debugging data for all components
@@ -1858,7 +1880,8 @@ class ComponentShowcase {
     if (!container) return;
 
     // Clear previous results
-    container.innerHTML = `<h5>Results: ${benchmarkType}</h5>`;
+    // XSS Prevention: Escape dynamic content
+    container.innerHTML = `<h5>Results: ${HTMLEscaper.escape(benchmarkType)}</h5>`;
 
     for (const [key, value] of Object.entries(results)) {
       const resultElement = document.createElement('div');
@@ -3629,7 +3652,8 @@ class ComponentShowcase {
     };
 
     const content = examples[exampleType] || 'Example not found';
-    this.elements.exampleContent.innerHTML = `<pre><code class="language-javascript">${content}</code></pre>`;
+    // XSS Prevention: Escape code content before inserting into DOM
+    this.elements.exampleContent.innerHTML = `<pre><code class="language-javascript">${HTMLEscaper.escape(content)}</code></pre>`;
 
     // Trigger syntax highlighting
     if (window.Prism) {

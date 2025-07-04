@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Escaping Test - Runtime.zyjeski.com</title>
+    <link rel="stylesheet" href="/css/test-html-escaping.css">
+</head>
+<body>
+    <h1>HTML Escaping Security Test</h1>
+    <p>This page tests the HTML escaping implementation to prevent XSS attacks.</p>
+
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button id="runAllTests">Run All Tests</button>
+        <button id="clearResults">Clear Results</button>
+        <button id="testXSSVectors">Test XSS Vectors</button>
+    </div>
+
+    <div class="test-summary" id="testSummary"></div>
+    <div id="testOutput"></div>
+
+    <script type="module" src="/js/test-html-escaping.js"></script>
+</body>
+</html>
