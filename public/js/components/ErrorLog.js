@@ -1062,32 +1062,5 @@ export default class ErrorLog {
     });
   }
 
-  /**
-   * Destroy the component and clean up resources
-   */
-  destroy() {
-    // Clear auto-dismiss timers
-    this.dismissTimers.forEach(timerId => clearTimeout(timerId));
-    this.dismissTimers.clear();
 
-    // Remove event listeners
-    if (this.elements.viewport) {
-      this.elements.viewport.removeEventListener('scroll', this.handleScroll);
-    }
-
-    window.removeEventListener('resize', this.handleResize);
-
-    // Clear event listeners
-    this._eventListeners.clear();
-
-    // Clear data
-    this.errors.clear();
-    this.filteredErrors = [];
-    this.selectedErrors.clear();
-
-    // Remove DOM
-    if (this.container && this.container.parentNode) {
-      this.container.parentNode.removeChild(this.container);
-    }
-  }
 }

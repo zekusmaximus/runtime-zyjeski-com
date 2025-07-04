@@ -29,14 +29,15 @@
     <script type="module" src="/js/socket-client.js"></script>
     
     <script>
-        function runTest() {
+        async function runTest() {
             // Wait for socket client to be ready
-            setTimeout(() => {
-                fetch('/manual-ground-state-test.js')
-                    .then(response => response.text())
-                    .then(code => {
-                        eval(code);
-                    });
+            setTimeout(async () => {
+                try {
+                    const { runGroundStateTest } = await import('/manual-ground-state-test.js');
+                    runGroundStateTest();
+                } catch (error) {
+                    console.error('Failed to load ground state test:', error);
+                }
             }, 500);
         }
         

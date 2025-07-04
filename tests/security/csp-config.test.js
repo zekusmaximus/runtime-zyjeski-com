@@ -290,8 +290,8 @@ describe('CSPConfig', () => {
     });
 
     it('should detect unsafe directives', () => {
-      // Mock a configuration with unsafe directives
-      const unsafeConfig = new CSPConfig();
+      // Mock a configuration with unsafe directives in production environment
+      const unsafeConfig = new CSPConfig({ environment: 'production' });
       const originalGetDirectives = unsafeConfig.getDirectives;
       unsafeConfig.getDirectives = (nonce) => {
         const directives = originalGetDirectives.call(unsafeConfig, nonce);
@@ -299,9 +299,9 @@ describe('CSPConfig', () => {
         directives.styleSrc.push("'unsafe-eval'");
         return directives;
       };
-      
+
       const validation = unsafeConfig.validateConfig();
-      
+
       expect(validation.valid).toBe(false);
       expect(validation.issues.length).toBeGreaterThan(0);
       expect(validation.issues.some(issue => issue.includes('unsafe-inline'))).toBe(true);

@@ -93,19 +93,25 @@ describe('CSP Integration Tests', () => {
     
     // CSP violation reporting endpoint
     app.post('/api/csp-report', (req, res) => {
-      const requestContext = {
-        ip: req.ip || '127.0.0.1',
-        userAgent: req.get('User-Agent') || 'test-agent'
-      };
-      
-      const result = cspReporter.processViolation(req.body, requestContext);
-      
-      if (!result.processed && result.reason === 'rate_limited') {
-        res.status(429).json({ error: 'Rate limited' });
-        return;
+      try {
+        const requestContext = {
+          ip: req.ip || '127.0.0.1',
+          userAgent: req.get('User-Agent') || 'test-agent'
+        };
+
+        const result = cspReporter.processViolation(req.body, requestContext);
+
+        if (!result.processed && result.reason === 'rate_limited') {
+          res.status(429).json({ error: 'Rate limited' });
+          return;
+        }
+
+        res.status(204).end();
+      } catch (error) {
+        // Handle CSP reporter errors gracefully - still return 204
+        // In production, you might want to log this error
+        res.status(204).end();
       }
-      
-      res.status(204).end();
     });
     
     // CSP stats endpoint

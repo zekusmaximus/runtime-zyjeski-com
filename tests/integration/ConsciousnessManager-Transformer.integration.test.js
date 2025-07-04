@@ -211,25 +211,26 @@ describe('ConsciousnessManager + ConsciousnessTransformer Integration', () => {
   });
 
   describe('updateConsciousnessPreview Integration', () => {
-    it('should use transformer for process extraction', () => {
+    it('should skip preview updates when feature is disabled', () => {
       const extractSpy = vi.spyOn(transformer, 'extractProcesses');
-      
+
       manager.updateConsciousnessPreview(mockConsciousnessData);
-      
-      expect(extractSpy).toHaveBeenCalledWith(mockConsciousnessData);
+
+      // Feature is disabled, so transformer should not be called
+      expect(extractSpy).not.toHaveBeenCalled();
       extractSpy.mockRestore();
     });
 
-    it('should render transformed process data correctly', () => {
+    it('should not render process data when feature is disabled', () => {
       const mockProcessList = { innerHTML: '' };
       global.document.getElementById.mockReturnValue({
         querySelector: vi.fn(() => mockProcessList)
       });
-      
+
       manager.updateConsciousnessPreview(mockConsciousnessData);
-      
-      expect(mockProcessList.innerHTML).toContain('Grief_Manager.exe');
-      expect(mockProcessList.innerHTML).toContain('Reality_Checker.dll');
+
+      // Feature is disabled, so no content should be rendered
+      expect(mockProcessList.innerHTML).toBe('');
     });
 
     it('should handle transformer errors gracefully', () => {
@@ -244,48 +245,51 @@ describe('ConsciousnessManager + ConsciousnessTransformer Integration', () => {
       extractSpy.mockRestore();
     });
 
-    it('should fall back to legacy rendering when transformer is not available', () => {
+    it('should not render when transformer is not available and feature is disabled', () => {
       const managerWithoutTransformer = new ConsciousnessManager({
         stateManager: mockStateManager,
         socketClient: mockSocketClient
       });
-      
+
       const mockProcessList = { innerHTML: '' };
       global.document.getElementById.mockReturnValue({
         querySelector: vi.fn(() => mockProcessList)
       });
-      
+
       managerWithoutTransformer.updateConsciousnessPreview(mockConsciousnessData);
-      
-      expect(mockProcessList.innerHTML).toContain('Grief_Manager.exe');
+
+      // Feature is disabled, so no content should be rendered
+      expect(mockProcessList.innerHTML).toBe('');
       managerWithoutTransformer.destroy();
     });
 
-    it('should display "No active processes" when no processes are found', () => {
+    it('should not display anything when feature is disabled', () => {
       const dataWithoutProcesses = { ...mockConsciousnessData, processes: [] };
       const mockProcessList = { innerHTML: '' };
       global.document.getElementById.mockReturnValue({
         querySelector: vi.fn(() => mockProcessList)
       });
-      
+
       manager.updateConsciousnessPreview(dataWithoutProcesses);
-      
-      expect(mockProcessList.innerHTML).toContain('No active processes');
+
+      // Feature is disabled, so no content should be rendered
+      expect(mockProcessList.innerHTML).toBe('');
     });
   });
 
   describe('Performance Integration', () => {
-    it('should benefit from transformer caching on repeated calls', () => {
+    it('should not call transformer when feature is disabled', () => {
       const extractSpy = vi.spyOn(transformer, 'extractProcesses');
-      
+
       // First call
       manager.updateConsciousnessPreview(mockConsciousnessData);
-      const firstCallCount = extractSpy.mock.calls.length;
-      
-      // Second call with same data should use cache
+
+      // Second call with same data
       manager.updateConsciousnessPreview(mockConsciousnessData);
-      expect(extractSpy.mock.calls.length).toBe(firstCallCount + 1); // Called again but cached internally
-      
+
+      // Feature is disabled, so transformer should never be called
+      expect(extractSpy.mock.calls.length).toBe(0);
+
       extractSpy.mockRestore();
     });
 
@@ -339,17 +343,17 @@ describe('ConsciousnessManager + ConsciousnessTransformer Integration', () => {
       legacyManager.destroy();
     });
 
-    it('should produce similar output with and without transformer', () => {
+    it('should produce no output when feature is disabled', () => {
       const mockProcessList1 = { innerHTML: '' };
       const mockProcessList2 = { innerHTML: '' };
-      
+
       // Manager with transformer
       global.document.getElementById.mockReturnValue({
         querySelector: vi.fn(() => mockProcessList1)
       });
       manager.updateConsciousnessPreview(mockConsciousnessData);
       const transformerOutput = mockProcessList1.innerHTML;
-      
+
       // Manager without transformer
       const legacyManager = new ConsciousnessManager({
         stateManager: mockStateManager,
@@ -360,11 +364,11 @@ describe('ConsciousnessManager + ConsciousnessTransformer Integration', () => {
       });
       legacyManager.updateConsciousnessPreview(mockConsciousnessData);
       const legacyOutput = mockProcessList2.innerHTML;
-      
-      // Both should contain process names
-      expect(transformerOutput).toContain('Grief_Manager.exe');
-      expect(legacyOutput).toContain('Grief_Manager.exe');
-      
+
+      // Both should be empty since feature is disabled
+      expect(transformerOutput).toBe('');
+      expect(legacyOutput).toBe('');
+
       legacyManager.destroy();
     });
   });

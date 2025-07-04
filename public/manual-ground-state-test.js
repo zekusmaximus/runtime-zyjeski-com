@@ -1,5 +1,6 @@
 // Manual Ground State Compliance Verification
-console.log('=== Manual Ground State Compliance Verification ===');
+export function runGroundStateTest() {
+  console.log('=== Manual Ground State Compliance Verification ===');
 
 // Check 1: Socket client exists and is not auto-connected
 if (window.socketClient) {
@@ -47,4 +48,5 @@ if (window.socketClient && typeof window.socketClient.connect === 'function') {
   console.log('❌ Connect method not available');
 }
 
-console.log('\n=== Ground State Verification Complete ===');
+  console.log('\n=== Ground State Verification Complete ===');
+}
