@@ -35,7 +35,10 @@ export default class ResourceMeter {
       // Visualization type
       type: 'circular', // 'circular', 'linear', 'arc'
       metric: 'cpu', // 'cpu', 'memory', 'threads', 'custom'
-      
+
+      // Initial value
+      value: 0, // Initial value (0 to max)
+
       // Size configuration
       size: { width: 200, height: 200 },
       
@@ -77,8 +80,9 @@ export default class ResourceMeter {
     };
 
     // State
-    this.currentValue = 0;
-    this.targetValue = 0;
+    const initialValue = Math.max(0, Math.min(this.options.max, this.options.value || 0));
+    this.currentValue = initialValue;
+    this.targetValue = initialValue;
     this.animationId = null;
     this.animationStartTime = null;
     this.animationStartValue = 0;
@@ -527,10 +531,25 @@ export default class ResourceMeter {
    * @private
    */
   renderLinear() {
-    const padding = 20;
-    const barHeight = 20;
+    // Use adaptive padding based on container size
+    const padding = Math.min(20, Math.max(4, this.logicalWidth * 0.05));
+    const barHeight = Math.min(20, Math.max(8, this.logicalHeight * 0.5));
     const barY = (this.logicalHeight - barHeight) / 2;
     const barWidth = this.logicalWidth - (padding * 2);
+
+    // Debug logging
+    if (window.DEBUG_MODE || this.currentValue > 0) {
+      console.log('🎨 ResourceMeter renderLinear:', {
+        currentValue: this.currentValue,
+        max: this.options.max,
+        logicalWidth: this.logicalWidth,
+        logicalHeight: this.logicalHeight,
+        barWidth: barWidth,
+        barHeight: barHeight,
+        barY: barY,
+        padding: padding
+      });
+    }
 
     // Validate values before calculating fillWidth
     if (!isFinite(barWidth) || !isFinite(this.currentValue) || !isFinite(this.options.max) || this.options.max === 0) {
@@ -565,6 +584,25 @@ export default class ResourceMeter {
 
       this.ctx.fillStyle = gradient;
       this.ctx.fillRect(padding, barY, fillWidth, barHeight);
+
+      // Debug logging
+      if (window.DEBUG_MODE || this.currentValue > 0) {
+        console.log('🎨 Drawing fill rect:', {
+          fillWidth: fillWidth,
+          color: color,
+          rect: [padding, barY, fillWidth, barHeight]
+        });
+      }
+    } else {
+      // Debug logging for why fill isn't drawn
+      if (window.DEBUG_MODE || this.currentValue > 0) {
+        console.log('❌ Not drawing fill:', {
+          currentValue: this.currentValue,
+          fillWidth: fillWidth,
+          isFiniteFillWidth: isFinite(fillWidth),
+          fillWidthPositive: fillWidth > 0
+        });
+      }
     }
 
     // Draw border

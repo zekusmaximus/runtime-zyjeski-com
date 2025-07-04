@@ -106,25 +106,29 @@ class DataSimulator {
   
   /**
    * Start data simulation with specified scenario
+   * Only starts continuous updates if explicitly requested
    */
-  start(scenario = 'normal') {
+  start(scenario = 'normal', continuous = false) {
     if (this.running) {
       this.stop();
     }
-    
+
     this.currentScenario = scenario;
-    this.running = true;
-    
+    this.running = continuous;
+
     // Generate initial data
     this.generateData();
-    
-    // Set up interval for continuous updates
-    this.interval = setInterval(() => {
-      this.generateData();
-      this.broadcastData();
-    }, 1000);
-    
-    console.log(`DataSimulator: Started with scenario '${scenario}'`);
+
+    // Only set up interval for continuous updates if explicitly requested
+    if (continuous) {
+      this.interval = setInterval(() => {
+        this.generateData();
+        this.broadcastData();
+      }, 1000);
+      console.log(`DataSimulator: Started continuous updates with scenario '${scenario}'`);
+    } else {
+      console.log(`DataSimulator: Generated static data for scenario '${scenario}'`);
+    }
   }
   
   /**
@@ -347,6 +351,15 @@ class DataSimulator {
   getCurrentData() {
     return { ...this.currentData };
   }
+
+  /**
+   * Manually trigger a single data update
+   * Used for user-initiated actions while maintaining Ground State Principle
+   */
+  triggerUpdate() {
+    this.generateData();
+    this.broadcastData();
+  }
 }
 
 /**
@@ -386,20 +399,31 @@ class PerformanceMonitor {
     };
     requestAnimationFrame(measureFPS);
 
-    // Memory usage monitoring (if available)
-    if (performance.memory) {
-      setInterval(() => {
-        this.metrics.memoryUsage = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
-      }, 1000);
-    }
+    // Memory usage monitoring (if available) - manual updates only
+    // Following Ground State Principle - no automatic background processes
+    this.updateMemoryUsage();
 
-    // Update rate monitoring
-    setInterval(() => {
-      const now = performance.now();
-      this.metrics.updateRate = Math.round((this.updateCount * 1000) / (now - this.lastUpdateTime));
-      this.updateCount = 0;
-      this.lastUpdateTime = now;
-    }, 1000);
+    // Update rate monitoring - manual updates only
+    this.updateRate();
+  }
+
+  /**
+   * Manually update memory usage metrics
+   */
+  updateMemoryUsage() {
+    if (performance.memory) {
+      this.metrics.memoryUsage = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+    }
+  }
+
+  /**
+   * Manually update rate metrics
+   */
+  updateRate() {
+    const now = performance.now();
+    this.metrics.updateRate = Math.round((this.updateCount * 1000) / (now - this.lastUpdateTime));
+    this.updateCount = 0;
+    this.lastUpdateTime = now;
   }
 
   recordRenderTime(componentName, time) {
@@ -968,6 +992,13 @@ class ComponentShowcase {
       this.dataSimulator.dataVolumeMultiplier = parseInt(dataVolume);
       this.dataSimulator.errorRateMultiplier = parseInt(errorRate) / 10;
 
+      // Generate new data with updated settings and update components
+      this.dataSimulator.generateData();
+      const newData = this.dataSimulator.getCurrentData();
+      this.updateComponentsWithData(newData);
+      this.updateStats(newData);
+      this.updatePerformanceDisplay();
+
       console.log('Applied real-time settings:', {
         updateFrequency: updateFrequency + 'ms',
         dataVolume: dataVolume + 'x',
@@ -1071,6 +1102,8 @@ class ComponentShowcase {
     setTimeout(() => {
       clearInterval(interval);
       console.log(`Error storm test completed: ${errorCount} errors generated`);
+      // Update performance display after stress test
+      this.updatePerformanceDisplay();
     }, 5000);
   }
 
@@ -1139,6 +1172,8 @@ class ComponentShowcase {
       if (index >= 9) {
         clearInterval(interval);
         console.log('Resource spike test completed');
+        // Update performance display after stress test
+        this.updatePerformanceDisplay();
       }
     }, 500);
   }
@@ -1180,6 +1215,8 @@ class ComponentShowcase {
       const endTime = performance.now();
       const avgFPS = (updateCount / ((endTime - startTime) / 1000)).toFixed(1);
       console.log(`Rapid updates test: ${updateCount} updates in ${((endTime - startTime) / 1000).toFixed(1)}s (${avgFPS} FPS)`);
+      // Update performance display after stress test
+      this.updatePerformanceDisplay();
     }, 3000);
   }
 
@@ -1404,6 +1441,8 @@ class ComponentShowcase {
           results.total_updates = updateCount;
           results.duration = duration.toFixed(2) + 's';
 
+          // Update performance display after stress test
+          this.updatePerformanceDisplay();
           resolve(results);
         }
       }, 10);
@@ -1741,8 +1780,14 @@ class ComponentShowcase {
       this.performanceMonitor.recordUpdate();
     });
 
-    // Start with normal scenario
-    this.dataSimulator.start('normal');
+    // Generate initial static data instead of starting continuous simulation
+    // This follows the Ground State Principle - no automatic background processes
+    this.dataSimulator.generateData();
+    const staticData = this.dataSimulator.getCurrentData();
+    this.updateComponentsWithData(staticData);
+    this.updateStats(staticData);
+
+    console.log('ComponentShowcase: Using static data (no automatic updates)');
   }
 
   /**
@@ -1828,40 +1873,52 @@ class ComponentShowcase {
 
   /**
    * Setup performance display updates
+   * Following Ground State Principle - no automatic background processes
    */
   setupPerformanceDisplay() {
-    setInterval(() => {
-      const metrics = this.performanceMonitor.getMetrics();
-
-      // Update basic stats
-      if (this.elements.globalFPS) {
-        this.elements.globalFPS.textContent = metrics.fps;
-      }
-
-      if (this.elements.memoryUsage) {
-        this.elements.memoryUsage.textContent = `${metrics.memoryUsage}MB`;
-      }
-
-      if (this.elements.updateRate) {
-        this.elements.updateRate.textContent = metrics.updateRate;
-      }
-
-      if (this.elements.meterFPS) {
-        this.elements.meterFPS.textContent = metrics.fps;
-      }
-
-      // Update render times
-      if (this.elements.processRenderTime) {
-        const renderTime = metrics.renderTimes.get('processListDemo') || 0;
-        this.elements.processRenderTime.textContent = `${renderTime.toFixed(1)}ms`;
-      }
-
-      // Update performance dashboard
-      this.updatePerformanceDashboard(metrics);
-    }, 1000);
+    // Perform initial update only
+    this.updatePerformanceDisplay();
 
     // Setup performance dashboard controls
     this.setupPerformanceDashboardControls();
+  }
+
+  /**
+   * Manually update performance display
+   * Called only when needed (user actions, stress tests, etc.)
+   */
+  updatePerformanceDisplay() {
+    // Update performance monitor metrics first
+    this.performanceMonitor.updateMemoryUsage();
+    this.performanceMonitor.updateRate();
+
+    const metrics = this.performanceMonitor.getMetrics();
+
+    // Update basic stats
+    if (this.elements.globalFPS) {
+      this.elements.globalFPS.textContent = metrics.fps;
+    }
+
+    if (this.elements.memoryUsage) {
+      this.elements.memoryUsage.textContent = `${metrics.memoryUsage}MB`;
+    }
+
+    if (this.elements.updateRate) {
+      this.elements.updateRate.textContent = metrics.updateRate;
+    }
+
+    if (this.elements.meterFPS) {
+      this.elements.meterFPS.textContent = metrics.fps;
+    }
+
+    // Update render times
+    if (this.elements.processRenderTime) {
+      const renderTime = metrics.renderTimes.get('processListDemo') || 0;
+      this.elements.processRenderTime.textContent = `${renderTime.toFixed(1)}ms`;
+    }
+
+    // Update performance dashboard
+    this.updatePerformanceDashboard(metrics);
   }
 
   /**

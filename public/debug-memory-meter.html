@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Meter Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 20px;
+        }
+        .test-container {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #444;
+            border-radius: 8px;
+        }
+        .memory-meter {
+            width: 100%;
+            height: 40px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .debug-info {
+            background: #333;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Memory Meter Debug</h1>
+    
+    <div class="test-container">
+        <h3>Test 1: Basic Linear ResourceMeter</h3>
+        <div class="memory-meter" id="meter1"></div>
+        <div class="debug-info" id="debug1">Loading...</div>
+    </div>
+    
+    <div class="test-container">
+        <h3>Test 2: Memory Meter with Same Config as Monitor</h3>
+        <div class="memory-meter" id="meter2"></div>
+        <div class="debug-info" id="debug2">Loading...</div>
+    </div>
+    
+    <div class="test-container">
+        <h3>Test 3: Simple Canvas Test</h3>
+        <canvas id="simpleCanvas" width="400" height="40" style="border: 1px solid #444; background: #2a2a2a;"></canvas>
+        <div class="debug-info" id="debug3">Loading...</div>
+    </div>
+
+    <script type="module">
+        // Enable debug mode
+        window.DEBUG_MODE = true;
+
+        import ResourceMeter from './js/components/ResourceMeter.js';
+
+        console.log('🔧 Starting memory meter debug tests...');
+
+        // Test 1: Basic ResourceMeter with detailed debugging
+        try {
+            const container1 = document.getElementById('meter1');
+            const rect1 = container1.getBoundingClientRect();
+            console.log('🔍 Container 1 dimensions:', {
+                width: rect1.width,
+                height: rect1.height,
+                offsetWidth: container1.offsetWidth,
+                offsetHeight: container1.offsetHeight
+            });
+
+            const meter1 = new ResourceMeter(container1, {
+                type: 'linear',
+                value: 75,
+                max: 100,
+                unit: '%',
+                label: 'Test Memory',
+                thresholds: { low: 60, medium: 80 },
+                colors: {
+                    low: '#4CAF50',
+                    medium: '#FF9800',
+                    high: '#F44336',
+                    track: '#404040',
+                    text: '#ffffff'
+                },
+                animate: false,
+                showValue: true,
+                showLabel: true
+            });
+
+            // Log internal state
+            console.log('🔍 Meter 1 state:', {
+                currentValue: meter1.currentValue,
+                targetValue: meter1.targetValue,
+                logicalWidth: meter1.logicalWidth,
+                logicalHeight: meter1.logicalHeight,
+                options: meter1.options
+            });
+
+            document.getElementById('debug1').textContent = `ResourceMeter created: ${meter1.currentValue}% value, canvas: ${meter1.logicalWidth}x${meter1.logicalHeight}`;
+            console.log('✅ Test 1: ResourceMeter created successfully');
+
+        } catch (error) {
+            document.getElementById('debug1').textContent = `Error: ${error.message}`;
+            console.error('❌ Test 1 failed:', error);
+        }
+        
+        // Test 2: Same config as monitor with debugging
+        try {
+            const capacity = { total: 8192, allocated: 6144, available: 2048 };
+            const usedPercent = (capacity.allocated / capacity.total * 100);
+
+            const container2 = document.getElementById('meter2');
+            const rect2 = container2.getBoundingClientRect();
+            console.log('🔍 Container 2 dimensions:', {
+                width: rect2.width,
+                height: rect2.height,
+                offsetWidth: container2.offsetWidth,
+                offsetHeight: container2.offsetHeight
+            });
+
+            const meter2 = new ResourceMeter(container2, {
+                type: 'linear',
+                value: usedPercent,
+                max: 100,
+                unit: '%',
+                label: 'Memory Usage',
+                size: { width: 400, height: 40 },
+                thresholds: { low: 60, medium: 80 },
+                colors: {
+                    low: '#4CAF50',
+                    medium: '#FF9800',
+                    high: '#F44336',
+                    background: '#2a2a2a',
+                    text: '#ffffff',
+                    track: '#404040'
+                },
+                animate: false, // Disable animation for debugging
+                showValue: false,
+                showLabel: false,
+                showTooltip: true,
+                tooltipFormat: (value) => `Memory: ${capacity.allocated} MB / ${capacity.total} MB (${value.toFixed(1)}%)`
+            });
+
+            // Log internal state
+            console.log('🔍 Meter 2 state:', {
+                currentValue: meter2.currentValue,
+                targetValue: meter2.targetValue,
+                logicalWidth: meter2.logicalWidth,
+                logicalHeight: meter2.logicalHeight,
+                usedPercent: usedPercent
+            });
+
+            // Force an update to see if that helps
+            setTimeout(() => {
+                console.log('🔄 Forcing meter2 update...');
+                meter2.update(usedPercent);
+                console.log('🔍 After update - Meter 2 state:', {
+                    currentValue: meter2.currentValue,
+                    targetValue: meter2.targetValue
+                });
+            }, 100);
+
+            document.getElementById('debug2').textContent = `Monitor config: ${usedPercent.toFixed(1)}% (${capacity.allocated}MB / ${capacity.total}MB), canvas: ${meter2.logicalWidth}x${meter2.logicalHeight}`;
+            console.log('✅ Test 2: Monitor config ResourceMeter created successfully');
+
+        } catch (error) {
+            document.getElementById('debug2').textContent = `Error: ${error.message}`;
+            console.error('❌ Test 2 failed:', error);
+        }
+        
+        // Test 3: Simple canvas drawing
+        try {
+            const canvas = document.getElementById('simpleCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Draw background
+            ctx.fillStyle = '#404040';
+            ctx.fillRect(0, 0, 400, 40);
+            
+            // Draw progress bar
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(0, 0, 300, 40); // 75% of 400px
+            
+            // Draw border
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(0, 0, 400, 40);
+            
+            document.getElementById('debug3').textContent = 'Simple canvas drawing successful (75% green bar)';
+            console.log('✅ Test 3: Simple canvas drawing successful');
+            
+        } catch (error) {
+            document.getElementById('debug3').textContent = `Error: ${error.message}`;
+            console.error('❌ Test 3 failed:', error);
+        }
+        
+        // Additional debugging
+        setTimeout(() => {
+            console.log('🔍 Container dimensions check:');
+            ['meter1', 'meter2'].forEach(id => {
+                const element = document.getElementById(id);
+                const rect = element.getBoundingClientRect();
+                console.log(`${id}:`, {
+                    width: rect.width,
+                    height: rect.height,
+                    offsetWidth: element.offsetWidth,
+                    offsetHeight: element.offsetHeight
+                });
+            });
+        }, 1000);
+    </script>
+</body>
+</html>

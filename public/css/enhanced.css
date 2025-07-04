@@ -530,7 +530,8 @@
   opacity: 0.9;
 }
 
-.memory-stats {
+/* Memory stats for memory blocks - more specific selector to avoid conflicts */
+.memory-block .memory-stats {
   position: absolute;
   bottom: 0;
   left: 0;

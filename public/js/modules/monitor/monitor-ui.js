@@ -690,7 +690,7 @@ class MonitorUI {
     }
 
     // Create container for ResourceMeter and detailed memory blocks
-    let html = '<div class="memory-overview">';
+    let html = '';
     let hasData = false;
 
     // Add ResourceMeter for overall memory allocation if we have capacity data
@@ -699,21 +699,20 @@ class MonitorUI {
       const usedPercent = capacity.total ? ((capacity.allocated || 0) / capacity.total * 100) : 0;
 
       html += `
-        <div class="memory-meter-container">
-          <div class="memory-meter-header">
-            <h4>Memory Allocation</h4>
-            <span class="memory-meter-stats">${capacity.allocated || 0} MB / ${capacity.total || 0} MB (${usedPercent.toFixed(1)}%)</span>
+        <div class="memory-overview">
+          <div class="memory-meter-container">
+            <div class="memory-meter-header">
+              <span class="memory-meter-stats">${capacity.allocated || 0} MB / ${capacity.total || 0} MB (${usedPercent.toFixed(1)}%)</span>
+            </div>
+            <div class="memory-meter" id="memoryMeter"></div>
           </div>
-          <div class="memory-meter" id="memoryMeter"></div>
         </div>
       `;
       hasData = true;
     }
 
-    html += '</div>';
-
     // Handle the detailed memory structure from the server
-    html += '<div class="memory-blocks">';
+    html += '<div class="memory-details">';
     
     // Show memory regions (detailed memory blocks)
     if (memoryData.regions && Array.isArray(memoryData.regions) && memoryData.regions.length > 0) {
@@ -748,8 +747,12 @@ class MonitorUI {
     if (memoryData.pools && typeof memoryData.pools === 'object') {
       hasData = true;
       console.log('🧠 Found memory pools:', memoryData.pools);
-      
-      html += '<div class="memory-pools">';
+
+      html += `
+        <div class="memory-section">
+          <h4>Memory Pools</h4>
+          <div class="memory-pools">
+      `;
       for (const [poolName, count] of Object.entries(memoryData.pools)) {
         html += `
           <div class="memory-pool ${poolName.toLowerCase()}">
@@ -760,7 +763,10 @@ class MonitorUI {
           </div>
         `;
       }
-      html += '</div>';
+      html += `
+          </div>
+        </div>
+      `;
     }
     
     // Show capacity info
@@ -768,18 +774,20 @@ class MonitorUI {
       hasData = true;
       const capacity = memoryData.capacity;
       const usedPercent = capacity.total ? ((capacity.allocated || 0) / capacity.total * 100).toFixed(1) : 0;
-      
+
       html += `
-        <div class="memory-stats">
-          <div class="memory-capacity">
-            <div>Total: ${capacity.total || 0} MB</div>
-            <div>Used: ${capacity.allocated || 0} MB (${usedPercent}%)</div>
-            <div>Available: ${capacity.available || 0} MB</div>
-            <div>Reserved: ${capacity.reserved || 0} MB</div>
-          </div>
-          <div class="memory-fragmentation">
-            <div>Fragmentation: ${((memoryData.fragmentationLevel || 0) * 100).toFixed(1)}%</div>
-            <div>Total Memories: ${memoryData.totalMemories || 'Unknown'}</div>
+        <div class="memory-section">
+          <h4>System Statistics</h4>
+          <div class="memory-stats">
+            <div class="memory-capacity">
+              <div><strong>Capacity:</strong> ${capacity.total || 0} MB</div>
+              <div><strong>Available:</strong> ${capacity.available || 0} MB</div>
+              <div><strong>Reserved:</strong> ${capacity.reserved || 0} MB</div>
+            </div>
+            <div class="memory-fragmentation">
+              <div><strong>Fragmentation:</strong> ${((memoryData.fragmentationLevel || 0) * 100).toFixed(1)}%</div>
+              <div><strong>Total Memories:</strong> ${memoryData.totalMemories || 'Unknown'}</div>
+            </div>
           </div>
         </div>
       `;
@@ -812,39 +820,77 @@ class MonitorUI {
   }
 
   createMemoryResourceMeter(capacity) {
-    const meterContainer = document.getElementById('memoryMeter');
-    if (!meterContainer) {
-      console.warn('Memory meter container not found');
+    // First check if we're actually on the monitor page
+    const currentPath = window.location.pathname;
+    const currentHash = window.location.hash;
+    const isMonitorRoute = currentPath.includes('/monitor') || currentHash.includes('monitor');
+
+    if (!isMonitorRoute) {
+      console.log('🧠 Not on monitor page, skipping memory meter creation');
       return;
     }
 
-    // Check if monitor section is visible
+    const meterContainer = document.getElementById('memoryMeter');
+    if (!meterContainer) {
+      console.log('🧠 Memory meter container not found - this is expected if not on monitor page');
+      return;
+    }
+
+    // Check if the monitor section is visible
     const monitorSection = document.getElementById('monitor');
-    if (!monitorSection || !monitorSection.classList.contains('active')) {
-      console.log('Monitor section not active, skipping memory meter creation');
+    const isMonitorVisible = monitorSection && (monitorSection.classList.contains('active') ||
+                                               monitorSection.style.display !== 'none' ||
+                                               getComputedStyle(monitorSection).display !== 'none');
+
+    if (!isMonitorVisible) {
+      console.log('🧠 Monitor section not visible, skipping memory meter creation');
       return;
     }
 
     // Small delay to ensure DOM layout is complete
     setTimeout(() => {
-      this._createMemoryMeterInstance(capacity);
+      this._createMemoryMeterInstance(capacity, 0);
     }, 100);
   }
 
-  _createMemoryMeterInstance(capacity) {
+  _createMemoryMeterInstance(capacity, retryCount = 0) {
     const meterContainer = document.getElementById('memoryMeter');
     if (!meterContainer) {
       console.warn('Memory meter container not found during delayed creation');
       return;
     }
 
+    // Check container dimensions
+    const containerRect = meterContainer.getBoundingClientRect();
+    console.log('🧠 Memory meter container dimensions:', {
+      width: containerRect.width,
+      height: containerRect.height,
+      offsetWidth: meterContainer.offsetWidth,
+      offsetHeight: meterContainer.offsetHeight,
+      retryCount: retryCount
+    });
+
+    if (containerRect.width === 0 || containerRect.height === 0) {
+      if (retryCount >= 5) {
+        console.warn('🧠 Memory meter container still has zero dimensions after 5 retries, giving up');
+        return;
+      }
+      console.warn(`Memory meter container has zero dimensions, retrying in 200ms (attempt ${retryCount + 1}/5)`);
+      setTimeout(() => this._createMemoryMeterInstance(capacity, retryCount + 1), 200);
+      return;
+    }
+
+    console.log('🧠 Creating memory ResourceMeter with capacity:', capacity);
+
     // Clean up any existing meter
     if (this.memoryMeter) {
+      console.log('🧠 Cleaning up existing memory meter');
       this.memoryMeter.destroy();
     }
 
     try {
       const usedPercent = capacity.total ? ((capacity.allocated || 0) / capacity.total * 100) : 0;
+      console.log('🧠 Memory usage percentage:', usedPercent);
 
       this.memoryMeter = new ResourceMeter(meterContainer, {
         type: 'linear',
@@ -852,6 +898,7 @@ class MonitorUI {
         max: 100,
         unit: '%',
         label: 'Memory Usage',
+        size: { width: meterContainer.offsetWidth || 400, height: 40 },
         thresholds: {
           low: 60,    // Green below 60%
           medium: 80  // Yellow 60-80%, Red above 80%
@@ -859,9 +906,14 @@ class MonitorUI {
         colors: {
           low: '#4CAF50',     // Green
           medium: '#FF9800',  // Orange
-          high: '#F44336'     // Red
+          high: '#F44336',    // Red
+          background: '#2a2a2a',
+          text: '#ffffff',
+          track: '#404040'
         },
-        animation: true,
+        animate: true,
+        showValue: false,  // Don't show value text since we have it in the header
+        showLabel: false,  // Don't show label since we have it in the header
         showTooltip: true,
         tooltipFormat: (value) => `Memory: ${capacity.allocated || 0} MB / ${capacity.total || 0} MB (${value.toFixed(1)}%)`
       });
@@ -869,15 +921,46 @@ class MonitorUI {
       // Update with the current value to ensure it renders
       this.memoryMeter.update(usedPercent);
 
-      console.log('✅ Memory ResourceMeter created successfully');
+      console.log('✅ Memory ResourceMeter created successfully with value:', usedPercent);
     } catch (error) {
       console.error('❌ Failed to create memory ResourceMeter:', error);
+      console.error('Error details:', error.stack);
+
+      // Calculate usedPercent for fallback
+      const usedPercent = capacity.total ? ((capacity.allocated || 0) / capacity.total * 100) : 0;
+
       // Fallback to simple progress bar
       meterContainer.innerHTML = `
-        <div class="simple-progress-bar">
-          <div class="progress-fill" style="width: ${usedPercent.toFixed(1)}%"></div>
+        <div class="simple-progress-bar" style="
+          width: 100%;
+          height: 40px;
+          background: #2a2a2a;
+          border-radius: 4px;
+          overflow: hidden;
+          position: relative;
+          border: 1px solid #444;
+        ">
+          <div class="progress-fill" style="
+            width: ${usedPercent.toFixed(1)}%;
+            height: 100%;
+            background: ${usedPercent > 80 ? '#F44336' : usedPercent > 60 ? '#FF9800' : '#4CAF50'};
+            transition: width 0.3s ease;
+            position: relative;
+          ">
+            <div style="
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              color: white;
+              font-size: 12px;
+              font-weight: bold;
+              text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            ">${usedPercent.toFixed(1)}%</div>
+          </div>
         </div>
       `;
+      console.log('🧠 Fallback progress bar created');
     }
   }
 
