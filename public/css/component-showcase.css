@@ -408,27 +408,65 @@ body::before {
   .component-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .showcase-item.large {
     grid-column: span 1;
   }
-  
+
   .showcase-stats {
     flex-direction: column;
     gap: 20px;
   }
-  
+
   .title-main {
     font-size: 2rem;
   }
-  
+
   .nav-links {
     display: none;
   }
-  
+
   .meters-grid {
     grid-template-columns: 1fr;
     gap: 15px;
+  }
+
+  /* Dashboard responsive adjustments */
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
+    grid-template-areas:
+      "processes"
+      "resources"
+      "errors"
+      "memory";
+    height: auto; /* Allow height to adjust to content */
+    gap: 15px;
+  }
+
+  .processes-panel {
+    grid-area: processes;
+  }
+
+  .resources-panel {
+    grid-area: resources;
+  }
+
+  .errors-panel {
+    grid-area: errors;
+  }
+
+  .memory-panel {
+    grid-area: memory;
+  }
+
+  #unified-process-list {
+    min-height: 300px; /* Reduced minimum height for mobile */
+  }
+
+  #unified-memory-map,
+  #unified-error-log {
+    min-height: 250px; /* Reduced minimum height for mobile */
   }
 }
 
@@ -444,6 +482,35 @@ body::before {
   .component-demo {
     min-height: 250px;
   }
+
+  .dashboard-grid {
+    gap: 10px;
+  }
+
+  .dashboard-panel {
+    padding: 10px;
+  }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1200px) {
+  .dashboard-grid {
+    height: 1000px; /* More height for larger screens */
+    grid-template-columns: 2fr 1fr; /* Maintain proportions */
+    grid-template-rows: 1fr 1fr 1fr;
+  }
+
+  #unified-process-list {
+    min-height: 600px; /* More space for process list */
+  }
+
+  #unified-memory-map {
+    min-height: 300px; /* More space for memory map */
+  }
+
+  #unified-error-log {
+    min-height: 250px; /* More space for error log */
+  }
 }
 
 /* Unified Dashboard */
@@ -457,7 +524,8 @@ body::before {
   border-radius: 8px;
   padding: var(--panel-padding);
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* Changed from hidden to visible */
+  min-height: 600px; /* Ensure minimum height */
 }
 
 .unified-dashboard::before {
@@ -478,10 +546,15 @@ body::before {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 1fr 300px;
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-areas:
+    "processes resources"
+    "processes errors"
+    "memory memory";
   gap: var(--grid-gap);
-  height: 600px;
+  height: 900px; /* Increased height to accommodate content */
+  min-height: 700px; /* Minimum height for smaller screens */
 }
 
 .dashboard-panel {
@@ -490,7 +563,9 @@ body::before {
   border-radius: 6px;
   padding: 15px;
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* Changed from hidden to visible */
+  display: flex;
+  flex-direction: column;
 }
 
 .panel-title {
@@ -504,11 +579,19 @@ body::before {
 }
 
 .processes-panel {
-  grid-row: span 2;
+  grid-area: processes;
+}
+
+.resources-panel {
+  grid-area: resources;
+}
+
+.errors-panel {
+  grid-area: errors;
 }
 
 .memory-panel {
-  grid-column: span 2;
+  grid-area: memory;
 }
 
 .unified-meters {
@@ -516,6 +599,243 @@ body::before {
   flex-direction: column;
   gap: 15px;
   height: 100%;
+}
+
+/* Panel content containers */
+.dashboard-panel > div:not(.panel-title) {
+  flex: 1;
+  min-height: 0; /* Allow flex items to shrink below content size */
+  overflow: auto; /* Add scrolling when needed */
+}
+
+/* Specific sizing for process list in unified dashboard */
+#unified-process-list {
+  height: 100%;
+  min-height: 500px; /* Ensure minimum height for process list */
+  max-height: 100%; /* Prevent overflow */
+  overflow: hidden; /* Let the component handle its own scrolling */
+}
+
+/* Specific sizing for memory map in unified dashboard */
+#unified-memory-map {
+  height: 100%;
+  min-height: 300px; /* Ensure minimum height for memory map */
+}
+
+/* Specific sizing for error log in unified dashboard */
+#unified-error-log {
+  height: 100%;
+  min-height: 300px; /* Ensure minimum height for error log */
+}
+
+/* Ensure components within panels have proper sizing */
+.dashboard-panel .process-list,
+.dashboard-panel .memory-map,
+.dashboard-panel .error-log {
+  height: 100%;
+  width: 100%;
+  border: none; /* Remove duplicate borders */
+  border-radius: 0; /* Remove duplicate border radius */
+}
+
+/* Fix for resource meters in unified dashboard */
+.unified-meters .resource-meter {
+  margin-bottom: 10px;
+}
+
+.unified-meters .resource-meter:last-child {
+  margin-bottom: 0;
+}
+
+/* Ensure proper spacing for panel titles */
+.dashboard-panel .panel-title {
+  flex-shrink: 0; /* Prevent title from shrinking */
+  margin-bottom: 15px;
+}
+
+/* Fix z-index issues */
+.dashboard-panel {
+  z-index: 1;
+  position: relative; /* Ensure proper stacking context */
+}
+
+.dashboard-panel:hover {
+  z-index: 2;
+}
+
+/* Ensure processes panel is always visible */
+.processes-panel {
+  z-index: 2; /* Higher than other panels */
+}
+
+.processes-panel:hover {
+  z-index: 3;
+}
+
+/* Additional component sizing fixes */
+.dashboard-panel .process-list-viewport {
+  max-height: none; /* Remove any max-height restrictions */
+}
+
+.dashboard-panel .memory-map__canvas-container {
+  min-height: 200px; /* Ensure minimum height for canvas */
+}
+
+.dashboard-panel .error-log {
+  min-height: 200px; /* Ensure minimum height for error log */
+}
+
+/* Prevent content from being cut off */
+.dashboard-panel > * {
+  box-sizing: border-box;
+}
+
+/* Ensure proper scrolling behavior */
+.dashboard-panel {
+  contain: layout style;
+}
+
+/* Fix process list column sizing in dashboard */
+.dashboard-panel .process-list-header,
+.dashboard-panel .process-row {
+  min-width: 0; /* Allow flex items to shrink */
+}
+
+.dashboard-panel .process-list-header .column,
+.dashboard-panel .process-row .column {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ensure process list fits within panel */
+.dashboard-panel .process-list {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Memory map specific fixes */
+.dashboard-panel .memory-map {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Error log specific fixes */
+.dashboard-panel .error-log {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Responsive column widths for process list in dashboard */
+@media (max-width: 1200px) {
+  .dashboard-panel .column-memory {
+    width: 80px;
+    min-width: 80px;
+  }
+
+  .dashboard-panel .column-cpu {
+    width: 70px;
+    min-width: 70px;
+  }
+
+  .dashboard-panel .column-health {
+    width: 70px;
+    min-width: 70px;
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-panel .column-memory {
+    width: 70px;
+    min-width: 70px;
+  }
+
+  .dashboard-panel .column-cpu {
+    width: 60px;
+    min-width: 60px;
+  }
+
+  .dashboard-panel .column-health {
+    width: 60px;
+    min-width: 60px;
+  }
+
+  .dashboard-panel .column-status {
+    width: 50px;
+    min-width: 50px;
+  }
+}
+
+/* Debug mode - uncomment to see layout boundaries */
+/*
+.dashboard-panel {
+  outline: 2px solid red !important;
+}
+
+.dashboard-panel > * {
+  outline: 1px solid blue !important;
+}
+
+.process-list {
+  outline: 1px solid green !important;
+}
+
+.memory-map {
+  outline: 1px solid yellow !important;
+}
+
+.processes-panel {
+  outline: 3px solid lime !important;
+}
+
+.resources-panel {
+  outline: 3px solid cyan !important;
+}
+
+.errors-panel {
+  outline: 3px solid orange !important;
+}
+
+.memory-panel {
+  outline: 3px solid magenta !important;
+}
+*/
+
+/* Ensure components don't exceed their containers */
+.dashboard-panel * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Fix process list column sizing in dashboard */
+.dashboard-panel .process-list-header,
+.dashboard-panel .process-row {
+  min-width: 0; /* Allow flex items to shrink */
+}
+
+.dashboard-panel .process-list-header .column,
+.dashboard-panel .process-row .column {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ensure process list fits within panel */
+.dashboard-panel .process-list {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Memory map specific fixes */
+.dashboard-panel .memory-map {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Error log specific fixes */
+.dashboard-panel .error-log {
+  min-width: 0;
+  width: 100%;
 }
 
 /* Enhanced Unified Dashboard */

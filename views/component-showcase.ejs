@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Component Showcase - Runtime.zyjeski.com</title>
+    <meta name="description" content="Interactive showcase of consciousness debugging UI components">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/component-showcase.css">
+    
+    <!-- Component CSS Files -->
+    <link rel="stylesheet" href="/css/components/process-list.css">
+    <link rel="stylesheet" href="/css/components/resource-meter.css">
+    <link rel="stylesheet" href="/css/components/error-log.css">
+    <link rel="stylesheet" href="/css/components/memory-map.css">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body data-theme="dark">
+    <!-- Navigation -->
+    <nav class="showcase-nav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/" class="brand-link">
+                    <span class="brand-text">runtime.zyjeski.com</span>
+                    <span class="brand-subtitle">component showcase</span>
+                </a>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link">← Back to Main</a>
+                <a href="#components" class="nav-link">Components</a>
+                <a href="#unified" class="nav-link">Unified Dashboard</a>
+                <a href="#examples" class="nav-link">Code Examples</a>
+            </div>
+            <div class="nav-controls">
+                <button class="control-btn" id="themeToggle" title="Toggle Theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <button class="control-btn" id="dataSimulator" title="Start Data Simulation">
+                    <span class="sim-icon">▶️</span>
+                </button>
+                <button class="control-btn" id="exportConfig" title="Export Configuration">
+                    <span class="export-icon">📋</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="showcase-main">
+        <!-- Hero Section -->
+        <section class="showcase-hero">
+            <div class="hero-background">
+                <div class="matrix-rain" id="matrixRain"></div>
+            </div>
+            <div class="header-content">
+                <h1 class="showcase-title">
+                    <span class="title-main">Component Showcase</span>
+                    <span class="title-subtitle">Consciousness Debugging UI Components</span>
+                </h1>
+                <p class="showcase-description">
+                    Interactive demonstration of the four core UI components that power the consciousness debugging interface.
+                    Each component is designed for high performance, real-time updates, and seamless integration.
+                </p>
+                <div class="showcase-stats" id="showcaseStats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="componentCount">4</span>
+                        <span class="stat-label">Components</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="renderFps">60</span>
+                        <span class="stat-label">FPS</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="memoryUsage">0</span>
+                        <span class="stat-label">MB Used</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="updateRate">0</span>
+                        <span class="stat-label">Updates/sec</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Component Demonstrations -->
+        <section id="components" class="components-section">
+            <div class="section-header">
+                <h2 class="section-title">Interactive Component Demos</h2>
+                <p class="section-description">
+                    Each component below is fully functional and demonstrates real-time data visualization capabilities.
+                    Use the controls to interact with live data streams and observe performance characteristics.
+                </p>
+            </div>
+
+            <!-- ProcessList Component Demo -->
+            <div class="component-demo" id="processListDemo">
+                <div class="demo-header">
+                    <h3 class="demo-title">
+                        <span class="component-icon">⚙️</span>
+                        ProcessList Component
+                    </h3>
+                    <div class="demo-controls">
+                        <button class="demo-btn" id="addProcess">Add Process</button>
+                        <button class="demo-btn" id="killRandomProcess">Kill Random</button>
+                        <button class="demo-btn" id="toggleProcessUpdates">Toggle Updates</button>
+                        <span class="demo-status" id="processListStatus">Ready</span>
+                    </div>
+                </div>
+                <div class="demo-content">
+                    <div class="demo-component">
+                        <div id="processListContainer" class="process-list-container">
+                            <!-- ProcessList component will be rendered here -->
+                        </div>
+                    </div>
+                    <div class="demo-info">
+                        <div class="info-panel">
+                            <h4>Performance Metrics</h4>
+                            <div class="metrics">
+                                <div class="metric">
+                                    <span class="metric-label">Render Time:</span>
+                                    <span class="metric-value" id="processListRenderTime">0ms</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Process Count:</span>
+                                    <span class="metric-value" id="processListCount">0</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Memory Usage:</span>
+                                    <span class="metric-value" id="processListMemory">0MB</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-panel">
+                            <h4>Features</h4>
+                            <ul class="feature-list">
+                                <li>Virtual scrolling for 1000+ processes</li>
+                                <li>Real-time status updates</li>
+                                <li>Interactive process management</li>
+                                <li>Efficient DOM diffing</li>
+                                <li>Event delegation pattern</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ResourceMeter Component Demo -->
+            <div class="component-demo" id="resourceMeterDemo">
+                <div class="demo-header">
+                    <h3 class="demo-title">
+                        <span class="component-icon">📊</span>
+                        ResourceMeter Component
+                    </h3>
+                    <div class="demo-controls">
+                        <select id="meterType" class="demo-select">
+                            <option value="circular">Circular</option>
+                            <option value="linear">Linear</option>
+                            <option value="arc">Arc</option>
+                        </select>
+                        <button class="demo-btn" id="randomizeValues">Randomize</button>
+                        <button class="demo-btn" id="toggleAnimation">Toggle Animation</button>
+                        <span class="demo-status" id="resourceMeterStatus">Ready</span>
+                    </div>
+                </div>
+                <div class="demo-content">
+                    <div class="demo-component">
+                        <div id="resourceMeterContainer" class="resource-meter-container">
+                            <!-- ResourceMeter components will be rendered here -->
+                        </div>
+                    </div>
+                    <div class="demo-info">
+                        <div class="info-panel">
+                            <h4>Performance Metrics</h4>
+                            <div class="metrics">
+                                <div class="metric">
+                                    <span class="metric-label">Frame Rate:</span>
+                                    <span class="metric-value" id="resourceMeterFps">60fps</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Canvas Ops:</span>
+                                    <span class="metric-value" id="resourceMeterOps">0</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">GPU Usage:</span>
+                                    <span class="metric-value" id="resourceMeterGpu">Low</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-panel">
+                            <h4>Features</h4>
+                            <ul class="feature-list">
+                                <li>Canvas-based 60fps rendering</li>
+                                <li>Three visualization types</li>
+                                <li>Threshold-based color coding</li>
+                                <li>Smooth animations</li>
+                                <li>High DPI support</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ErrorLog Component Demo -->
+            <div class="component-demo" id="errorLogDemo">
+                <div class="demo-header">
+                    <h3 class="demo-title">
+                        <span class="component-icon">🚨</span>
+                        ErrorLog Component
+                    </h3>
+                    <div class="demo-controls">
+                        <button class="demo-btn" id="addError">Add Error</button>
+                        <button class="demo-btn" id="addWarning">Add Warning</button>
+                        <button class="demo-btn" id="clearErrors">Clear All</button>
+                        <select id="errorFilter" class="demo-select">
+                            <option value="all">All Levels</option>
+                            <option value="error">Errors Only</option>
+                            <option value="warning">Warnings Only</option>
+                            <option value="info">Info Only</option>
+                        </select>
+                        <span class="demo-status" id="errorLogStatus">Ready</span>
+                    </div>
+                </div>
+                <div class="demo-content">
+                    <div class="demo-component">
+                        <div id="errorLogContainer" class="error-log-container">
+                            <!-- ErrorLog component will be rendered here -->
+                        </div>
+                    </div>
+                    <div class="demo-info">
+                        <div class="info-panel">
+                            <h4>Performance Metrics</h4>
+                            <div class="metrics">
+                                <div class="metric">
+                                    <span class="metric-label">Error Count:</span>
+                                    <span class="metric-value" id="errorLogCount">0</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Scroll Performance:</span>
+                                    <span class="metric-value" id="errorLogScroll">60fps</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Filter Time:</span>
+                                    <span class="metric-value" id="errorLogFilter">0ms</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-panel">
+                            <h4>Features</h4>
+                            <ul class="feature-list">
+                                <li>Virtual scrolling for 50+ items</li>
+                                <li>Consciousness-themed error types</li>
+                                <li>Severity-based filtering</li>
+                                <li>Auto-dismissal with delays</li>
+                                <li>Error grouping for duplicates</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MemoryMap Component Demo -->
+            <div class="component-demo" id="memoryMapDemo">
+                <div class="demo-header">
+                    <h3 class="demo-title">
+                        <span class="component-icon">🧠</span>
+                        MemoryMap Component
+                    </h3>
+                    <div class="demo-controls">
+                        <select id="memoryViewMode" class="demo-select">
+                            <option value="type">By Type</option>
+                            <option value="access">By Access</option>
+                            <option value="fragmentation">Fragmentation</option>
+                            <option value="age">By Age</option>
+                        </select>
+                        <button class="demo-btn" id="allocateMemory">Allocate</button>
+                        <button class="demo-btn" id="fragmentMemory">Fragment</button>
+                        <button class="demo-btn" id="compactMemory">Compact</button>
+                        <span class="demo-status" id="memoryMapStatus">Ready</span>
+                    </div>
+                </div>
+                <div class="demo-content">
+                    <div class="demo-component">
+                        <div id="memoryMapContainer" class="memory-map-container">
+                            <!-- MemoryMap component will be rendered here -->
+                        </div>
+                    </div>
+                    <div class="demo-info">
+                        <div class="info-panel">
+                            <h4>Performance Metrics</h4>
+                            <div class="metrics">
+                                <div class="metric">
+                                    <span class="metric-label">Blocks Rendered:</span>
+                                    <span class="metric-value" id="memoryMapBlocks">0</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Hit Detection:</span>
+                                    <span class="metric-value" id="memoryMapHit">0ms</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Fragmentation:</span>
+                                    <span class="metric-value" id="memoryMapFrag">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-panel">
+                            <h4>Features</h4>
+                            <ul class="feature-list">
+                                <li>Multi-layer Canvas rendering</li>
+                                <li>Spatial indexing for hit detection</li>
+                                <li>Four view modes</li>
+                                <li>Consciousness memory types</li>
+                                <li>Interactive memory blocks</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Unified Dashboard Section -->
+        <section id="unified" class="unified-section">
+            <h2 class="section-title">Unified Consciousness Debugger</h2>
+            <p class="section-description">
+                All components working together in a realistic consciousness debugging interface.
+                Demonstrates cross-component communication and integrated workflows.
+            </p>
+            <div class="unified-dashboard" id="unifiedDashboard">
+                <div class="dashboard-grid">
+                    <div class="dashboard-panel" id="unifiedProcessList">
+                        <h3>Active Processes</h3>
+                        <div class="unified-component-container">
+                            <!-- Unified ProcessList -->
+                        </div>
+                    </div>
+                    <div class="dashboard-panel" id="unifiedResourceMeters">
+                        <h3>System Resources</h3>
+                        <div class="unified-component-container">
+                            <!-- Unified ResourceMeters -->
+                        </div>
+                    </div>
+                    <div class="dashboard-panel" id="unifiedMemoryMap">
+                        <h3>Memory Allocation</h3>
+                        <div class="unified-component-container">
+                            <!-- Unified MemoryMap -->
+                        </div>
+                    </div>
+                    <div class="dashboard-panel" id="unifiedErrorLog">
+                        <h3>Error Log</h3>
+                        <div class="unified-component-container">
+                            <!-- Unified ErrorLog -->
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-controls">
+                    <button class="dashboard-btn" id="startSimulation">Start Simulation</button>
+                    <button class="dashboard-btn" id="pauseSimulation">Pause</button>
+                    <button class="dashboard-btn" id="resetSimulation">Reset</button>
+                    <div class="simulation-stats">
+                        <span class="stat">
+                            <span class="stat-label">Simulation Time:</span>
+                            <span class="stat-value" id="simulationTime">00:00</span>
+                        </span>
+                        <span class="stat">
+                            <span class="stat-label">Events/sec:</span>
+                            <span class="stat-value" id="eventRate">0</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Code Examples Section -->
+        <section id="examples" class="examples-section">
+            <h2 class="section-title">Implementation Examples</h2>
+            <p class="section-description">
+                Code examples showing how to integrate and use each component in your consciousness debugging interface.
+            </p>
+
+            <div class="example-tabs">
+                <button class="tab-btn active" data-tab="processlist">ProcessList</button>
+                <button class="tab-btn" data-tab="resourcemeter">ResourceMeter</button>
+                <button class="tab-btn" data-tab="errorlog">ErrorLog</button>
+                <button class="tab-btn" data-tab="memorymap">MemoryMap</button>
+                <button class="tab-btn" data-tab="integration">Integration</button>
+            </div>
+
+            <div class="example-content">
+                <div class="example-panel active" id="processlist-example">
+                    <h3>ProcessList Component Usage</h3>
+                    <pre><code class="language-javascript">
+// Initialize ProcessList with dependency injection
+const processList = new ProcessList(container, {
+  stateManager,
+  eventBus,
+  logger: createLogger('ProcessList'),
+  virtualScrolling: true,
+  maxItems: 1000
+});
+
+// Update with process data
+processList.updateProcesses([
+  {
+    pid: 1001,
+    name: 'Grief_Manager.exe',
+    status: 'running',
+    cpu: 23.5,
+    memory: 847,
+    type: 'emotional'
+  }
+]);
+
+// Handle process events
+processList.on('process-click', (process) => {
+  console.log('Process selected:', process);
+});
+                    </code></pre>
+                </div>
+
+                <div class="example-panel" id="resourcemeter-example">
+                    <h3>ResourceMeter Component Usage</h3>
+                    <pre><code class="language-javascript">
+// Create circular resource meter
+const cpuMeter = new ResourceMeter(container, {
+  type: 'circular',
+  label: 'CPU Usage',
+  unit: '%',
+  thresholds: {
+    warning: 70,
+    critical: 90
+  },
+  colors: {
+    normal: '#00FFFF',
+    warning: '#FFC107',
+    critical: '#FF0040'
+  }
+});
+
+// Update meter value
+cpuMeter.updateValue(85.3);
+
+// Create linear memory meter
+const memoryMeter = new ResourceMeter(container, {
+  type: 'linear',
+  label: 'Memory',
+  unit: 'MB',
+  max: 2048
+});
+                    </code></pre>
+                </div>
+
+                <div class="example-panel" id="errorlog-example">
+                    <h3>ErrorLog Component Usage</h3>
+                    <pre><code class="language-javascript">
+// Initialize ErrorLog with consciousness-themed errors
+const errorLog = new ErrorLog(container, {
+  maxEntries: 100,
+  autoScroll: true,
+  groupDuplicates: true,
+  dismissDelay: 5000
+});
+
+// Add consciousness-specific errors
+errorLog.addError({
+  type: 'memory_leak',
+  severity: 'error',
+  message: 'Unprocessed grief consuming memory',
+  source: 'Emotional_Processor.dll',
+  timestamp: Date.now()
+});
+
+errorLog.addError({
+  type: 'stack_overflow',
+  severity: 'critical',
+  message: 'Anxiety loop detected in thought process',
+  source: 'Cognitive_Engine.exe'
+});
+                    </code></pre>
+                </div>
+
+                <div class="example-panel" id="memorymap-example">
+                    <h3>MemoryMap Component Usage</h3>
+                    <pre><code class="language-javascript">
+// Initialize MemoryMap with consciousness memory types
+const memoryMap = new MemoryMap(container, {
+  viewMode: 'type',
+  blockSize: 8,
+  enableMinimap: true,
+  memoryTypes: {
+    emotion: { color: '#FF00FF', label: 'Emotional' },
+    trauma: { color: '#FF0040', label: 'Traumatic' },
+    relationship: { color: '#00FFFF', label: 'Relationship' },
+    system: { color: '#0080FF', label: 'System' }
+  }
+});
+
+// Update memory allocation
+memoryMap.updateMemory({
+  capacity: { total: 2048, allocated: 1536 },
+  blocks: [
+    {
+      id: 'mem_001',
+      type: 'emotion',
+      size: 256,
+      content: 'Recent loss processing'
+    }
+  ]
+});
+                    </code></pre>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Initializing Components...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script type="module" src="/js/component-showcase.js"></script>
+</body>
+</html>

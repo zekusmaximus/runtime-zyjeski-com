@@ -39,6 +39,10 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { info, error } from './lib/logger.js';
 
+// Import security configuration
+import { createCSPConfig } from './lib/security/csp-config.js';
+import { CSPReporter } from './lib/security/csp-reporter.js';
+
 // Import routes
 import apiRoutes from './routes/api.js';
 import consciousnessRoutes from './routes/consciousness.js';
@@ -78,6 +82,25 @@ const getCorsOrigins = () => {
 const app = express();
 const server = http.createServer(app);
 
+// Configure EJS template engine for nonce injection
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Initialize CSP configuration
+const cspConfig = createCSPConfig({
+  reportOnly: process.env.CSP_REPORT_ONLY === 'true',
+  reportUri: '/api/csp-report',
+  enableReporting: process.env.CSP_DISABLE_REPORTING !== 'true'
+});
+
+// Initialize CSP violation reporter
+const cspReporter = new CSPReporter({
+  maxViolationsPerMinute: 100,
+  maxViolationsPerIP: 20,
+  alertThreshold: 10,
+  enableDetailedLogging: process.env.NODE_ENV !== 'production'
+});
+
 /**
  * Socket.io server with secure CORS configuration
  * Restricts origins based on environment to prevent XSS attacks and unauthorized access.
@@ -97,10 +120,42 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// CSP Nonce Middleware - MUST come before Helmet CSP
+app.use((req, res, next) => {
+  // Generate unique nonce for each request
+  res.locals.nonce = cspConfig.generateNonce();
+  next();
+});
+
+// Security Middleware with CSP
 app.use(helmet({
-  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
+  contentSecurityPolicy: false // We'll handle CSP manually
 }));
+
+// Custom CSP Middleware
+app.use((req, res, next) => {
+  const directives = cspConfig.getDirectives(res.locals.nonce);
+
+  // Convert directives to CSP header string
+  const cspHeader = Object.entries(directives)
+    .map(([directive, sources]) => {
+      if (Array.isArray(sources) && sources.length > 0) {
+        const directiveName = directive.replace(/([A-Z])/g, '-$1').toLowerCase();
+        return `${directiveName} ${sources.join(' ')}`;
+      }
+      return '';
+    })
+    .filter(Boolean)
+    .join('; ');
+
+  if (cspConfig.reportOnly) {
+    res.setHeader('Content-Security-Policy-Report-Only', cspHeader);
+  } else {
+    res.setHeader('Content-Security-Policy', cspHeader);
+  }
+
+  next();
+});
 
 /**
  * Express CORS middleware with secure configuration
@@ -128,13 +183,83 @@ app.use(express.static(path.join(__dirname, 'public'), {
   }
 }));
 
+// CSP Violation Reporting Endpoint with Enhanced Analysis
+app.post('/api/csp-report', express.json({
+  type: ['application/csp-report', 'application/json'],
+  limit: '1mb'
+}), (req, res) => {
+  const requestContext = {
+    ip: req.ip || req.connection?.remoteAddress || 'unknown',
+    userAgent: req.get('User-Agent') || 'unknown',
+    requestId: req.get('X-Request-ID') || `req_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+  };
+
+  // Process violation with enhanced reporter
+  const result = cspReporter.processViolation(req.body, requestContext);
+
+  if (!result.processed) {
+    // Log processing failures or rate limiting
+    if (result.reason === 'rate_limited') {
+      // Don't log individual rate limited requests to avoid spam
+      res.status(429).json({ error: 'Rate limited' });
+      return;
+    } else {
+      error('CSP violation processing failed', {
+        reason: result.reason,
+        ip: requestContext.ip,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
+  // Always respond with 204 No Content for successful processing
+  res.status(204).end();
+});
+
+// CSP Statistics Endpoint (for monitoring)
+app.get('/api/csp-stats', (req, res) => {
+  // Only allow in development or with proper authentication
+  if (process.env.NODE_ENV === 'production') {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+
+  const stats = cspReporter.getStats();
+  const cspConfigStats = cspConfig.getStats();
+
+  res.json({
+    csp: cspConfigStats,
+    violations: stats,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Routes
 app.use('/api', apiRoutes);
 app.use('/api/consciousness', consciousnessRoutes);
 
-// Serve main page
+// Serve main page with nonce injection
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.render('index', {
+    nonce: res.locals.nonce,
+    wsEndpoint: process.env.NODE_ENV === 'production'
+      ? 'wss://runtime.zyjeski.com'
+      : `ws://localhost:${PORT}`
+  });
+});
+
+// Serve component showcase page with nonce injection
+app.get('/component-showcase.html', (req, res) => {
+  res.render('component-showcase', {
+    nonce: res.locals.nonce
+  });
+});
+
+// Serve monitor page with nonce injection
+app.get('/monitor.html', (req, res) => {
+  res.render('monitor', {
+    nonce: res.locals.nonce
+  });
 });
 
 // Handle 404s for API routes

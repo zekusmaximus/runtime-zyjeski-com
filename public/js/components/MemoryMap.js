@@ -341,7 +341,10 @@ export default class MemoryMap {
    * @private
    */
   renderBaseLayer() {
-    if (!this.baseCtx) return;
+    if (!this.baseCtx) {
+      console.warn('MemoryMap: No base context available for rendering');
+      return;
+    }
 
     // Clear canvas
     this.baseCtx.clearRect(0, 0, this.baseCanvas.width, this.baseCanvas.height);
@@ -351,9 +354,12 @@ export default class MemoryMap {
 
     // Draw memory blocks
     if (this.memoryData && this.memoryData.blocks) {
+      console.log(`MemoryMap: Rendering ${this.memoryData.blocks.length} memory blocks`);
       this.memoryData.blocks.forEach(block => {
         this.drawMemoryBlock(this.baseCtx, block);
       });
+    } else {
+      console.warn('MemoryMap: No memory data available for rendering', this.memoryData);
     }
 
     // Draw addresses if enabled
@@ -1238,6 +1244,7 @@ export default class MemoryMap {
       return;
     }
 
+    console.log('MemoryMap: Updating with data:', memoryData);
     this.memoryData = memoryData;
     this.buildSpatialIndex();
     this.requestRender();

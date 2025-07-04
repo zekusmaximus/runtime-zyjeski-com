@@ -324,7 +324,7 @@ class DataSimulator {
   }
   
   generateMemoryContent() {
-    const contents = [
+    const descriptions = [
       'Childhood memory fragment',
       'Emotional association data',
       'Relationship context',
@@ -333,7 +333,15 @@ class DataSimulator {
       'Decision tree node',
       'Sensory data cache'
     ];
-    return this.getRandomElement(contents);
+
+    return {
+      description: this.getRandomElement(descriptions),
+      intensity: Math.random(),
+      age: this.randomBetween(0, 3600000),
+      accessCount: this.randomBetween(0, 100),
+      fragmented: Math.random() < 0.2,
+      linked: []
+    };
   }
   
   /**
@@ -850,6 +858,12 @@ class ComponentShowcase {
       this.elements.dataSimulator.addEventListener('click', () => this.toggleDataSimulation());
     }
 
+    // Window resize handler to ensure components resize properly
+    window.addEventListener('resize', () => this.handleResize());
+
+    // Initial resize to ensure proper sizing
+    setTimeout(() => this.handleResize(), 100);
+
     // Configuration export/import
     if (this.elements.exportConfig) {
       this.elements.exportConfig.addEventListener('click', () => this.exportConfiguration());
@@ -935,6 +949,106 @@ class ComponentShowcase {
 
     // Real-time controls
     this.setupRealtimeControls();
+  }
+
+  /**
+   * Handle window resize and component resizing
+   */
+  handleResize() {
+    // Trigger resize for components that need it
+    this.components.forEach((component) => {
+      if (component && typeof component.resize === 'function') {
+        component.resize();
+      } else if (component && typeof component.refresh === 'function') {
+        component.refresh();
+      }
+    });
+
+    // Debug: Log container dimensions if in debug mode
+    if (window.DEBUG_MODE) {
+      this.logContainerDimensions();
+    }
+  }
+
+  /**
+   * Debug method to log container dimensions
+   */
+  logContainerDimensions() {
+    const containers = [
+      'unified-process-list',
+      'unified-memory-map',
+      'unified-error-log',
+      'unified-resources'
+    ];
+
+    containers.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        console.log(`${id}: ${rect.width}x${rect.height}`);
+      }
+    });
+  }
+
+  /**
+   * Public method to refresh layout - can be called from console
+   */
+  refreshLayout() {
+    console.log('Refreshing component layout...');
+    this.handleResize();
+
+    // Force a repaint
+    document.body.style.display = 'none';
+    document.body.offsetHeight; // Trigger reflow
+    document.body.style.display = '';
+
+    console.log('Layout refresh complete');
+  }
+
+  /**
+   * Public method to regenerate data - can be called from console
+   */
+  regenerateData() {
+    console.log('Regenerating component data...');
+    this.dataSimulator.generateData();
+    const newData = this.dataSimulator.getCurrentData();
+    console.log('Generated data:', newData);
+    this.updateComponentsWithData(newData);
+    this.updateStats(newData);
+    console.log('Data regeneration complete');
+  }
+
+  /**
+   * Public method to toggle debug mode - can be called from console
+   */
+  toggleDebugMode() {
+    const style = document.createElement('style');
+    style.id = 'debug-grid-style';
+
+    if (document.getElementById('debug-grid-style')) {
+      document.getElementById('debug-grid-style').remove();
+      console.log('Debug mode OFF');
+    } else {
+      style.textContent = `
+        .dashboard-panel {
+          outline: 2px solid red !important;
+        }
+        .processes-panel {
+          outline: 3px solid lime !important;
+        }
+        .resources-panel {
+          outline: 3px solid cyan !important;
+        }
+        .errors-panel {
+          outline: 3px solid orange !important;
+        }
+        .memory-panel {
+          outline: 3px solid magenta !important;
+        }
+      `;
+      document.head.appendChild(style);
+      console.log('Debug mode ON - Grid areas highlighted');
+    }
   }
 
   /**
@@ -1845,12 +1959,31 @@ class ComponentShowcase {
 
     // Update MemoryMaps
     if (data.memoryBlocks) {
+      console.log('Updating MemoryMaps with', data.memoryBlocks.length, 'blocks');
       ['memoryMapDemo', 'unifiedMemoryMap'].forEach(name => {
         const component = this.components.get(name);
-        if (component && component.updateMemoryBlocks) {
-          component.updateMemoryBlocks(data.memoryBlocks);
+        if (component && component.update) {
+          // Transform data to MemoryMap expected format
+          const memoryData = {
+            totalSize: 2048,
+            usedSize: data.memoryBlocks.reduce((sum, block) => sum + block.size, 0),
+            blocks: data.memoryBlocks.map(block => ({
+              id: block.id,
+              address: `0x${block.address.toString(16).toUpperCase().padStart(4, '0')}`,
+              size: block.size,
+              type: block.type,
+              allocated: block.allocated,
+              fragmented: block.fragmented,
+              lastAccess: block.lastAccess,
+              content: block.content
+            }))
+          };
+          console.log(`Updating ${name} with memory data:`, memoryData);
+          component.update(memoryData);
         }
       });
+    } else {
+      console.warn('No memory blocks data available for MemoryMap update');
     }
   }
 
@@ -3203,4 +3336,11 @@ monitor.on('fps-drop', (fps) => {
 // Initialize the showcase when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   window.componentShowcase = new ComponentShowcase();
+
+  // Ensure proper sizing after initialization
+  setTimeout(() => {
+    if (window.componentShowcase && window.componentShowcase.handleResize) {
+      window.componentShowcase.handleResize();
+    }
+  }, 500);
 });

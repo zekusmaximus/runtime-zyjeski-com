@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consciousness Monitor - Runtime.zyjeski.com</title>
+    <meta name="description" content="Real-time consciousness monitoring interface">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/monitor.css">
+    <link rel="stylesheet" href="/css/components/process-list.css">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Templates for monitor interface -->
+    <template id="resourceMeterTemplate">
+        <div class="resource-meter">
+            <div class="meter-label">
+                <span class="meter-name"></span>
+                <span class="meter-value"></span>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill"></div>
+            </div>
+        </div>
+    </template>
+
+    <template id="processRowTemplate">
+        <tr class="process-row">
+            <td class="process-pid"></td>
+            <td class="process-name"></td>
+            <td class="process-status"></td>
+            <td class="process-cpu"></td>
+            <td class="process-memory"></td>
+            <td>
+                <button class="action-btn kill-btn">Kill</button>
+            </td>
+        </tr>
+    </template>
+
+    <template id="memoryBlockTemplate">
+        <div class="memory-block">
+            <div class="memory-block-id"></div>
+            <div class="memory-block-size"></div>
+        </div>
+    </template>
+
+    <template id="errorEntryTemplate">
+        <div class="error-entry">
+            <div class="error-header">
+                <span class="error-timestamp"></span>
+                <span class="error-severity"></span>
+            </div>
+            <div class="error-description"></div>
+        </div>
+    </template>
+
+    <section id="monitor" class="section">
+        <div class="monitor-container">
+            <div class="monitor-header">
+                <h2>Consciousness Monitor</h2>
+                <div class="monitor-controls">
+                    <div class="connection-status disconnected" id="connectionStatus">No Consciousness Connected</div>
+                    <select id="characterSelect" class="character-selector">
+                        <option value="">Select Character</option>
+                        <option value="alexander-kane">Alexander Kane</option>
+                    </select>
+                    
+                    <button class="btn btn-primary" id="toggleMonitoring" disabled>
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-text">Start Monitoring</span>
+                    </button>
+                    
+                    <button class="btn btn-small" id="refreshMonitor" disabled>
+                        <span class="btn-icon">↻</span>
+                        Refresh
+                    </button>
+
+                    <button class="btn btn-small" id="testMemoryBtn" onclick="injectTestMemoryData()">
+                        <span class="btn-icon">🧠</span>
+                        Test Memory
+                    </button>
+                </div>
+            </div>
+            <div class="monitor-grid">
+                <div class="monitor-panel">
+                    <h3>System Resources</h3>
+                    <div class="resource-meters" id="resourceMeters">
+                        <div class="empty-state">Waiting for data...</div>
+                    </div>
+                </div>
+                <div class="monitor-panel">
+                    <h3>Active Processes</h3>
+                    <div class="process-table" id="processTable">
+                        <div class="empty-state">Waiting for process data...</div>
+                    </div>
+                </div>
+                <div class="monitor-panel">
+                    <h3>Memory Allocation</h3>
+                    <div class="memory-visualization" id="memoryVisualization">
+                        <div class="empty-state">Waiting for memory data...</div>
+                    </div>
+                </div>
+                <div class="monitor-panel">
+                    <h3>Error Log <button id="clearErrors" class="btn btn-small">Clear</button></h3>
+                    <div class="error-log" id="errorLog">
+                        <div class="empty-state">No errors detected</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="monitor-footer">
+                <div class="footer-stats">
+                    <span class="footer-stat">
+                        <span class="stat-label">Processes:</span>
+                        <span class="stat-value" id="processCount">0</span>
+                    </span>
+                    <span class="footer-stat">
+                        <span class="stat-label">Errors:</span>
+                        <span class="stat-value" id="errorCount">0</span>
+                    </span>
+                    <span class="footer-stat">
+                        <span class="stat-label">Memory:</span>
+                        <span class="stat-value" id="memoryUsage">0%</span>
+                    </span>
+                    <span class="footer-stat">
+                        <span class="stat-label">Last Update:</span>
+                        <span class="stat-value last-update-time">Never</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- Ground State Socket Client (required for monitor) -->
+    <script type="module" src="/js/socket-client.js"></script>
+    <!-- Ground State Validator -->
+    <script type="module" src="/js/ground-state-validator.js"></script>
+    <!-- State manager is initialized by bootstrap.js -->
+    <script type="module" src="/js/monitor.js"></script>
+
+    <!-- Enhanced Monitor Styles with CSP nonce -->
+    <style nonce="<%= nonce %>">
+    /* Enhanced Monitor Styles - Based on ResourceMeter Demo */
+    :root {
+        --bg-primary: #1a1a1a;
+        --bg-secondary: #2d2d2d;
+        --bg-tertiary: #3a3a3a;
+        --text-primary: #ffffff;
+        --text-secondary: #cccccc;
+        --text-muted: #888888;
+        --accent-cyan: #00ffff;
+        --accent-amber: #ffc107;
+        --accent-magenta: #ff00ff;
+        --accent-blue: #0080ff;
+        --accent-red: #ff0040;
+        --success-color: #4caf50;
+        --warning-color: #ff9800;
+        --error-color: #f44336;
+        --info-color: #2196f3;
+        --border-color: #444444;
+        --shadow-color: rgba(0, 0, 0, 0.3);
+    }
+
+    body {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+        padding: 20px;
+        min-height: 100vh;
+    }
+
+    .monitor-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 8px 32px var(--shadow-color);
+    }
+
+    .monitor-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .monitor-header h2 {
+        margin: 0;
+        color: var(--accent-cyan);
+        font-size: 1.8rem;
+        font-weight: 600;
+    }
+
+    .monitor-controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .monitor-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+        min-height: 600px;
+    }
+
+    .monitor-panel {
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        padding: 20px;
+        border: 1px solid var(--border-color);
+    }
+
+    .monitor-panel h3 {
+        margin: 0 0 16px 0;
+        color: var(--text-primary);
+        font-size: 1.2rem;
+        font-weight: 500;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .empty-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 200px;
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-primary {
+        background: var(--accent-cyan);
+        color: var(--bg-primary);
+    }
+
+    .btn-primary:hover {
+        background: #00cccc;
+        transform: translateY(-1px);
+    }
+
+    .btn-small {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-small:hover {
+        background: var(--border-color);
+        transform: translateY(-1px);
+    }
+
+    .character-selector {
+        padding: 8px 12px;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 0.9rem;
+    }
+
+    .connection-status {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .connection-status.disconnected {
+        background: var(--error-color);
+        color: white;
+    }
+
+    .monitor-footer {
+        border-top: 1px solid var(--border-color);
+        padding-top: 16px;
+    }
+
+    .footer-stats {
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+    }
+
+    .footer-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .stat-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--accent-cyan);
+    }
+
+    /* Memory block type colors */
+    .memory-block.shortTerm { background: var(--info-color); }
+    .memory-block.longTerm { background: var(--success-color); }
+    .memory-block.traumatic { background: var(--error-color); }
+    .memory-block.procedural { background: var(--warning-color); }
+    </style>
+
+    <!-- Inline script with CSP nonce for test functionality -->
+    <script nonce="<%= nonce %>">
+    // Test function to inject sample memory data
+    function injectTestMemoryData() {
+        console.log('🧠 Injecting test memory data...');
+
+        // Get the monitor UI instance
+        const monitorUI = window.monitorUI;
+        if (!monitorUI) {
+            console.error('Monitor UI not found');
+            alert('Monitor UI not initialized. Please wait for the page to load completely.');
+            return;
+        }
+
+        // Sample memory data with capacity information
+        const testMemoryData = {
+            capacity: {
+                total: 8192,        // 8GB total
+                allocated: 6144,    // 6GB allocated (75%)
+                available: 2048,    // 2GB available
+                reserved: 512       // 512MB reserved
+            },
+            regions: [
+                {
+                    label: 'Grief Processing',
+                    type: 'emotional',
+                    size: 1024,
+                    address: '0x7F8B4C000000',
+                    description: 'Active grief processing memories',
+                    fragmentation: 0.15,
+                    corruption: 0.02,
+                    access_pattern: 'sequential'
+                },
+                {
+                    label: 'Identity Core',
+                    type: 'core',
+                    size: 2048,
+                    address: '0x7F8B4D000000',
+                    description: 'Core identity and self-awareness',
+                    fragmentation: 0.05,
+                    corruption: 0.00,
+                    access_pattern: 'random'
+                },
+                {
+                    label: 'Memory Cache',
+                    type: 'cache',
+                    size: 1536,
+                    address: '0x7F8B4E000000',
+                    description: 'Recent memory cache',
+                    fragmentation: 0.25,
+                    corruption: 0.01,
+                    access_pattern: 'temporal'
+                }
+            ]
+        };
+
+        // Update the memory visualization
+        monitorUI.updateMemoryVisualization(testMemoryData);
+
+        // Show success message
+        const testBtn = document.getElementById('testMemoryBtn');
+        const originalText = testBtn.innerHTML;
+        testBtn.innerHTML = '<span class="btn-icon">✅</span>Loaded!';
+        testBtn.style.background = '#4CAF50';
+
+        setTimeout(() => {
+            testBtn.innerHTML = originalText;
+            testBtn.style.background = '';
+        }, 2000);
+
+        console.log('✅ Test memory data injected successfully');
+    }
+    </script>
+</body>
+</html>
