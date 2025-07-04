@@ -1,3 +1,34 @@
+/**
+ * Runtime.zyjeski.com Server
+ * Interactive fiction platform where readers debug consciousness as executable code
+ *
+ * SECURITY CONFIGURATION:
+ * This server implements strict CORS policies to prevent XSS attacks and unauthorized access.
+ *
+ * DEPLOYMENT REQUIREMENTS:
+ * - MUST set NODE_ENV=production in production environments
+ * - Production only accepts requests from https://runtime.zyjeski.com
+ * - Development only accepts requests from localhost variants
+ * - If NODE_ENV is undefined, defaults to production settings for security
+ *
+ * CORS ORIGINS:
+ * - Production: ['https://runtime.zyjeski.com']
+ * - Development: ['http://localhost:3000', 'http://127.0.0.1:3000']
+ * - Undefined environment: Defaults to production origins
+ *
+ * ADDING NEW ORIGINS:
+ * To safely add new origins:
+ * 1. Update the getCorsOrigins() function below
+ * 2. Ensure the origin uses HTTPS in production
+ * 3. Test thoroughly in development first
+ * 4. Monitor CORS rejection logs after deployment
+ *
+ * SECURITY MONITORING:
+ * - Production CORS rejections are logged for security analysis
+ * - Monitor logs for suspicious origin patterns
+ * - Review rejected requests regularly
+ */
+
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -19,12 +50,48 @@ import websocketHandlers from './lib/ws-bootstrap.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+/**
+ * Get allowed CORS origins based on environment
+ * @returns {string[]} Array of allowed origins
+ * @description Defaults to production origins if NODE_ENV is not set for maximum security.
+ * This prevents accidentally deploying with development vulnerabilities.
+ *
+ * Security considerations:
+ * - Production: Only allows requests from the official domain
+ * - Development: Only allows localhost variants to prevent external access
+ * - Undefined environment: Defaults to production settings for fail-safe security
+ */
+const getCorsOrigins = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // Default to production origins for maximum security
+  // This ensures that if NODE_ENV is not set, we use the most restrictive settings
+  if (isProduction || !process.env.NODE_ENV) {
+    return ['https://runtime.zyjeski.com'];
+  }
+
+  // Development-only origins - restricted to localhost variants only
+  // This prevents external access during development while allowing local testing
+  return ['http://localhost:3000', 'http://127.0.0.1:3000'];
+};
+
 const app = express();
 const server = http.createServer(app);
+
+/**
+ * Socket.io server with secure CORS configuration
+ * Restricts origins based on environment to prevent XSS attacks and unauthorized access.
+ *
+ * Security features:
+ * - Environment-specific origin restrictions
+ * - Credentials support for authenticated requests
+ * - No wildcard origins in any environment
+ */
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' ? ['https://runtime.zyjeski.com'] : '*',
-    methods: ["GET", "POST"]
+    origin: getCorsOrigins(),
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -34,7 +101,18 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet({
   contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
 }));
-app.use(cors());
+
+/**
+ * Express CORS middleware with secure configuration
+ * Uses the same origin restrictions as Socket.io for consistency
+ */
+app.use(cors({
+  origin: getCorsOrigins(),
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -64,13 +142,30 @@ app.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });
 });
 
+// Production CORS monitoring - Log rejected requests for security analysis
+if (process.env.NODE_ENV === 'production') {
+  io.engine.on("connection_error", (err) => {
+    // Log CORS-related connection errors for security monitoring
+    if (err.req && err.code === 1) { // Socket.io CORS error code
+      const origin = err.req.headers.origin || 'unknown';
+      const userAgent = err.req.headers['user-agent'] || 'unknown';
+      error('CORS rejection detected', {
+        origin,
+        userAgent,
+        timestamp: new Date().toISOString(),
+        ip: err.req.connection?.remoteAddress || 'unknown'
+      });
+    }
+  });
+}
+
 // WebSocket connection handling
 io.on('connection', (socket) => {
   info('Client connected', { socketId: socket.id });
-  
+
   // Initialize WebSocket handlers
   websocketHandlers.initializeHandlers(socket, io);
-  
+
   socket.on('disconnect', () => {
     info('Client disconnected', { socketId: socket.id });
   });
