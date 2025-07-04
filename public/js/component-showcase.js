@@ -11,6 +11,7 @@ import { ConsciousnessTransformer } from '/js/utils/ConsciousnessTransformer.js'
 /**
  * Data Simulation System
  * Generates realistic consciousness debugging data for all components
+ * Follows Ground State Principle - no automatic background processes
  */
 class DataSimulator {
   constructor() {
@@ -19,6 +20,7 @@ class DataSimulator {
     this.currentScenario = 'normal';
     this.processIdCounter = 1000;
     this.errorIdCounter = 1;
+    this.eventBus = new EventTarget(); // For component communication
     
     // Scenario configurations
     this.scenarios = {
@@ -107,7 +109,7 @@ class DataSimulator {
   
   /**
    * Start data simulation with specified scenario
-   * Only starts continuous updates if explicitly requested
+   * Ground State Principle: Only starts continuous updates if explicitly requested by user action
    */
   start(scenario = 'normal', continuous = false) {
     if (this.running) {
@@ -120,16 +122,27 @@ class DataSimulator {
     // Generate initial data
     this.generateData();
 
-    // Only set up interval for continuous updates if explicitly requested
+    // Only set up interval for continuous updates if explicitly requested (stress tests only)
     if (continuous) {
       this.interval = setInterval(() => {
         this.generateData();
         this.broadcastData();
       }, 1000);
-      console.log(`DataSimulator: Started continuous updates with scenario '${scenario}'`);
+      console.log(`DataSimulator: Started continuous updates for user-initiated stress test '${scenario}'`);
     } else {
-      console.log(`DataSimulator: Generated static data for scenario '${scenario}'`);
+      console.log(`DataSimulator: Generated static data for scenario '${scenario}' (Ground State Principle)`);
     }
+  }
+
+  /**
+   * Generate static data without starting continuous updates
+   * This is the default mode following Ground State Principle
+   */
+  generateStaticData(scenario = 'normal') {
+    this.currentScenario = scenario;
+    this.generateData();
+    console.log(`DataSimulator: Generated static data for scenario '${scenario}' (no automatic updates)`);
+    return this.getCurrentData();
   }
   
   /**
@@ -366,14 +379,36 @@ class DataSimulator {
    * Used for user-initiated actions while maintaining Ground State Principle
    */
   triggerUpdate() {
+    console.log('DataSimulator: Manual update triggered by user action');
     this.generateData();
     this.broadcastData();
+
+    // Emit event for components to listen to
+    this.eventBus.dispatchEvent(new CustomEvent('data-updated', {
+      detail: this.getCurrentData()
+    }));
+  }
+
+  /**
+   * Get current data without triggering updates
+   * Safe method that doesn't cause side effects
+   */
+  getCurrentData() {
+    return this.currentData ? { ...this.currentData } : null;
+  }
+
+  /**
+   * Check if simulator is in continuous mode (stress test)
+   */
+  isContinuous() {
+    return this.running && this.interval !== null;
   }
 }
 
 /**
  * Performance Monitor
  * Tracks component performance metrics
+ * Follows Ground State Principle - no automatic background monitoring
  */
 class PerformanceMonitor {
   constructor() {
@@ -381,7 +416,9 @@ class PerformanceMonitor {
       fps: 60,
       renderTimes: new Map(),
       memoryUsage: 0,
-      updateRate: 0
+      updateRate: 0,
+      lastAction: null,
+      timestamp: null
     };
 
     this.frameCount = 0;
@@ -389,31 +426,22 @@ class PerformanceMonitor {
     this.updateCount = 0;
     this.lastUpdateTime = performance.now();
 
-    this.startMonitoring();
+    // Initialize with static values - no automatic monitoring
+    this.initializeStaticMetrics();
   }
 
-  startMonitoring() {
-    // FPS monitoring
-    const measureFPS = () => {
-      this.frameCount++;
-      const now = performance.now();
-
-      if (now - this.lastFrameTime >= 1000) {
-        this.metrics.fps = Math.round((this.frameCount * 1000) / (now - this.lastFrameTime));
-        this.frameCount = 0;
-        this.lastFrameTime = now;
-      }
-
-      requestAnimationFrame(measureFPS);
-    };
-    requestAnimationFrame(measureFPS);
-
-    // Memory usage monitoring (if available) - manual updates only
-    // Following Ground State Principle - no automatic background processes
+  /**
+   * Initialize metrics with static values
+   * Ground State Principle: No automatic background processes
+   */
+  initializeStaticMetrics() {
+    // Set initial memory usage if available
     this.updateMemoryUsage();
 
-    // Update rate monitoring - manual updates only
+    // Set initial update rate
     this.updateRate();
+
+    console.log('PerformanceMonitor: Initialized with static metrics (no automatic monitoring)');
   }
 
   /**
@@ -441,6 +469,32 @@ class PerformanceMonitor {
 
   recordUpdate() {
     this.updateCount++;
+  }
+
+  /**
+   * Record user action and update metrics
+   * Called after user-initiated actions
+   */
+  recordUserAction(action) {
+    this.updateMemoryUsage();
+    this.updateRate();
+    this.metrics.lastAction = action;
+    this.metrics.timestamp = Date.now();
+    console.log(`PerformanceMonitor: Recorded user action '${action}'`);
+  }
+
+  /**
+   * Manually update FPS calculation
+   * Called during stress tests or user actions
+   */
+  updateFPS() {
+    const now = performance.now();
+    if (now - this.lastFrameTime >= 1000) {
+      this.metrics.fps = Math.round((this.frameCount * 1000) / (now - this.lastFrameTime));
+      this.frameCount = 0;
+      this.lastFrameTime = now;
+    }
+    this.frameCount++;
   }
 
   getMetrics() {
@@ -583,6 +637,11 @@ class ComponentShowcase {
     this.currentTheme = 'dark';
     this.isInitialized = false;
 
+    // Stress test management
+    this.stressTestInterval = null;
+    this.stressTestTimeout = null;
+    this.visibilityHandler = null;
+
     // DOM elements
     this.elements = {};
 
@@ -621,13 +680,117 @@ class ComponentShowcase {
       // Hide loading overlay
       this.hideLoadingOverlay();
 
+      // Initialize lifecycle handlers
+      this.initLifecycle();
+
       this.isInitialized = true;
+      // Verify Ground State Principle compliance
+      this.verifyGroundStateCompliance();
+
       console.log('ComponentShowcase: Initialization complete');
 
     } catch (error) {
       console.error('ComponentShowcase: Initialization failed', error);
       this.showError('Failed to initialize showcase: ' + error.message);
     }
+  }
+
+  /**
+   * Initialize lifecycle handlers for proper cleanup
+   */
+  initLifecycle() {
+    // Handle page unload
+    this.beforeUnloadHandler = () => {
+      this.destroy();
+    };
+    window.addEventListener('beforeunload', this.beforeUnloadHandler);
+
+    console.log('ComponentShowcase: Lifecycle handlers initialized');
+  }
+
+  /**
+   * Clean up resources on page unload
+   */
+  destroy() {
+    // Clean up any active stress tests
+    this.cleanupStressTest();
+
+    // Stop data simulator
+    if (this.dataSimulator) {
+      this.dataSimulator.stop();
+    }
+
+    // Remove global event listeners
+    if (this.beforeUnloadHandler) {
+      window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+    }
+
+    // Clear component references
+    this.components.clear();
+
+    console.log('ComponentShowcase: Cleaned up all resources');
+  }
+
+  /**
+   * Verify Ground State Principle compliance
+   * Ensures no automatic background processes are running
+   */
+  verifyGroundStateCompliance() {
+    const violations = [];
+
+    // Check data simulator
+    if (this.dataSimulator.isContinuous()) {
+      violations.push('DataSimulator is running in continuous mode');
+    }
+
+    // Check for active stress test intervals
+    if (this.stressTestInterval) {
+      violations.push('Stress test interval is active');
+    }
+
+    if (violations.length > 0) {
+      console.warn('⚠️ Ground State Principle violations detected:', violations);
+      return false;
+    } else {
+      console.log('✅ Ground State Principle compliance verified - no automatic background processes');
+      return true;
+    }
+  }
+
+  /**
+   * Test Ground State compliance by monitoring for automatic updates
+   * This method can be called from browser console for verification
+   */
+  testGroundStateCompliance() {
+    console.log('🧪 Testing Ground State Principle compliance...');
+
+    const initialData = JSON.stringify(this.dataSimulator.getCurrentData());
+    const initialMetrics = JSON.stringify(this.performanceMonitor.getMetrics());
+
+    console.log('📊 Initial state captured');
+    console.log('⏱️ Waiting 5 seconds to check for automatic updates...');
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const finalData = JSON.stringify(this.dataSimulator.getCurrentData());
+        const finalMetrics = JSON.stringify(this.performanceMonitor.getMetrics());
+
+        const dataChanged = initialData !== finalData;
+        const metricsChanged = initialMetrics !== finalMetrics;
+
+        if (dataChanged || metricsChanged) {
+          console.error('❌ Ground State Principle VIOLATION detected!');
+          if (dataChanged) console.error('  - Data changed automatically');
+          if (metricsChanged) console.error('  - Metrics changed automatically');
+          resolve(false);
+        } else {
+          console.log('✅ Ground State Principle compliance VERIFIED');
+          console.log('  - No automatic data updates detected');
+          console.log('  - No automatic metric updates detected');
+          resolve(true);
+        }
+      }, 5000);
+    });
   }
 
   /**
@@ -848,14 +1011,46 @@ class ComponentShowcase {
    * Setup event listeners
    */
   setupEventListeners() {
+    // Ground State Controls - Manual update buttons
+    const manualUpdateBtn = document.getElementById('manualUpdate');
+    if (manualUpdateBtn) {
+      manualUpdateBtn.addEventListener('click', () => this.manualUpdate());
+    }
+
+    const refreshMetricsBtn = document.getElementById('refreshMetrics');
+    if (refreshMetricsBtn) {
+      refreshMetricsBtn.addEventListener('click', () => this.refreshMetrics());
+    }
+
+    const regenerateDataBtn = document.getElementById('regenerateData');
+    if (regenerateDataBtn) {
+      regenerateDataBtn.addEventListener('click', () => this.regenerateData());
+    }
+
+    // Stress test controls
+    const stressLightBtn = document.getElementById('stressLight');
+    if (stressLightBtn) {
+      stressLightBtn.addEventListener('click', () => this.startStressTest('light', 3000));
+    }
+
+    const stressHeavyBtn = document.getElementById('stressHeavy');
+    if (stressHeavyBtn) {
+      stressHeavyBtn.addEventListener('click', () => this.startStressTest('heavy', 5000));
+    }
+
+    const stopStressBtn = document.getElementById('stopStress');
+    if (stopStressBtn) {
+      stopStressBtn.addEventListener('click', () => this.cleanupStressTest());
+    }
+
     // Theme toggle
     if (this.elements.themeToggle) {
       this.elements.themeToggle.addEventListener('click', () => this.toggleTheme());
     }
 
-    // Data simulator toggle
+    // Data simulator toggle (legacy - now shows manual controls info)
     if (this.elements.dataSimulator) {
-      this.elements.dataSimulator.addEventListener('click', () => this.toggleDataSimulation());
+      this.elements.dataSimulator.addEventListener('click', () => this.showGroundStateInfo());
     }
 
     // Window resize handler to ensure components resize properly
@@ -1180,21 +1375,28 @@ class ComponentShowcase {
     const endTime = performance.now();
     console.log(`Process flood test: ${processes.length} processes rendered in ${(endTime - startTime).toFixed(2)}ms`);
 
-    // Reset after 5 seconds
-    setTimeout(() => {
-      this.dataSimulator.generateData();
-    }, 5000);
+    // Note: No automatic reset - user must manually refresh data
+    console.log('Process flood test completed - use manual controls to refresh data');
   }
 
   /**
    * Stress test: Error storm
    */
   async stressTestErrorStorm() {
+    console.log('ComponentShowcase: Starting error storm stress test (user-initiated)');
+
     const errorTypes = ['memory_leak', 'stack_overflow', 'null_reference', 'timeout', 'access_violation'];
     const severities = ['critical', 'error', 'warning', 'info'];
 
     let errorCount = 0;
-    const interval = setInterval(() => {
+
+    // Clean up any existing stress test
+    this.cleanupStressTest();
+
+    // Set UI state
+    this.setUIState('testing', 'Error storm test in progress...');
+
+    this.stressTestInterval = setInterval(() => {
       for (let i = 0; i < 10; i++) {
         const error = {
           id: Date.now() + i,
@@ -1214,13 +1416,20 @@ class ComponentShowcase {
       }
     }, 100);
 
-    // Stop after 5 seconds
-    setTimeout(() => {
-      clearInterval(interval);
+    // Set cleanup timer
+    this.stressTestTimeout = setTimeout(() => {
       console.log(`Error storm test completed: ${errorCount} errors generated`);
-      // Update performance display after stress test
-      this.updatePerformanceDisplay();
+      this.cleanupStressTest();
     }, 5000);
+
+    // Setup visibility handler for cleanup
+    this.visibilityHandler = () => {
+      if (document.hidden) {
+        console.log('ComponentShowcase: Page hidden, cleaning up error storm test');
+        this.cleanupStressTest();
+      }
+    };
+    document.addEventListener('visibilitychange', this.visibilityHandler);
   }
 
   /**
@@ -1249,24 +1458,30 @@ class ComponentShowcase {
 
     console.log(`Memory fragmentation test: ${blocks.length} blocks with high fragmentation`);
 
-    // Reset after 5 seconds
-    setTimeout(() => {
-      this.dataSimulator.generateData();
-    }, 5000);
+    // Note: No automatic reset - user must manually refresh data
+    console.log('Memory fragmentation test completed - use manual controls to refresh data');
   }
 
   /**
    * Stress test: Resource spike
    */
   async stressTestResourceSpike() {
+    console.log('ComponentShowcase: Starting resource spike stress test (user-initiated)');
+
     const spikes = [
       { metric: 'cpu', values: [95, 98, 100, 97, 92, 85, 70, 50, 30] },
       { metric: 'memory', values: [85, 90, 95, 98, 100, 95, 80, 60, 40] },
       { metric: 'threads', values: [50, 55, 60, 58, 45, 35, 25, 15, 8] }
     ];
 
+    // Clean up any existing stress test
+    this.cleanupStressTest();
+
+    // Set UI state
+    this.setUIState('testing', 'Resource spike test in progress...');
+
     let index = 0;
-    const interval = setInterval(() => {
+    this.stressTestInterval = setInterval(() => {
       spikes.forEach(spike => {
         const value = spike.values[index] || spike.values[spike.values.length - 1];
 
@@ -1286,22 +1501,37 @@ class ComponentShowcase {
 
       index++;
       if (index >= 9) {
-        clearInterval(interval);
         console.log('Resource spike test completed');
-        // Update performance display after stress test
-        this.updatePerformanceDisplay();
+        this.cleanupStressTest();
       }
     }, 500);
+
+    // Setup visibility handler for cleanup
+    this.visibilityHandler = () => {
+      if (document.hidden) {
+        console.log('ComponentShowcase: Page hidden, cleaning up resource spike test');
+        this.cleanupStressTest();
+      }
+    };
+    document.addEventListener('visibilitychange', this.visibilityHandler);
   }
 
   /**
    * Stress test: Rapid updates
    */
   async stressTestRapidUpdates() {
+    console.log('ComponentShowcase: Starting rapid updates stress test (user-initiated)');
+
     let updateCount = 0;
     const startTime = performance.now();
 
-    const interval = setInterval(() => {
+    // Clean up any existing stress test
+    this.cleanupStressTest();
+
+    // Set UI state
+    this.setUIState('testing', 'Rapid updates test in progress...');
+
+    this.stressTestInterval = setInterval(() => {
       // Generate small data updates
       const processes = [];
       for (let i = 0; i < 50; i++) {
@@ -1325,15 +1555,22 @@ class ComponentShowcase {
       updateCount++;
     }, 16); // ~60fps
 
-    // Stop after 3 seconds
-    setTimeout(() => {
-      clearInterval(interval);
+    // Set cleanup timer
+    this.stressTestTimeout = setTimeout(() => {
       const endTime = performance.now();
       const avgFPS = (updateCount / ((endTime - startTime) / 1000)).toFixed(1);
       console.log(`Rapid updates test: ${updateCount} updates in ${((endTime - startTime) / 1000).toFixed(1)}s (${avgFPS} FPS)`);
-      // Update performance display after stress test
-      this.updatePerformanceDisplay();
+      this.cleanupStressTest();
     }, 3000);
+
+    // Setup visibility handler for cleanup
+    this.visibilityHandler = () => {
+      if (document.hidden) {
+        console.log('ComponentShowcase: Page hidden, cleaning up rapid updates test');
+        this.cleanupStressTest();
+      }
+    };
+    document.addEventListener('visibilitychange', this.visibilityHandler);
   }
 
   /**
@@ -1886,24 +2123,311 @@ class ComponentShowcase {
   }
 
   /**
-   * Setup data simulation
+   * Setup data simulation - Ground State Principle compliant
    */
   setupDataSimulation() {
-    // Listen for simulator data
+    // Listen for simulator data updates
     window.addEventListener('simulatorData', (event) => {
       this.updateComponentsWithData(event.detail);
       this.updateStats(event.detail);
       this.performanceMonitor.recordUpdate();
     });
 
-    // Generate initial static data instead of starting continuous simulation
-    // This follows the Ground State Principle - no automatic background processes
-    this.dataSimulator.generateData();
-    const staticData = this.dataSimulator.getCurrentData();
+    // Listen for data simulator events
+    this.dataSimulator.eventBus.addEventListener('data-updated', (event) => {
+      console.log('ComponentShowcase: Components notified of data update');
+      this.updateComponentsWithData(event.detail);
+      this.updateStats(event.detail);
+    });
+
+    // Generate initial static data - Ground State Principle
+    const staticData = this.dataSimulator.generateStaticData('normal');
     this.updateComponentsWithData(staticData);
     this.updateStats(staticData);
 
-    console.log('ComponentShowcase: Using static data (no automatic updates)');
+    console.log('ComponentShowcase: Using static data (Ground State Principle - no automatic updates)');
+  }
+
+  /**
+   * Manual update triggered by user action
+   * Ground State Principle: Updates only occur through user interaction
+   */
+  manualUpdate() {
+    console.log('ComponentShowcase: Manual update requested by user');
+
+    // Show updating state
+    this.setUIState('updating', 'Updating data...');
+
+    // Generate new data
+    this.dataSimulator.triggerUpdate();
+    const newData = this.dataSimulator.getCurrentData();
+
+    // Update components
+    this.updateComponentsWithData(newData);
+    this.updateStats(newData);
+
+    // Record performance after user action
+    this.performanceMonitor.recordUserAction('manual-update');
+    this.updatePerformanceDisplay();
+
+    // Restore UI state
+    setTimeout(() => {
+      this.setUIState('idle');
+    }, 200); // Brief delay for visual feedback
+  }
+
+  /**
+   * Regenerate data with new scenario
+   */
+  regenerateData(scenario = 'normal') {
+    console.log(`ComponentShowcase: Regenerating data for scenario '${scenario}'`);
+
+    this.setUIState('updating', 'Generating new data...');
+
+    const newData = this.dataSimulator.generateStaticData(scenario);
+    this.updateComponentsWithData(newData);
+    this.updateStats(newData);
+
+    this.performanceMonitor.recordUserAction(`regenerate-${scenario}`);
+    this.updatePerformanceDisplay();
+
+    setTimeout(() => {
+      this.setUIState('idle');
+    }, 200);
+  }
+
+  /**
+   * Refresh performance metrics manually
+   */
+  refreshMetrics() {
+    console.log('ComponentShowcase: Refreshing performance metrics');
+
+    this.performanceMonitor.recordUserAction('refresh-metrics');
+    this.updatePerformanceDisplay();
+
+    // Show brief success indicator
+    this.setUIState('success', 'Metrics refreshed');
+    setTimeout(() => {
+      this.setUIState('idle');
+    }, 1000);
+  }
+
+  /**
+   * Start stress test - user-initiated temporary continuous updates
+   */
+  startStressTest(type = 'light', duration = 3000) {
+    console.log(`ComponentShowcase: User initiated ${type} stress test for ${duration}ms`);
+
+    // Clean up any existing stress test
+    this.cleanupStressTest();
+
+    // Disable controls and show progress
+    this.setUIState('testing', `${type} stress test in progress...`);
+
+    // Start continuous updates for stress test
+    this.dataSimulator.start(type, true); // Enable continuous mode
+
+    // Set up cleanup timer
+    this.stressTestTimeout = setTimeout(() => {
+      this.cleanupStressTest();
+    }, duration);
+
+    // Setup visibility change handler for robust cleanup
+    this.visibilityHandler = () => {
+      if (document.hidden) {
+        console.log('ComponentShowcase: Page hidden, cleaning up stress test');
+        this.cleanupStressTest();
+      }
+    };
+    document.addEventListener('visibilitychange', this.visibilityHandler);
+  }
+
+  /**
+   * Clean up stress test resources
+   */
+  cleanupStressTest() {
+    // Stop data simulator continuous mode
+    if (this.dataSimulator.isContinuous()) {
+      this.dataSimulator.stop();
+      console.log('ComponentShowcase: Stopped continuous data simulation');
+    }
+
+    // Clear stress test interval
+    if (this.stressTestInterval) {
+      clearInterval(this.stressTestInterval);
+      this.stressTestInterval = null;
+    }
+
+    // Clear stress test timeout
+    if (this.stressTestTimeout) {
+      clearTimeout(this.stressTestTimeout);
+      this.stressTestTimeout = null;
+    }
+
+    // Remove visibility handler
+    if (this.visibilityHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityHandler);
+      this.visibilityHandler = null;
+    }
+
+    console.log('ComponentShowcase: Stress test completed/cleaned up');
+
+    // Re-enable controls
+    this.setUIState('idle');
+
+    // Update performance metrics after test
+    this.performanceMonitor.recordUserAction('stress-test-complete');
+    this.updatePerformanceDisplay();
+  }
+
+  /**
+   * Set UI state during operations
+   * @param {string} state - 'idle', 'testing', 'updating', 'success', or 'error'
+   * @param {string} message - Optional status message
+   */
+  setUIState(state, message = '') {
+    const controls = document.querySelectorAll('.ground-state-controls button');
+    const statusElement = document.getElementById('showcase-status');
+
+    switch (state) {
+      case 'testing':
+      case 'updating':
+        // Disable all controls except stop button
+        controls.forEach(btn => {
+          if (btn.id !== 'stopStress') {
+            btn.disabled = true;
+            btn.setAttribute('data-original-text', btn.textContent);
+          } else {
+            btn.disabled = false;
+          }
+        });
+
+        // Show status message
+        if (statusElement) {
+          statusElement.textContent = message;
+          statusElement.classList.add('active');
+          statusElement.classList.remove('success', 'error');
+        }
+        break;
+
+      case 'success':
+        // Show success message
+        if (statusElement) {
+          statusElement.textContent = message;
+          statusElement.classList.add('active', 'success');
+          statusElement.classList.remove('error');
+        }
+        break;
+
+      case 'error':
+        // Show error message
+        if (statusElement) {
+          statusElement.textContent = message;
+          statusElement.classList.add('active', 'error');
+          statusElement.classList.remove('success');
+        }
+        break;
+
+      case 'idle':
+      default:
+        // Re-enable controls
+        controls.forEach(btn => {
+          btn.disabled = false;
+          const originalText = btn.getAttribute('data-original-text');
+          if (originalText) {
+            btn.textContent = originalText;
+          }
+        });
+
+        // Disable stop button when idle
+        const stopBtn = document.getElementById('stopStress');
+        if (stopBtn) {
+          stopBtn.disabled = true;
+        }
+
+        // Hide status message
+        if (statusElement) {
+          statusElement.textContent = '';
+          statusElement.classList.remove('active', 'success', 'error');
+        }
+        break;
+    }
+  }
+
+  /**
+   * Show Ground State Principle information
+   */
+  showGroundStateInfo() {
+    const message = 'Ground State Principle: All updates are now manual. Use the controls below to trigger updates.';
+    this.setUIState('success', message);
+    setTimeout(() => {
+      this.setUIState('idle');
+    }, 3000);
+  }
+
+  /**
+   * Update performance display - called manually, not automatically
+   */
+  updatePerformanceDisplay() {
+    this.performanceMonitor.updateMemoryUsage();
+    const metrics = this.performanceMonitor.getMetrics();
+
+    // Update global stats
+    if (this.elements.globalFPS) {
+      this.elements.globalFPS.textContent = metrics.fps;
+    }
+    if (this.elements.memoryUsage) {
+      this.elements.memoryUsage.textContent = `${metrics.memoryUsage}MB`;
+    }
+    if (this.elements.updateRate) {
+      this.elements.updateRate.textContent = metrics.updateRate;
+    }
+
+    // Update performance dashboard
+    const performanceFPS = document.getElementById('performanceFPS');
+    const performanceMemory = document.getElementById('performanceMemory');
+    const performanceUpdates = document.getElementById('performanceUpdates');
+
+    if (performanceFPS) performanceFPS.textContent = metrics.fps;
+    if (performanceMemory) performanceMemory.textContent = metrics.memoryUsage;
+    if (performanceUpdates) performanceUpdates.textContent = metrics.updateRate;
+
+    // Update status bars
+    this.updatePerformanceBars(metrics);
+
+    console.log('ComponentShowcase: Performance display updated manually');
+  }
+
+  /**
+   * Update performance bars based on metrics
+   */
+  updatePerformanceBars(metrics) {
+    // FPS bar (60 FPS = 100%)
+    const fpsBar = document.getElementById('fpsBar');
+    const fpsStatus = document.getElementById('fpsStatus');
+    if (fpsBar && fpsStatus) {
+      const fpsPercent = Math.min((metrics.fps / 60) * 100, 100);
+      fpsBar.style.width = `${fpsPercent}%`;
+      fpsStatus.textContent = metrics.fps >= 55 ? 'Excellent' : metrics.fps >= 30 ? 'Good' : 'Poor';
+    }
+
+    // Memory bar (100MB = 100%)
+    const memoryBar = document.getElementById('memoryBar');
+    const memoryStatus = document.getElementById('memoryStatus');
+    if (memoryBar && memoryStatus) {
+      const memoryPercent = Math.min((metrics.memoryUsage / 100) * 100, 100);
+      memoryBar.style.width = `${memoryPercent}%`;
+      memoryStatus.textContent = metrics.memoryUsage < 50 ? 'Normal' : metrics.memoryUsage < 80 ? 'High' : 'Critical';
+    }
+
+    // Updates bar (10 updates/sec = 100%)
+    const updatesBar = document.getElementById('updatesBar');
+    const updatesStatus = document.getElementById('updatesStatus');
+    if (updatesBar && updatesStatus) {
+      const updatesPercent = Math.min((metrics.updateRate / 10) * 100, 100);
+      updatesBar.style.width = `${updatesPercent}%`;
+      updatesStatus.textContent = metrics.updateRate === 0 ? 'Idle' : metrics.updateRate < 5 ? 'Low' : 'Active';
+    }
   }
 
   /**
@@ -3335,7 +3859,11 @@ monitor.on('fps-drop', (fps) => {
 
 // Initialize the showcase when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+  // Make showcase globally available
   window.componentShowcase = new ComponentShowcase();
+
+  // Expose Ground State testing function globally
+  window.testGroundState = () => window.componentShowcase.testGroundStateCompliance();
 
   // Ensure proper sizing after initialization
   setTimeout(() => {
@@ -3343,4 +3871,10 @@ document.addEventListener('DOMContentLoaded', () => {
       window.componentShowcase.handleResize();
     }
   }, 500);
+
+  // Log Ground State compliance instructions
+  console.log('🔧 Ground State Testing Available:');
+  console.log('  - Run testGroundState() in console to verify compliance');
+  console.log('  - Use manual controls in the UI to trigger updates');
+  console.log('  - No automatic background processes should be running');
 });

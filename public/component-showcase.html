@@ -20,9 +20,139 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Syntax Highlighting -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+
+    <!-- Ground State Controls Styles -->
+    <style>
+        .ground-state-section {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .ground-state-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .control-group h4 {
+            color: #00FFFF;
+            margin-bottom: 0.5rem;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .control-description {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 1rem;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #00FFFF;
+            color: #000;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #00CCCC;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #FFF;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-warning {
+            background: #FFC107;
+            color: #000;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: #FFB300;
+        }
+
+        .btn-danger {
+            background: #FF0040;
+            color: #FFF;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #CC0033;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-indicator {
+            display: none;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid #FFC107;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+
+        .status-indicator.active {
+            display: block;
+        }
+
+        .status-indicator.success {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: #00FF00;
+        }
+
+        .status-indicator.error {
+            background: rgba(255, 0, 64, 0.2);
+            border-color: #FF0040;
+        }
+
+        @media (max-width: 768px) {
+            .ground-state-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .control-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body data-theme="dark">
     <!-- Navigation -->
@@ -326,6 +456,55 @@
                     <button class="perf-btn" id="resetMetrics">Reset Metrics</button>
                     <button class="perf-btn" id="exportMetrics">Export Metrics</button>
                     <button class="perf-btn" id="toggleProfiling">Start Profiling</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ground State Controls -->
+        <section class="ground-state-section">
+            <h3 class="section-title">Ground State Controls</h3>
+            <p class="section-description">
+                Following the Ground State Principle: All updates occur only through user action.
+                No automatic background processes are running.
+            </p>
+
+            <div class="ground-state-controls">
+                <div class="control-group">
+                    <h4>Manual Data Updates</h4>
+                    <div id="showcase-status" class="status-indicator"></div>
+                    <div class="control-buttons">
+                        <button id="manualUpdate" class="btn btn-primary">
+                            <span class="btn-icon">🔄</span>
+                            Update Data
+                        </button>
+                        <button id="refreshMetrics" class="btn btn-secondary">
+                            <span class="btn-icon">📊</span>
+                            Refresh Metrics
+                        </button>
+                        <button id="regenerateData" class="btn btn-secondary">
+                            <span class="btn-icon">🎲</span>
+                            Generate New Data
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Temporary Stress Tests</h4>
+                    <p class="control-description">These tests temporarily enable continuous updates for demonstration purposes</p>
+                    <div class="control-buttons">
+                        <button id="stressLight" class="btn btn-warning">
+                            <span class="btn-icon">⚡</span>
+                            Light Load (3s)
+                        </button>
+                        <button id="stressHeavy" class="btn btn-danger">
+                            <span class="btn-icon">🔥</span>
+                            Heavy Load (5s)
+                        </button>
+                        <button id="stopStress" class="btn btn-secondary" disabled>
+                            <span class="btn-icon">⏹️</span>
+                            Stop Test
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
