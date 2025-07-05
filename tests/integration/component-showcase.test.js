@@ -257,26 +257,28 @@ describe('Component Showcase', () => {
   });
 
   describe('Performance Monitoring', () => {
-    test('should track FPS correctly', (done) => {
+    test('should track FPS correctly', async () => {
       let frameCount = 0;
       const startTime = performance.now();
 
-      const measureFPS = () => {
-        frameCount++;
-        const now = performance.now();
-        
-        if (now - startTime >= 100) { // Test for 100ms
-          const fps = Math.round((frameCount * 1000) / (now - startTime));
-          expect(fps).toBeGreaterThan(0);
-          expect(fps).toBeLessThanOrEqual(120); // Reasonable upper bound
-          done();
-          return;
-        }
-        
+      return new Promise((resolve) => {
+        const measureFPS = () => {
+          frameCount++;
+          const now = performance.now();
+
+          if (now - startTime >= 100) { // Test for 100ms
+            const fps = Math.round((frameCount * 1000) / (now - startTime));
+            expect(fps).toBeGreaterThan(0);
+            expect(fps).toBeLessThanOrEqual(120); // Reasonable upper bound
+            resolve();
+            return;
+          }
+
+          requestAnimationFrame(measureFPS);
+        };
+
         requestAnimationFrame(measureFPS);
-      };
-      
-      requestAnimationFrame(measureFPS);
+      });
     });
 
     test('should record render times', () => {

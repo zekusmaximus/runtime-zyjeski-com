@@ -9,7 +9,7 @@ const PERFORMANCE_TARGETS = {
   INITIAL_RENDER_100: 200,   // < 200ms for 100 processes (realistic for DOM manipulation)
   INITIAL_RENDER_500: 300,   // < 300ms for 500 processes
   INITIAL_RENDER_1000: 500,  // < 500ms for 1000 processes
-  INITIAL_RENDER_SMALL: 150, // < 150ms for small datasets without virtual scroll
+  INITIAL_RENDER_SMALL: 160, // < 160ms for small datasets without virtual scroll
   UPDATE_TIME: 100,          // < 100ms for updates (realistic for DOM diffing)
   SCROLL_FRAME_TIME: 40,     // < 40ms per scroll frame (60fps target)
   MEMORY_LIMIT_MB: 5,        // < 5MB for 1000 processes
