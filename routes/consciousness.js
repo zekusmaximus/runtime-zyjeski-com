@@ -3,6 +3,7 @@ import express from 'express';
 import { consciousnessEngine } from '../lib/ws-bootstrap.js';
 import { error, info } from '../lib/logger.js';
 import { validateConsciousnessData } from '../lib/validateConsciousness.js';
+import { debugCommandsLimiter } from '../lib/middleware/rate-limiter.js';
 
 const router = express.Router();
 
@@ -194,8 +195,8 @@ router.get('/:characterId/errors', async (req, res) => {
   }
 });
 
-// Update consciousness state
-router.post('/:characterId/update', async (req, res) => {
+// Update consciousness state with debug command rate limiting
+router.post('/:characterId/update', debugCommandsLimiter, async (req, res) => {
   try {
     const characterId = req.params.characterId;
     const updates = req.body;

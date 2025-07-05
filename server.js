@@ -43,6 +43,18 @@ import { info, error } from './lib/logger.js';
 import { createCSPConfig } from './lib/security/csp-config.js';
 import { CSPReporter } from './lib/security/csp-reporter.js';
 
+// Import rate limiting middleware
+import {
+  generalApiLimiter,
+  authLimiter,
+  debugCommandsLimiter,
+  cspReportingLimiter,
+  strictLimiter,
+  getRateLimitStats,
+  rateLimitHeadersMiddleware,
+  wsDebugCommandsLimiter
+} from './lib/middleware/rate-limiter.js';
+
 // Import routes
 import apiRoutes from './routes/api.js';
 import consciousnessRoutes from './routes/consciousness.js';
@@ -171,6 +183,12 @@ app.use(cors({
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Rate limiting headers middleware - adds transparency headers
+app.use(rateLimitHeadersMiddleware);
+
+// Trust proxy for accurate IP detection in rate limiting
+app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
+
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath, stat) => {
     if (filePath.endsWith('.js')) {
@@ -183,8 +201,8 @@ app.use(express.static(path.join(__dirname, 'public'), {
   }
 }));
 
-// CSP Violation Reporting Endpoint with Enhanced Analysis
-app.post('/api/csp-report', express.json({
+// CSP Violation Reporting Endpoint with Enhanced Analysis and Rate Limiting
+app.post('/api/csp-report', cspReportingLimiter, express.json({
   type: ['application/csp-report', 'application/json'],
   limit: '1mb'
 }), (req, res) => {
@@ -234,9 +252,29 @@ app.get('/api/csp-stats', (req, res) => {
   });
 });
 
-// Routes
-app.use('/api', apiRoutes);
-app.use('/api/consciousness', consciousnessRoutes);
+// Rate Limiting Statistics Endpoint (for monitoring)
+app.get('/api/rate-limit-stats', (req, res) => {
+  // Only allow in development or with proper authentication
+  if (process.env.NODE_ENV === 'production') {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+
+  const rateLimitStats = getRateLimitStats();
+  const wsStats = wsDebugCommandsLimiter.getStats();
+
+  res.json({
+    ...rateLimitStats,
+    websocket: wsStats
+  });
+});
+
+// Routes with rate limiting
+// General API routes with standard rate limiting
+app.use('/api', generalApiLimiter, apiRoutes);
+
+// Consciousness API routes with debug command rate limiting for debug endpoints
+app.use('/api/consciousness', generalApiLimiter, consciousnessRoutes);
 
 // Serve main page with nonce injection
 app.get('/', (req, res) => {

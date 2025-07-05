@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { error } from '../lib/logger.js';
+import { debugCommandsLimiter } from '../lib/middleware/rate-limiter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -59,8 +60,8 @@ router.get('/character/:id', async (req, res) => {
   }
 });
 
-// Start debugging session
-router.post('/debug/:characterId', async (req, res) => {
+// Start debugging session with debug command rate limiting
+router.post('/debug/:characterId', debugCommandsLimiter, async (req, res) => {
   try {
     const characterId = req.params.characterId;
     const sessionId = `debug_${characterId}_${Date.now()}`;
@@ -78,8 +79,8 @@ router.post('/debug/:characterId', async (req, res) => {
   }
 });
 
-// Kill a mental process
-router.put('/process/:pid/kill', async (req, res) => {
+// Kill a mental process with debug command rate limiting
+router.put('/process/:pid/kill', debugCommandsLimiter, async (req, res) => {
   try {
     const pid = parseInt(req.params.pid);
     const { characterId } = req.body;
