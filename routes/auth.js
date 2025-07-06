@@ -220,7 +220,7 @@ function rotateTokensForSession(user, existingSessionId, db) {
   return { accessToken, refreshToken };
 }
 
-router.post('/refresh', async (req, res) => {
+router.post('/refresh', authLimiter, async (req, res) => {
   try {
     const { refreshToken } = req.body;
 
