@@ -31,6 +31,7 @@
 
 import 'dotenv/config';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
@@ -39,6 +40,14 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { info, error } from './lib/logger.js';
+
+// Configure rate limiter for /api routes
+const apiRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // max 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
 
 // Import security configuration
 import { createCSPConfig } from './lib/security/csp-config.js';
@@ -59,6 +68,10 @@ import {
 // Import routes
 import apiRoutes from './routes/api.js';
 import consciousnessRoutes from './routes/consciousness.js';
+import debuggingStateRoutes from './routes/debugging-states.js';
+import { enhancedSecurityHeaders } from './lib/security/security-middleware.js';
+import { optionalAuth } from './lib/auth/auth-middleware.js';
+import { authenticateWebSocket } from './lib/auth/ws-auth.js';
 
 // Import WebSocket handlers
 import websocketHandlers from './lib/ws-bootstrap.js';
@@ -131,6 +144,8 @@ const io = new Server(server, {
   }
 });
 
+io.use(authenticateWebSocket);
+
 const PORT = process.env.PORT || 3000;
 
 // CSP Nonce Middleware - MUST come before Helmet CSP
@@ -144,6 +159,8 @@ app.use((req, res, next) => {
 app.use(helmet({
   contentSecurityPolicy: false // We'll handle CSP manually
 }));
+
+app.use(enhancedSecurityHeaders);
 
 // Custom CSP Middleware
 app.use((req, res, next) => {
@@ -271,8 +288,14 @@ app.get('/api/rate-limit-stats', (req, res) => {
 });
 
 // Routes with rate limiting
+// Apply optional authentication to all API routes
+app.use('/api', apiRateLimiter, optionalAuth);
+
 // General API routes with standard rate limiting
 app.use('/api', generalApiLimiter, apiRoutes);
+
+// Debugging state routes (authenticated)
+app.use('/api/debugging-states', generalApiLimiter, debuggingStateRoutes);
 
 // Consciousness API routes with debug command rate limiting for debug endpoints
 app.use('/api/consciousness', generalApiLimiter, consciousnessRoutes);

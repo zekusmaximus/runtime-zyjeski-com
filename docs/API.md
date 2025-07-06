@@ -12,7 +12,20 @@ http://localhost:3000/api
 
 ## Authentication
 
-Currently, no authentication is required. Each browser session maintains independent character consciousness state.
+Authentication is optional and uses JSON Web Tokens (JWT). Endpoints under `/api/auth` provide registration and login as well as token management.
+
+### Endpoints
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| POST | `/api/auth/register` | Create a new user account |
+| POST | `/api/auth/login` | Obtain access and refresh tokens |
+| POST | `/api/auth/refresh` | Exchange a refresh token for new tokens |
+| POST | `/api/auth/logout` | Revoke the current session |
+| POST | `/api/auth/logout-all` | Revoke all user sessions |
+| GET  | `/api/auth/verify` | Validate the provided access token |
+
+Access tokens expire after 15 minutes and are automatically refreshed by the client.
 
 ## Response Format
 
