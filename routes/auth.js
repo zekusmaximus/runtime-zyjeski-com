@@ -283,7 +283,7 @@ router.post('/refresh', authLimiter, async (req, res) => {
   }
 });
 
-router.post('/logout', authenticateToken, async (req, res) => {
+router.post('/logout', authLimiter, authenticateToken, async (req, res) => {
   try {
     db.revokeAuthSession(req.user.sessionId);
 
