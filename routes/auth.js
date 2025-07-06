@@ -341,7 +341,7 @@ router.post('/logout-all', authLimiter, authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/verify', authenticateToken, (req, res) => {
+router.get('/verify', authLimiter, authenticateToken, (req, res) => {
   res.json({
     success: true,
     data: {
