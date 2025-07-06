@@ -312,7 +312,7 @@ router.post('/logout', authLimiter, authenticateToken, async (req, res) => {
   }
 });
 
-router.post('/logout-all', authenticateToken, async (req, res) => {
+router.post('/logout-all', authLimiter, authenticateToken, async (req, res) => {
   try {
     db.revokeUserTokens(req.user.id);
 
