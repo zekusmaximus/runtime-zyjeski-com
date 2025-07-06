@@ -31,6 +31,7 @@
 
 import 'dotenv/config';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
@@ -39,6 +40,14 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { info, error } from './lib/logger.js';
+
+// Configure rate limiter for /api routes
+const apiRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // max 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
 
 // Import security configuration
 import { createCSPConfig } from './lib/security/csp-config.js';
@@ -280,7 +289,7 @@ app.get('/api/rate-limit-stats', (req, res) => {
 
 // Routes with rate limiting
 // Apply optional authentication to all API routes
-app.use('/api', optionalAuth);
+app.use('/api', apiRateLimiter, optionalAuth);
 
 // General API routes with standard rate limiting
 app.use('/api', generalApiLimiter, apiRoutes);
