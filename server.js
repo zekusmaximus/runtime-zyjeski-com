@@ -59,6 +59,10 @@ import {
 // Import routes
 import apiRoutes from './routes/api.js';
 import consciousnessRoutes from './routes/consciousness.js';
+import debuggingStateRoutes from './routes/debugging-states.js';
+import { enhancedSecurityHeaders } from './lib/security/security-middleware.js';
+import { optionalAuth } from './lib/auth/auth-middleware.js';
+import { authenticateWebSocket } from './lib/auth/ws-auth.js';
 
 // Import WebSocket handlers
 import websocketHandlers from './lib/ws-bootstrap.js';
@@ -131,6 +135,8 @@ const io = new Server(server, {
   }
 });
 
+io.use(authenticateWebSocket);
+
 const PORT = process.env.PORT || 3000;
 
 // CSP Nonce Middleware - MUST come before Helmet CSP
@@ -144,6 +150,8 @@ app.use((req, res, next) => {
 app.use(helmet({
   contentSecurityPolicy: false // We'll handle CSP manually
 }));
+
+app.use(enhancedSecurityHeaders);
 
 // Custom CSP Middleware
 app.use((req, res, next) => {
@@ -271,8 +279,14 @@ app.get('/api/rate-limit-stats', (req, res) => {
 });
 
 // Routes with rate limiting
+// Apply optional authentication to all API routes
+app.use('/api', optionalAuth);
+
 // General API routes with standard rate limiting
 app.use('/api', generalApiLimiter, apiRoutes);
+
+// Debugging state routes (authenticated)
+app.use('/api/debugging-states', generalApiLimiter, debuggingStateRoutes);
 
 // Consciousness API routes with debug command rate limiting for debug endpoints
 app.use('/api/consciousness', generalApiLimiter, consciousnessRoutes);
