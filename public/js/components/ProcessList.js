@@ -728,17 +728,19 @@ export class ProcessList {
     const offsetTop = this._visibleStartIndex * this.options.rowHeight;
     this.elements.content.style.transform = `translateY(${offsetTop}px)`;
 
-    // Render visible range
+    // Render visible range using a document fragment for better performance
+    const fragment = document.createDocumentFragment();
     for (let i = this._visibleStartIndex; i < this._visibleEndIndex; i++) {
       if (i >= this._filteredProcesses.length) break;
 
       const process = this._filteredProcesses[i];
       const rowElement = this._createRowElement(process);
-      this.elements.content.appendChild(rowElement);
+      fragment.appendChild(rowElement);
 
       // Store reference for updates
       this._rowElements.set(process.pid, rowElement);
     }
+    this.elements.content.appendChild(fragment);
   }
 
   /**
@@ -749,11 +751,13 @@ export class ProcessList {
     this.elements.content.innerHTML = '';
     this.elements.content.style.transform = '';
 
+    const fragment = document.createDocumentFragment();
     this._filteredProcesses.forEach(process => {
       const rowElement = this._createRowElement(process);
-      this.elements.content.appendChild(rowElement);
+      fragment.appendChild(rowElement);
       this._rowElements.set(process.pid, rowElement);
     });
+    this.elements.content.appendChild(fragment);
   }
 
   /**

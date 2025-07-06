@@ -232,7 +232,11 @@ router.post('/refresh', authLimiter, async (req, res) => {
       });
     }
 
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET,
+      { algorithms: ['HS256'] }
+    );
     const tokenRecord = db.getToken(decoded.jti);
     if (!tokenRecord || tokenRecord.token_type !== 'refresh' || tokenRecord.revoked) {
       return res.status(403).json({
