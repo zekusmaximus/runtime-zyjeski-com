@@ -975,8 +975,7 @@ class Terminal {
     
     // Handle special formatting for tables and progress bars
     if (text.includes('─') || text.includes('█') || text.includes('░')) {
-      line.style.fontFamily = 'var(--font-mono)';
-      line.style.whiteSpace = 'pre';
+      line.classList.add('terminal-formatted');
     }
     
     line.textContent = text;

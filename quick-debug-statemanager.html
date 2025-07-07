@@ -12,13 +12,17 @@
 </head>
 <body>
     <h1>Quick StateManager Debug</h1>
-    <button onclick="checkStateManager()">Check StateManager Now</button>
-    <button onclick="loadCharacterAndCheck()">Load Character & Check</button>
+    <button id="checkStateManagerBtn">Check StateManager Now</button>
+    <button id="loadCharacterBtn">Load Character & Check</button>
     <div id="results"></div>
 
     <script type="module">
         import '/js/bootstrap.js';
-        
+
+        // Add event listeners
+        document.getElementById('checkStateManagerBtn').addEventListener('click', checkStateManager);
+        document.getElementById('loadCharacterBtn').addEventListener('click', loadCharacterAndCheck);
+
         window.checkStateManager = function() {
             const results = document.getElementById('results');
             results.innerHTML = '<h2>StateManager Status:</h2>';

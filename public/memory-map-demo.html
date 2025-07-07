@@ -559,12 +559,21 @@
                 ${results.map(address => {
                     const block = consciousnessMemoryData.blocks.find(b => b.address === address);
                     return `
-                        <div class="search-result" onclick="centerOnBlock('${address}')">
+                        <div class="search-result" data-address="${address}">
                             <strong>${address}</strong> - ${block?.content?.description || 'Unknown'}
                         </div>
                     `;
                 }).join('')}
             `;
+
+            // Add event delegation for search results
+            container.addEventListener('click', (e) => {
+                const searchResult = e.target.closest('.search-result');
+                if (searchResult) {
+                    const address = searchResult.dataset.address;
+                    centerOnBlock(address);
+                }
+            });
         }
 
         window.centerOnBlock = (address) => {

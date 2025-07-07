@@ -51,213 +51,10 @@ class VisualCueSystem {
    * Initialize CSS styles for visual cues
    */
   initializeStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-      /* Narrative Overlay Styles */
-      .narrative-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.9);
-        z-index: 10000;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        backdrop-filter: blur(4px);
-      }
-
-      .narrative-content {
-        background: #1e1e1e;
-        border: 2px solid #007acc;
-        border-radius: 8px;
-        padding: 2rem;
-        max-width: 80%;
-        max-height: 80%;
-        overflow-y: auto;
-        color: #d4d4d4;
-        font-family: 'Consolas', monospace;
-        line-height: 1.6;
-        box-shadow: 0 0 30px rgba(0, 122, 204, 0.3);
-      }
-
-      .narrative-title {
-        color: #569cd6;
-        font-size: 1.4rem;
-        margin-bottom: 1rem;
-        font-weight: bold;
-      }
-
-      .narrative-text {
-        white-space: pre-line;
-        margin-bottom: 1rem;
-      }
-
-      .narrative-continue {
-        background: #007acc;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        cursor: pointer;
-        font-family: inherit;
-        float: right;
-      }
-
-      .narrative-continue:hover {
-        background: #005a99;
-      }
-
-      /* Memory Fragment Styles */
-      .memory-fragment-container {
-        position: fixed;
-        top: 50%;
-        right: 20px;
-        transform: translateY(-50%);
-        z-index: 9000;
-        pointer-events: none;
-      }
-
-      .memory-fragment {
-        background: rgba(30, 30, 30, 0.95);
-        border: 1px solid #ff6b6b;
-        border-radius: 4px;
-        padding: 1rem;
-        margin-bottom: 0.5rem;
-        color: #ff6b6b;
-        font-family: 'Consolas', monospace;
-        font-size: 0.9rem;
-        max-width: 300px;
-        animation: memoryPulse 2s infinite;
-        box-shadow: 0 0 20px rgba(255, 107, 107, 0.2);
-      }
-
-      @keyframes memoryPulse {
-        0%, 100% { opacity: 0.8; }
-        50% { opacity: 1; }
-      }
-
-      .memory-address {
-        color: #569cd6;
-        font-size: 0.8rem;
-        margin-bottom: 0.5rem;
-      }
-
-      /* Terminal Highlight Styles */
-      .terminal-highlight-container {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 100;
-      }
-
-      .terminal-highlight {
-        position: absolute;
-        background: rgba(255, 165, 0, 0.2);
-        border: 1px solid rgba(255, 165, 0, 0.5);
-        animation: terminalGlow 1.5s ease-in-out;
-      }
-
-      @keyframes terminalGlow {
-        0% { opacity: 0; transform: scale(0.9); }
-        50% { opacity: 1; transform: scale(1.05); }
-        100% { opacity: 0; transform: scale(1); }
-      }
-
-      /* Monitor Effects Styles */
-      .monitor-effects-container {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 100;
-      }
-
-      .process-pulse {
-        position: absolute;
-        border: 2px solid #ff4444;
-        border-radius: 4px;
-        animation: processPulse 3s infinite;
-      }
-
-      @keyframes processPulse {
-        0% { opacity: 0; transform: scale(1); }
-        20% { opacity: 1; transform: scale(1.1); }
-        80% { opacity: 1; transform: scale(1.1); }
-        100% { opacity: 0; transform: scale(1); }
-      }
-
-      .timeline-visualization {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(45deg, 
-          transparent 0%, 
-          rgba(0, 122, 204, 0.1) 50%, 
-          transparent 100%);
-        animation: timelineShift 4s linear infinite;
-      }
-
-      @keyframes timelineShift {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
-      }
-
-      /* Critical System Alert */
-      .critical-alert {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 0, 0, 0.1);
-        z-index: 8000;
-        animation: criticalPulse 0.5s infinite alternate;
-        pointer-events: none;
-      }
-
-      @keyframes criticalPulse {
-        0% { opacity: 0.1; }
-        100% { opacity: 0.3; }
-      }
-
-      /* Chapter Transition */
-      .chapter-transition {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(to bottom, 
-          rgba(0, 0, 0, 1) 0%, 
-          rgba(0, 0, 0, 0.8) 50%, 
-          rgba(0, 0, 0, 1) 100%);
-        z-index: 9500;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #569cd6;
-        font-family: 'Consolas', monospace;
-        font-size: 2rem;
-        text-align: center;
-        animation: chapterFade 4s ease-in-out forwards;
-      }
-
-      @keyframes chapterFade {
-        0% { opacity: 0; }
-        20% { opacity: 1; }
-        80% { opacity: 1; }
-        100% { opacity: 0; }
-      }
-    `;
-    document.head.appendChild(style);
-    return style;
+    // Styles are now loaded from external CSS file: /css/visual-cues.css
+    // This method is kept for compatibility but does nothing
+    console.log('Visual cues styles loaded from external CSS file');
+    return null;
   }
 
   /**
@@ -484,25 +281,17 @@ class VisualCueSystem {
   highlightMemoryRegion(cue) {
     const memorySection = document.querySelector('#memory-usage');
     if (!memorySection) return;
-    
+
     const highlight = document.createElement('div');
-    highlight.className = 'memory-highlight';
-    highlight.style.cssText = `
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 107, 107, 0.2);
-      border: 2px solid rgba(255, 107, 107, 0.5);
-      animation: memoryPulse 2s infinite;
-      pointer-events: none;
-    `;
-    
-    memorySection.style.position = 'relative';
+    highlight.className = 'memory-highlight-overlay';
+
+    memorySection.classList.add('memory-highlight-container');
     memorySection.appendChild(highlight);
-    
-    setTimeout(() => highlight.remove(), 4000);
+
+    setTimeout(() => {
+      highlight.remove();
+      memorySection.classList.remove('memory-highlight-container');
+    }, 4000);
   }
 
   /**
@@ -511,23 +300,12 @@ class VisualCueSystem {
   highlightTerminalElement(cue) {
     const terminal = document.querySelector('#terminal-output');
     if (!terminal) return;
-    
+
     const highlight = document.createElement('div');
-    highlight.className = 'terminal-highlight';
-    highlight.style.cssText = `
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(255, 165, 0, 0.1);
-      border: 2px solid rgba(255, 165, 0, 0.3);
-      animation: terminalGlow 2s ease-in-out;
-      pointer-events: none;
-    `;
-    
+    highlight.className = 'terminal-highlight-overlay';
+
     this.terminalHighlights.appendChild(highlight);
-    
+
     setTimeout(() => highlight.remove(), 2000);
   }
 
@@ -537,27 +315,19 @@ class VisualCueSystem {
   pulseProcessElement(cue) {
     const processElements = document.querySelectorAll('.process-item');
     processElements.forEach(element => {
-      if (element.textContent.includes('Grief_Manager') || 
+      if (element.textContent.includes('Grief_Manager') ||
           element.textContent.includes('Search_Protocol')) {
-        
+
         const pulse = document.createElement('div');
-        pulse.className = 'process-pulse';
-        pulse.style.cssText = `
-          position: absolute;
-          top: -2px;
-          left: -2px;
-          right: -2px;
-          bottom: -2px;
-          border: 2px solid #ff4444;
-          border-radius: 4px;
-          animation: processPulse 3s infinite;
-          pointer-events: none;
-        `;
-        
-        element.style.position = 'relative';
+        pulse.className = 'process-pulse-overlay';
+
+        element.classList.add('process-pulse-container');
         element.appendChild(pulse);
-        
-        setTimeout(() => pulse.remove(), 6000);
+
+        setTimeout(() => {
+          pulse.remove();
+          element.classList.remove('process-pulse-container');
+        }, 6000);
       }
     });
   }

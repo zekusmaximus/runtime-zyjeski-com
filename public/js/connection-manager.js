@@ -97,8 +97,8 @@
       if (!this.connectionStatus) return;
 
       /* Ensure element is visible once manager has control */
-      if (this.connectionStatus.style.display === 'none') {
-        this.connectionStatus.style.display = 'inline-flex';
+      if (this.connectionStatus.classList.contains('hidden')) {
+        this.connectionStatus.classList.remove('hidden');
       }
 
       const isConnected = this.lastKnownConnectionState;
@@ -126,10 +126,10 @@
 
     setStyles(color, background) {
       if (!this.connectionStatus) return;
-      
-      this.connectionStatus.style.color = color;
-      this.connectionStatus.style.background = background;
-      this.connectionStatus.style.borderColor = color;
+
+      // Use CSS custom properties instead of inline styles
+      this.connectionStatus.style.setProperty('--connection-color', color);
+      this.connectionStatus.style.setProperty('--connection-background', background);
     }
 
     // Public methods for debugging

@@ -81,7 +81,7 @@
                         Refresh
                     </button>
 
-                    <button class="btn btn-small" id="testMemoryBtn" onclick="injectTestMemoryData()">
+                    <button class="btn btn-small" id="testMemoryBtn">
                         <span class="btn-icon">🧠</span>
                         Test Memory
                     </button>
@@ -138,13 +138,13 @@
     </section>
 
     <!-- Socket.io -->
-    <script src="/socket.io/socket.io.js"></script>
+    <script nonce="<%= nonce %>" src="/socket.io/socket.io.js"></script>
     <!-- Ground State Socket Client (required for monitor) -->
-    <script type="module" src="/js/socket-client.js"></script>
+    <script nonce="<%= nonce %>" type="module" src="/js/socket-client.js"></script>
     <!-- Ground State Validator -->
-    <script type="module" src="/js/ground-state-validator.js"></script>
+    <script nonce="<%= nonce %>" type="module" src="/js/ground-state-validator.js"></script>
     <!-- State manager is initialized by bootstrap.js -->
-    <script type="module" src="/js/monitor.js"></script>
+    <script nonce="<%= nonce %>" type="module" src="/js/monitor.js"></script>
 
     <!-- Enhanced Monitor Styles with CSP nonce -->
     <style nonce="<%= nonce %>">
@@ -337,8 +337,24 @@
     .memory-block.procedural { background: var(--warning-color); }
     </style>
 
-    <!-- Inline script with CSP nonce for test functionality -->
+    <!-- Inline script with CSP nonce for configuration and test functionality -->
     <script nonce="<%= nonce %>">
+    // Application configuration - injected securely with CSP nonce
+    window.APP_CONFIG = {
+        environment: '<%= process.env.NODE_ENV || "development" %>',
+        debug: <%= process.env.NODE_ENV !== 'production' %>,
+        cspNonce: '<%= nonce %>'
+    };
+
+    // Event listeners for buttons (CSP compliant)
+    document.addEventListener('DOMContentLoaded', function() {
+        // Test Memory button
+        const testMemoryBtn = document.getElementById('testMemoryBtn');
+        if (testMemoryBtn) {
+            testMemoryBtn.addEventListener('click', injectTestMemoryData);
+        }
+    });
+
     // Test function to inject sample memory data
     function injectTestMemoryData() {
         console.log('🧠 Injecting test memory data...');
@@ -400,11 +416,11 @@
         const testBtn = document.getElementById('testMemoryBtn');
         const originalText = testBtn.innerHTML;
         testBtn.innerHTML = '<span class="btn-icon">✅</span>Loaded!';
-        testBtn.style.background = '#4CAF50';
+        testBtn.classList.add('success-state');
 
         setTimeout(() => {
             testBtn.innerHTML = originalText;
-            testBtn.style.background = '';
+            testBtn.classList.remove('success-state');
         }, 2000);
 
         console.log('✅ Test memory data injected successfully');

@@ -1104,24 +1104,11 @@ class MonitorUI {
     console.log('MonitorUI destroyed');
   }
 
-  // Injects the required flash CSS once per page load
+  // Flash CSS is now in external CSS file - no need to inject
   addFlashCSS() {
-    if (document.getElementById('monitor-flash-css')) return;
-    const style = document.createElement('style');
-    style.id = 'monitor-flash-css';
-    style.textContent = `
-      .monitor-container.flash-update {
-        border-color: #2196f3 !important;
-        box-shadow: 0 0 20px rgba(33, 150, 243, 0.3) !important;
-        transition: all 0.3s ease !important;
-      }
-      .monitor-container.flash-intervention {
-        border-color: #4caf50 !important;
-        box-shadow: 0 0 20px rgba(76, 175, 80, 0.3) !important;
-        transition: all 0.3s ease !important;
-      }
-    `;
-    document.head.appendChild(style);
+    // Flash styles are now in public/css/enhanced.css
+    // This method is kept for compatibility but does nothing
+    console.log('Monitor flash CSS loaded from external file');
   }
 }
 

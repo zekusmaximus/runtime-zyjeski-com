@@ -1,4 +1,5 @@
 // Enhanced Onboarding System with Manual Button
+
 class OnboardingSystem {
   constructor() {
     this.currentStep = 0;
@@ -70,7 +71,7 @@ class OnboardingSystem {
         </div>
         <div class="onboarding-body">
           <p id="onboarding-text">Loading...</p>
-          <div id="onboarding-manual-section" style="display: none; margin-top: 20px; text-align: center;">
+          <div id="onboarding-manual-section" class="onboarding-manual-section hidden">
             <button id="onboarding-manual-btn" class="onboarding-manual-btn">📖 Read the Complete Manual</button>
           </div>
         </div>
@@ -81,7 +82,7 @@ class OnboardingSystem {
           <div class="onboarding-actions">
             <button id="onboarding-prev" class="onboarding-btn secondary" disabled>Previous</button>
             <button id="onboarding-next" class="onboarding-btn primary">Next</button>
-            <button id="onboarding-finish" class="onboarding-btn primary" style="display: none;">Start Debugging</button>
+            <button id="onboarding-finish" class="onboarding-btn primary hidden">Start Debugging</button>
           </div>
         </div>
       </div>
@@ -96,363 +97,9 @@ class OnboardingSystem {
   }
 
   addStyles() {
-    if (document.getElementById('onboarding-styles')) return;
-
-    const styles = document.createElement('style');
-    styles.id = 'onboarding-styles';
-    styles.textContent = `
-      /* Onboarding Overlay - Light overlay so content remains visible */
-      .onboarding-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.3);
-        backdrop-filter: blur(1px);
-        z-index: 50000;
-        display: none;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        pointer-events: none;
-      }
-      
-      .onboarding-overlay.active {
-        pointer-events: auto;
-      }
-      
-      .onboarding-modal {
-        pointer-events: auto;
-      }
-
-      .onboarding-overlay.active {
-        display: flex;
-        opacity: 1;
-      }
-
-      .onboarding-modal {
-        position: absolute;
-        background: #1a1a1a;
-        border: 2px solid #00aaff;
-        border-radius: 12px;
-        box-shadow: 0 20px 60px rgba(0, 170, 255, 0.3);
-        max-width: 420px;
-        min-width: 320px;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-        transform: scale(0.9);
-        transition: all 0.3s ease;
-      }
-
-      .onboarding-overlay.active .onboarding-modal {
-        transform: scale(1);
-      }
-
-      .onboarding-content {
-        padding: 0;
-        color: #ffffff;
-      }
-
-      .onboarding-header {
-        background: linear-gradient(135deg, #00aaff, #0077cc);
-        padding: 1.5rem;
-        border-radius: 10px 10px 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        position: relative;
-      }
-
-      .onboarding-header h2 {
-        margin: 0;
-        color: #ffffff;
-        font-size: 1.4rem;
-        font-weight: 600;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-      }
-
-      .onboarding-close {
-        background: rgba(255, 255, 255, 0.2);
-        border: none;
-        color: #ffffff;
-        font-size: 1.5rem;
-        cursor: pointer;
-        padding: 8px;
-        border-radius: 50%;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-      }
-
-      .onboarding-close:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: scale(1.1);
-      }
-
-      .onboarding-body {
-        padding: 2rem;
-        line-height: 1.6;
-      }
-
-      .onboarding-body p {
-        margin: 0;
-        font-size: 1rem;
-        color: #e0e0e0;
-      }
-
-      /* Manual Button Styling */
-      .onboarding-manual-btn {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 14px;
-        font-family: 'Courier New', 'Monaco', monospace;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-        min-width: 200px;
-      }
-
-      .onboarding-manual-btn::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: left 0.5s;
-      }
-
-      .onboarding-manual-btn:hover::before {
-        left: 100%;
-      }
-
-      .onboarding-manual-btn:hover {
-        background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-      }
-
-      .onboarding-manual-btn:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      }
-
-      .onboarding-footer {
-        padding: 1.5rem;
-        border-top: 1px solid #333;
-        background: #141414;
-        border-radius: 0 0 10px 10px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .progress-dots {
-        display: flex;
-        gap: 8px;
-      }
-
-      .progress-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #333;
-        transition: all 0.3s ease;
-      }
-
-      .progress-dot.active {
-        background: #00aaff;
-        transform: scale(1.2);
-      }
-
-      .progress-dot.completed {
-        background: #00ff88;
-      }
-
-      .onboarding-actions {
-        display: flex;
-        gap: 12px;
-      }
-
-      .onboarding-btn {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 6px;
-        font-size: 0.9rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        min-width: 80px;
-      }
-
-      .onboarding-btn.primary {
-        background: #00aaff;
-        color: #ffffff;
-      }
-
-      .onboarding-btn.primary:hover:not(:disabled) {
-        background: #0099ee;
-        transform: translateY(-1px);
-      }
-
-      .onboarding-btn.secondary {
-        background: #444;
-        color: #ffffff;
-        border: 1px solid #666;
-      }
-
-      .onboarding-btn.secondary:hover:not(:disabled) {
-        background: #555;
-      }
-
-      .onboarding-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      /* Arrow pointer */
-      .onboarding-arrow {
-        position: absolute;
-        width: 0;
-        height: 0;
-        pointer-events: none;
-      }
-
-      .onboarding-arrow.top {
-        border-left: 10px solid transparent;
-        border-right: 10px solid transparent;
-        border-bottom: 10px solid #00aaff;
-        top: -10px;
-        left: 50%;
-        transform: translateX(-50%);
-      }
-
-      .onboarding-arrow.bottom {
-        border-left: 10px solid transparent;
-        border-right: 10px solid transparent;
-        border-top: 10px solid #00aaff;
-        bottom: -10px;
-        left: 50%;
-        transform: translateX(-50%);
-      }
-
-      .onboarding-arrow.left {
-        border-top: 10px solid transparent;
-        border-bottom: 10px solid transparent;
-        border-right: 10px solid #00aaff;
-        left: -10px;
-        top: 50%;
-        transform: translateY(-50%);
-      }
-
-      .onboarding-arrow.right {
-        border-top: 10px solid transparent;
-        border-bottom: 10px solid transparent;
-        border-left: 10px solid #00aaff;
-        right: -10px;
-        top: 50%;
-        transform: translateY(-50%);
-      }
-
-      /* Target highlighting */
-      .onboarding-highlight {
-        position: relative;
-        z-index: 49999;
-      }
-
-      .onboarding-highlight::before {
-        content: '';
-        position: absolute;
-        top: -8px;
-        left: -8px;
-        right: -8px;
-        bottom: -8px;
-        border: 3px solid #00aaff;
-        border-radius: 12px;
-        box-shadow: 0 0 30px rgba(0, 170, 255, 0.8), inset 0 0 0 2px rgba(0, 170, 255, 0.2);
-        animation: onboardingPulse 2s infinite;
-        pointer-events: none;
-        background: rgba(0, 170, 255, 0.05);
-      }
-
-      @keyframes onboardingPulse {
-        0%, 100% { 
-          opacity: 0.8; 
-          transform: scale(1);
-          box-shadow: 0 0 30px rgba(0, 170, 255, 0.8), inset 0 0 0 2px rgba(0, 170, 255, 0.2);
-        }
-        50% { 
-          opacity: 1; 
-          transform: scale(1.02);
-          box-shadow: 0 0 40px rgba(0, 170, 255, 1), inset 0 0 0 2px rgba(0, 170, 255, 0.3);
-        }
-      }
-
-      /* Responsive design */
-      @media (max-width: 768px) {
-        .onboarding-modal {
-          max-width: 90vw;
-          min-width: 280px;
-          margin: 20px;
-        }
-
-        .onboarding-header {
-          padding: 1rem;
-        }
-
-        .onboarding-header h2 {
-          font-size: 1.2rem;
-        }
-
-        .onboarding-body {
-          padding: 1.5rem;
-        }
-
-        .onboarding-footer {
-          padding: 1rem;
-          flex-direction: column;
-          gap: 1rem;
-        }
-
-        .onboarding-actions {
-          width: 100%;
-          justify-content: space-between;
-        }
-
-        .onboarding-btn {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .onboarding-manual-btn {
-          min-width: auto;
-          padding: 10px 16px;
-          font-size: 12px;
-        }
-      }
-
-      /* Center positioning for modal steps */
-      .onboarding-modal.center {
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(0.9);
-      }
-
-      .onboarding-overlay.active .onboarding-modal.center {
-        transform: translate(-50%, -50%) scale(1);
-      }
-    `;
-
-    document.head.appendChild(styles);
+    // Styles are now loaded from external CSS file: /css/onboarding.css
+    // This method is kept for compatibility but does nothing
+    console.log('Onboarding styles loaded from external CSS file');
   }
 
   bindEvents() {
@@ -487,7 +134,7 @@ class OnboardingSystem {
         case 'ArrowRight':
         case 'Enter':
           if (!nextBtn.disabled) this.nextStep();
-          else if (finishBtn.style.display !== 'none') this.finishOnboarding();
+          else if (!finishBtn.classList.contains('hidden')) this.finishOnboarding();
           break;
         case 'ArrowLeft':
           if (!prevBtn.disabled) this.prevStep();
@@ -724,15 +371,15 @@ class OnboardingSystem {
         left = viewportWidth - modalRect.width - margin;
       }
 
-      // Apply final positioning
-      modal.style.top = `${Math.max(margin, top)}px`;
-      modal.style.left = `${Math.max(margin, left)}px`;
-      
+      // Apply final positioning using CSS custom properties
+      modal.style.setProperty('--modal-top', `${Math.max(margin, top)}px`);
+      modal.style.setProperty('--modal-left', `${Math.max(margin, left)}px`);
+
       // Set arrow
       if (finalArrowClass === 'none') {
-        arrow.style.display = 'none';
+        arrow.classList.add('hidden');
       } else {
-        arrow.style.display = 'block';
+        arrow.classList.remove('hidden');
         arrow.className = `onboarding-arrow ${finalArrowClass}`;
       }
     }, 10);

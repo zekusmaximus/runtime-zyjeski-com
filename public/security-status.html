@@ -71,6 +71,13 @@
             margin: 20px 0;
             text-align: center;
         }
+        .security-status {
+            margin-top: 20px;
+        }
+        .status-secure {
+            color: #00ff00;
+            font-weight: bold;
+        }
         .stat-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -237,9 +244,9 @@
             input validation, and Content Security Policy implementation. The system now provides multiple layers of security 
             while maintaining performance and functionality.</p>
             
-            <div style="margin-top: 20px;">
+            <div class="security-status">
                 <strong>Security Status: </strong>
-                <span style="color: #00ff00; font-weight: bold;">🛡️ SECURE</span>
+                <span class="status-secure">🛡️ SECURE</span>
             </div>
         </div>
     </main>

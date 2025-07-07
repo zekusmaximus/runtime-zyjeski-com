@@ -287,6 +287,11 @@ app.get('/', (req, res) => {
   });
 });
 
+// Redirect old static HTML file requests to main route
+app.get('/index.html', (req, res) => {
+  res.redirect(301, '/');
+});
+
 // Serve component showcase page with nonce injection
 app.get('/component-showcase.html', (req, res) => {
   res.render('component-showcase', {

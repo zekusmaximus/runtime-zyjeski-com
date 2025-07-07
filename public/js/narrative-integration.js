@@ -1,6 +1,8 @@
 // Narrative Integration System
 // Connects story beats with debugging actions
 
+import { createCSPCompliantStyle } from './utils/csp-utils.js';
+
 class NarrativeIntegration {
   constructor() {
     this.storyProgress = {
@@ -304,70 +306,67 @@ class NarrativeIntegration {
     modal.id = 'narrative-modal';
 
     // Add CSS for narrative modals if not exists
-    if (!document.getElementById('narrative-styles')) {
-      const style = document.createElement('style');
-      style.id = 'narrative-styles';
-      style.textContent = `
-        .narrative-modal {
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: rgba(30, 30, 30, 0.95);
-          border: 1px solid #444;
-          border-radius: 8px;
-          padding: 2rem;
-          max-width: 600px;
-          max-height: 80vh;
-          overflow-y: auto;
-          z-index: 1000;
-          box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
-          animation: narrativeFadeIn 0.5s ease-out;
-        }
-        @keyframes narrativeFadeIn {
-          from { opacity: 0; transform: translate(-50%, -45%); }
-          to { opacity: 1; transform: translate(-50%, -50%); }
-        }
-        .narrative-modal p {
-          margin: 0.5rem 0;
-          line-height: 1.6;
-        }
-        .system-message { color: #4EC9B0; font-family: 'Fira Code', monospace; }
-        .character-thought { color: #C586C0; font-style: italic; }
-        .memory-header { color: #CE9178; font-weight: bold; }
-        .memory-content { color: #9CDCFE; padding-left: 1rem; }
-        .technical-content { color: #569CD6; font-family: 'Fira Code', monospace; }
-        .narrative-modal .close-button {
-          position: absolute;
-          top: 1rem;
-          right: 1rem;
-          background: none;
-          border: none;
-          color: #666;
-          font-size: 1.5rem;
-          cursor: pointer;
-          transition: color 0.2s;
-        }
-        .narrative-modal .close-button:hover {
-          color: #fff;
-        }
-        .narrative-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0, 0, 0, 0.7);
-          z-index: 999;
-          animation: overlayFadeIn 0.3s ease-out;
-        }
-        @keyframes overlayFadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-      `;
-      document.head.appendChild(style);
-    }
+    const cssText = `
+      .narrative-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(30, 30, 30, 0.95);
+        border: 1px solid #444;
+        border-radius: 8px;
+        padding: 2rem;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        animation: narrativeFadeIn 0.5s ease-out;
+      }
+      @keyframes narrativeFadeIn {
+        from { opacity: 0; transform: translate(-50%, -45%); }
+        to { opacity: 1; transform: translate(-50%, -50%); }
+      }
+      .narrative-modal p {
+        margin: 0.5rem 0;
+        line-height: 1.6;
+      }
+      .system-message { color: #4EC9B0; font-family: 'Fira Code', monospace; }
+      .character-thought { color: #C586C0; font-style: italic; }
+      .memory-header { color: #CE9178; font-weight: bold; }
+      .memory-content { color: #9CDCFE; padding-left: 1rem; }
+      .technical-content { color: #569CD6; font-family: 'Fira Code', monospace; }
+      .narrative-modal .close-button {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        color: #666;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: color 0.2s;
+      }
+      .narrative-modal .close-button:hover {
+        color: #fff;
+      }
+      .narrative-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 999;
+        animation: overlayFadeIn 0.3s ease-out;
+      }
+      @keyframes overlayFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+    `;
+
+    createCSPCompliantStyle('narrative-styles', cssText);
 
     // Add close button
     const closeBtn = document.createElement('button');

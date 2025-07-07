@@ -1741,6 +1741,40 @@ body::before {
   to { transform: translateX(0); }
 }
 
+/* Status Indicators */
+.status-good {
+  color: var(--cyber-green) !important;
+}
+
+.status-warning {
+  color: var(--cyber-amber) !important;
+}
+
+.status-critical {
+  color: var(--cyber-red) !important;
+}
+
+/* Status Bar Backgrounds */
+.status-good {
+  background: linear-gradient(90deg, var(--cyber-green), var(--cyber-cyan)) !important;
+  width: var(--bar-width, 0%);
+}
+
+.status-warning {
+  background: linear-gradient(90deg, var(--cyber-amber), var(--cyber-cyan)) !important;
+  width: var(--bar-width, 0%);
+}
+
+.status-critical {
+  background: linear-gradient(90deg, var(--cyber-red), var(--cyber-amber)) !important;
+  width: var(--bar-width, 0%);
+}
+
+/* Force repaint utility */
+.force-repaint {
+  display: none !important;
+}
+
 /* Glow Effects */
 .glow-pulse {
   animation: glowPulse 2s ease-in-out infinite alternate;

@@ -45,13 +45,13 @@
     
     <div class="section">
         <h2>Test Ground State Data Access</h2>
-        <button onclick="checkStateManager()">Check State Manager</button>
-        <button onclick="loadCharacter()">Load Alexander Kane</button>
-        <button onclick="checkCharacterData()">Check Character Data</button>
-        <button onclick="getProcesses()">Get Processes</button>
-        <button onclick="getResources()">Get Resources</button>
-        <button onclick="getMemory()">Get Memory</button>
-        <button onclick="getErrors()">Get Errors</button>
+        <button id="checkStateManagerBtn">Check State Manager</button>
+        <button id="loadCharacterBtn">Load Alexander Kane</button>
+        <button id="checkCharacterDataBtn">Check Character Data</button>
+        <button id="getProcessesBtn">Get Processes</button>
+        <button id="getResourcesBtn">Get Resources</button>
+        <button id="getMemoryBtn">Get Memory</button>
+        <button id="getErrorsBtn">Get Errors</button>
     </div>
     
     <div class="section">
@@ -60,6 +60,17 @@
     </div>
 
     <script>
+        // Add event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('checkStateManagerBtn').addEventListener('click', checkStateManager);
+            document.getElementById('loadCharacterBtn').addEventListener('click', loadCharacter);
+            document.getElementById('checkCharacterDataBtn').addEventListener('click', checkCharacterData);
+            document.getElementById('getProcessesBtn').addEventListener('click', getProcesses);
+            document.getElementById('getResourcesBtn').addEventListener('click', getResources);
+            document.getElementById('getMemoryBtn').addEventListener('click', getMemory);
+            document.getElementById('getErrorsBtn').addEventListener('click', getErrors);
+        });
+
         function log(message, data = null) {
             const output = document.getElementById('output');
             const timestamp = new Date().toLocaleTimeString();

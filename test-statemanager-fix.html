@@ -18,16 +18,21 @@
     <h1>StateManager Fix Test</h1>
     <p>This test verifies that the StateManager consolidation is working correctly.</p>
     
-    <button onclick="runTest()">Run StateManager Test</button>
-    <button onclick="testModuleGetters()">Test Module Getters</button>
-    <button onclick="clearResults()">Clear Results</button>
+    <button id="runTestBtn">Run StateManager Test</button>
+    <button id="testGettersBtn">Test Module Getters</button>
+    <button id="clearResultsBtn">Clear Results</button>
     
     <div id="results"></div>
 
     <script type="module">
         // Import the fixed bootstrap
         import '/js/bootstrap.js';
-        
+
+        // Add event listeners
+        document.getElementById('runTestBtn').addEventListener('click', runTest);
+        document.getElementById('testGettersBtn').addEventListener('click', testModuleGetters);
+        document.getElementById('clearResultsBtn').addEventListener('click', clearResults);
+
         window.runTest = function() {
             const results = document.getElementById('results');
             results.innerHTML = '<h2>StateManager Test Results:</h2>';

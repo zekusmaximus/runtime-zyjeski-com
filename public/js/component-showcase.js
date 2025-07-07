@@ -7,6 +7,7 @@ import ResourceMeter from '/js/components/ResourceMeter.js';
 import ErrorLog from '/js/components/ErrorLog.js';
 import MemoryMap from '/js/components/MemoryMap.js';
 import { ConsciousnessTransformer } from '/js/utils/ConsciousnessTransformer.js';
+import { createCSPCompliantStyle } from '/js/utils/csp-utils.js';
 
 // HTML Escaping Utility for XSS Prevention
 class HTMLEscaper {
@@ -1214,10 +1215,10 @@ class ComponentShowcase {
     console.log('Refreshing component layout...');
     this.handleResize();
 
-    // Force a repaint
-    document.body.style.display = 'none';
+    // Force a repaint using CSS class instead of inline styles
+    document.body.classList.add('force-repaint');
     document.body.offsetHeight; // Trigger reflow
-    document.body.style.display = '';
+    document.body.classList.remove('force-repaint');
 
     console.log('Layout refresh complete');
   }
@@ -1239,14 +1240,11 @@ class ComponentShowcase {
    * Public method to toggle debug mode - can be called from console
    */
   toggleDebugMode() {
-    const style = document.createElement('style');
-    style.id = 'debug-grid-style';
-
     if (document.getElementById('debug-grid-style')) {
       document.getElementById('debug-grid-style').remove();
       console.log('Debug mode OFF');
     } else {
-      style.textContent = `
+      const cssText = `
         .dashboard-panel {
           outline: 2px solid red !important;
         }
@@ -1263,7 +1261,8 @@ class ComponentShowcase {
           outline: 3px solid magenta !important;
         }
       `;
-      document.head.appendChild(style);
+
+      createCSPCompliantStyle('debug-grid-style', cssText);
       console.log('Debug mode ON - Grid areas highlighted');
     }
   }
@@ -2622,15 +2621,18 @@ class ComponentShowcase {
 
       if (fpsBar) {
         const fpsPercent = Math.min(100, (metrics.fps / 60) * 100);
-        fpsBar.style.width = `${fpsPercent}%`;
+        fpsBar.style.setProperty('--bar-width', `${fpsPercent}%`);
+
+        // Remove existing status classes
+        fpsBar.classList.remove('status-good', 'status-warning', 'status-critical');
 
         // Update color based on performance
         if (metrics.fps >= 55) {
-          fpsBar.style.background = 'linear-gradient(90deg, var(--cyber-green), var(--cyber-cyan))';
+          fpsBar.classList.add('status-good');
         } else if (metrics.fps >= 30) {
-          fpsBar.style.background = 'linear-gradient(90deg, var(--cyber-amber), var(--cyber-cyan))';
+          fpsBar.classList.add('status-warning');
         } else {
-          fpsBar.style.background = 'linear-gradient(90deg, var(--cyber-red), var(--cyber-amber))';
+          fpsBar.classList.add('status-critical');
         }
       }
 
@@ -2661,14 +2663,17 @@ class ComponentShowcase {
 
       if (memoryBar) {
         const memoryPercent = Math.min(100, (metrics.memoryUsage / 100) * 100); // Assume 100MB as max
-        memoryBar.style.width = `${memoryPercent}%`;
+        memoryBar.style.setProperty('--bar-width', `${memoryPercent}%`);
+
+        // Remove existing status classes
+        memoryBar.classList.remove('status-good', 'status-warning', 'status-critical');
 
         if (metrics.memoryUsage < 50) {
-          memoryBar.style.background = 'linear-gradient(90deg, var(--cyber-green), var(--cyber-cyan))';
+          memoryBar.classList.add('status-good');
         } else if (metrics.memoryUsage < 80) {
-          memoryBar.style.background = 'linear-gradient(90deg, var(--cyber-amber), var(--cyber-cyan))';
+          memoryBar.classList.add('status-warning');
         } else {
-          memoryBar.style.background = 'linear-gradient(90deg, var(--cyber-red), var(--cyber-amber))';
+          memoryBar.classList.add('status-critical');
         }
       }
 
@@ -2724,14 +2729,17 @@ class ComponentShowcase {
 
       if (renderTimeBar) {
         const renderTimePercent = Math.min(100, (avgRenderTime / 16) * 100); // 16ms = 60fps
-        renderTimeBar.style.width = `${renderTimePercent}%`;
+        renderTimeBar.style.setProperty('--bar-width', `${renderTimePercent}%`);
+
+        // Remove existing status classes
+        renderTimeBar.classList.remove('status-good', 'status-warning', 'status-critical');
 
         if (avgRenderTime < 8) {
-          renderTimeBar.style.background = 'linear-gradient(90deg, var(--cyber-green), var(--cyber-cyan))';
+          renderTimeBar.classList.add('status-good');
         } else if (avgRenderTime < 16) {
-          renderTimeBar.style.background = 'linear-gradient(90deg, var(--cyber-amber), var(--cyber-cyan))';
+          renderTimeBar.classList.add('status-warning');
         } else {
-          renderTimeBar.style.background = 'linear-gradient(90deg, var(--cyber-red), var(--cyber-amber))';
+          renderTimeBar.classList.add('status-critical');
         }
       }
 
@@ -2790,11 +2798,11 @@ class ComponentShowcase {
 
       // Color code based on performance
       if (renderTime < 8) {
-        timeElement.style.color = 'var(--cyber-green)';
+        timeElement.classList.add('status-good');
       } else if (renderTime < 16) {
-        timeElement.style.color = 'var(--cyber-amber)';
+        timeElement.classList.add('status-warning');
       } else {
-        timeElement.style.color = 'var(--cyber-red)';
+        timeElement.classList.add('status-critical');
       }
 
       metricElement.appendChild(nameElement);
@@ -3667,9 +3675,7 @@ class ComponentShowcase {
   hideLoadingOverlay() {
     if (this.elements.loadingOverlay) {
       this.elements.loadingOverlay.classList.add('hidden');
-      setTimeout(() => {
-        this.elements.loadingOverlay.style.display = 'none';
-      }, 500);
+      // No need to set display: none as the hidden class handles it
     }
   }
 

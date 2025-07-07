@@ -163,7 +163,7 @@ class InterventionSystem {
       <div class="intervention-list" id="intervention-list">
         <!-- Interventions will be populated here -->
       </div>
-      <div class="intervention-details" id="intervention-details" style="display: none;">
+      <div class="intervention-details hidden" id="intervention-details">
         <h4 class="intervention-name"></h4>
         <p class="intervention-description"></p>
         <div class="intervention-requirements">
@@ -383,7 +383,7 @@ class InterventionSystem {
     // Show details
     const detailsPanel = document.getElementById('intervention-details');
     if (detailsPanel) {
-      detailsPanel.style.display = 'block';
+      detailsPanel.classList.remove('hidden');
       
       detailsPanel.querySelector('.intervention-name').textContent = intervention.name;
       detailsPanel.querySelector('.intervention-description').textContent = intervention.description;
@@ -490,7 +490,7 @@ class InterventionSystem {
     
     const detailsPanel = document.getElementById('intervention-details');
     if (detailsPanel) {
-      detailsPanel.style.display = 'none';
+      detailsPanel.classList.add('hidden');
     }
   }
 

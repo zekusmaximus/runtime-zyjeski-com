@@ -21,10 +21,10 @@
     
     <div class="test-section">
         <h2>Test API Endpoints</h2>
-        <button onclick="testCharactersEndpoint()">Test /api/characters</button>
-        <button onclick="testCharacterEndpoint()">Test /api/character/alexander-kane</button>
-        <button onclick="testStateManagerLoad()">Test StateManager.loadCharacter</button>
-        <button onclick="clearResults()">Clear Results</button>
+        <button id="testCharactersBtn">Test /api/characters</button>
+        <button id="testCharacterBtn">Test /api/character/alexander-kane</button>
+        <button id="testStateManagerBtn">Test StateManager.loadCharacter</button>
+        <button id="clearResultsBtn">Clear Results</button>
     </div>
     
     <div id="results"></div>
@@ -32,7 +32,13 @@
     <script type="module">
         // Import the fixed bootstrap
         import '/js/bootstrap.js';
-        
+
+        // Add event listeners
+        document.getElementById('testCharactersBtn').addEventListener('click', testCharactersEndpoint);
+        document.getElementById('testCharacterBtn').addEventListener('click', testCharacterEndpoint);
+        document.getElementById('testStateManagerBtn').addEventListener('click', testStateManagerLoad);
+        document.getElementById('clearResultsBtn').addEventListener('click', clearResults);
+
         window.testCharactersEndpoint = async function() {
             const results = document.getElementById('results');
             results.innerHTML += '<h2>Characters Endpoint Test:</h2>';

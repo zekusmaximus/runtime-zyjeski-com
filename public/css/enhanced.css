@@ -13,6 +13,19 @@
   background-color: rgba(137, 209, 133, 0.1);
 }
 
+/* Monitor Flash Effects */
+.monitor-container.flash-update {
+  border-color: #2196f3 !important;
+  box-shadow: 0 0 20px rgba(33, 150, 243, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.monitor-container.flash-intervention {
+  border-color: #4caf50 !important;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
 .monitor-header {
   display: flex;
   justify-content: space-between;

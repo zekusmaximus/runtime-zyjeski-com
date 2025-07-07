@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP Compliance Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0040; }
+        .warning { color: #ffc107; }
+        .info { color: #00aaff; }
+        button {
+            background: #333;
+            color: #00ff00;
+            border: 1px solid #555;
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover {
+            background: #444;
+        }
+        #testResults {
+            margin-top: 20px;
+            padding: 15px;
+            background: #222;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🛡️ CSP Compliance Test</h1>
+    
+    <div class="test-section">
+        <h2>Configuration Check</h2>
+        <p>Testing if APP_CONFIG and nonce are available...</p>
+        <button id="testConfigBtn">Test Configuration</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Dynamic Style Creation Test</h2>
+        <p>Testing CSP-compliant dynamic style creation...</p>
+        <button id="testDynamicBtn">Test Dynamic Styles</button>
+        <button id="testUnsafeBtn">Test Unsafe Styles (Should Fail)</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Inline Style Test</h2>
+        <p>Testing inline style violations...</p>
+        <button id="testInlineBtn">Test Inline Styles (Should Fail)</button>
+    </div>
+    
+    <div id="testResults">
+        <h3>Test Results:</h3>
+        <div id="results"></div>
+    </div>
+
+    <script type="module">
+        // Simulate APP_CONFIG for testing
+        if (!window.APP_CONFIG) {
+            window.APP_CONFIG = {
+                cspNonce: 'test-nonce-12345',
+                environment: 'development',
+                debug: true
+            };
+        }
+
+        import { createCSPCompliantStyle, hasCSPNonce, getCSPNonce } from './js/utils/csp-utils.js';
+
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            results.appendChild(div);
+            console.log(message);
+        }
+
+        window.testConfiguration = function() {
+            log('Testing configuration...', 'info');
+            
+            if (window.APP_CONFIG) {
+                log('✅ APP_CONFIG is available', 'success');
+                log(`Environment: ${window.APP_CONFIG.environment}`, 'info');
+                log(`Debug: ${window.APP_CONFIG.debug}`, 'info');
+                
+                if (hasCSPNonce()) {
+                    log('✅ CSP nonce is available', 'success');
+                    log(`Nonce: ${getCSPNonce()}`, 'info');
+                } else {
+                    log('❌ CSP nonce is not available', 'error');
+                }
+            } else {
+                log('❌ APP_CONFIG is not available', 'error');
+            }
+        };
+
+        window.testDynamicStyles = function() {
+            log('Testing CSP-compliant dynamic styles...', 'info');
+            
+            try {
+                const cssText = `
+                    .test-dynamic-style {
+                        background: linear-gradient(45deg, #00ff00, #00aaff);
+                        padding: 10px;
+                        border-radius: 5px;
+                        margin: 10px 0;
+                        color: #000;
+                    }
+                `;
+                
+                const style = createCSPCompliantStyle('test-dynamic-styles', cssText);
+                
+                if (style) {
+                    log('✅ Dynamic style created successfully', 'success');
+                    
+                    // Test the style by creating an element
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'test-dynamic-style';
+                    testDiv.textContent = 'This element uses dynamically created CSP-compliant styles!';
+                    document.getElementById('testResults').appendChild(testDiv);
+                    
+                    log('✅ Test element with dynamic styles added', 'success');
+                } else {
+                    log('❌ Failed to create dynamic style', 'error');
+                }
+            } catch (error) {
+                log(`❌ Error creating dynamic styles: ${error.message}`, 'error');
+            }
+        };
+
+        window.testUnsafeStyles = function() {
+            log('Testing unsafe dynamic styles (should fail)...', 'warning');
+            
+            try {
+                const style = document.createElement('style');
+                style.textContent = `
+                    .unsafe-style {
+                        background: red;
+                        color: white;
+                        padding: 10px;
+                    }
+                `;
+                // This should fail due to CSP
+                document.head.appendChild(style);
+                log('❌ Unsafe style was allowed (CSP not working)', 'error');
+            } catch (error) {
+                log(`✅ Unsafe style blocked: ${error.message}`, 'success');
+            }
+        };
+
+        window.testInlineStyles = function() {
+            log('Testing inline styles (should fail)...', 'warning');
+            
+            try {
+                const testDiv = document.createElement('div');
+                testDiv.textContent = 'This should not have inline styles';
+                // This should fail due to CSP
+                testDiv.style.background = 'red';
+                testDiv.style.color = 'white';
+                testDiv.style.padding = '10px';
+                document.getElementById('testResults').appendChild(testDiv);
+                
+                if (testDiv.style.background) {
+                    log('❌ Inline styles were allowed (CSP not working properly)', 'error');
+                } else {
+                    log('✅ Inline styles blocked', 'success');
+                }
+            } catch (error) {
+                log(`✅ Inline styles blocked: ${error.message}`, 'success');
+            }
+        };
+
+        // Add event listeners for buttons
+        document.getElementById('testConfigBtn').addEventListener('click', testConfiguration);
+        document.getElementById('testDynamicBtn').addEventListener('click', testDynamicStyles);
+        document.getElementById('testUnsafeBtn').addEventListener('click', testUnsafeStyles);
+        document.getElementById('testInlineBtn').addEventListener('click', testInlineStyles);
+
+        // Auto-run configuration test
+        setTimeout(() => {
+            testConfiguration();
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -702,8 +702,13 @@ export class ProcessList {
   _updateEmptyState() {
     const hasProcesses = this._filteredProcesses.length > 0;
 
-    this.elements.emptyState.style.display = hasProcesses ? 'none' : 'block';
-    this.elements.viewport.style.display = hasProcesses ? 'block' : 'none';
+    if (hasProcesses) {
+      this.elements.emptyState.classList.add('hidden');
+      this.elements.viewport.classList.remove('hidden');
+    } else {
+      this.elements.emptyState.classList.remove('hidden');
+      this.elements.viewport.classList.add('hidden');
+    }
   }
 
   /**
@@ -781,6 +786,9 @@ export class ProcessList {
     // Build row content
     row.innerHTML = this._generateRowHTML(process);
 
+    // Apply resource bar widths using CSS custom properties (CSP compliant)
+    this._applyResourceBarWidths(row);
+
     return row;
   }
 
@@ -796,8 +804,7 @@ export class ProcessList {
     // Status indicator
     columns.push(`
       <div class="column column-status">
-        <div class="status-indicator"
-             style="background-color: ${process.indicator.color}"
+        <div class="status-indicator status-${process.status.toLowerCase()}"
              title="${process.status}">
           <i class="icon-${process.indicator.icon}"></i>
         </div>
@@ -853,7 +860,7 @@ export class ProcessList {
       columns.push(`
         <div class="column column-memory">
           <div class="resource-bar">
-            <div class="resource-fill" style="width: ${memoryPercent}%"></div>
+            <div class="resource-fill" data-width="${memoryPercent}"></div>
           </div>
           <div class="resource-value">${process.memory}MB</div>
         </div>
@@ -867,6 +874,21 @@ export class ProcessList {
     }
 
     return columns.join('');
+  }
+
+  /**
+   * Apply resource bar widths using CSS custom properties (CSP compliant)
+   * @private
+   * @param {HTMLElement} rowElement - Row element to apply widths to
+   */
+  _applyResourceBarWidths(rowElement) {
+    const resourceFills = rowElement.querySelectorAll('.resource-fill[data-width]');
+    resourceFills.forEach(fill => {
+      const width = fill.getAttribute('data-width');
+      if (width) {
+        fill.style.setProperty('width', `${width}%`);
+      }
+    });
   }
 
   /**

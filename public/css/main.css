@@ -514,6 +514,29 @@ p {
   background: var(--text-muted);
 }
 
+/* Utility Classes */
+.hidden {
+  display: none !important;
+}
+
+/* Connection Status Dynamic Styling */
+.connection-status {
+  color: var(--connection-color, var(--text-muted));
+  background: var(--connection-background, var(--bg-secondary));
+  border-color: var(--connection-color, var(--border-color));
+}
+
+/* Ground State Disabled Navigation */
+.nav-link.ground-state-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Success State for Buttons */
+.success-state {
+  background: #4CAF50 !important;
+}
+
 /* Add this to your main.css file */
 
 /* Home Page Manual Button */

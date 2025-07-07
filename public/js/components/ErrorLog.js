@@ -180,7 +180,7 @@ export default class ErrorLog {
         <div class="error-log-viewport">
           <div class="error-log-content"></div>
         </div>
-        <div class="error-log-empty" style="display: none;">
+        <div class="error-log-empty hidden">
           <div class="empty-icon">✨</div>
           <div class="empty-message">No errors detected</div>
           <div class="empty-subtitle">Consciousness running smoothly</div>
@@ -764,8 +764,14 @@ export default class ErrorLog {
 
   updateEmptyState() {
     const hasErrors = this.filteredErrors.length > 0;
-    this.elements.empty.style.display = hasErrors ? 'none' : 'flex';
-    this.elements.viewport.style.display = hasErrors ? 'block' : 'none';
+
+    if (hasErrors) {
+      this.elements.empty.classList.add('hidden');
+      this.elements.viewport.classList.remove('hidden');
+    } else {
+      this.elements.empty.classList.remove('hidden');
+      this.elements.viewport.classList.add('hidden');
+    }
   }
 
   updateSelectionDisplay() {

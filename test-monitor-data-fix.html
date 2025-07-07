@@ -38,11 +38,11 @@
     
     <div class="test-section">
         <h2>Manual Tests</h2>
-        <button onclick="testStateManagerData()">Test StateManager Data</button>
-        <button onclick="testMonitorState()">Test Monitor State</button>
-        <button onclick="testMonitorUI()">Test Monitor UI Data</button>
-        <button onclick="loadCharacterAndTest()">Load Character & Test</button>
-        <button onclick="clearResults()">Clear Results</button>
+        <button id="testStateManagerBtn">Test StateManager Data</button>
+        <button id="testMonitorStateBtn">Test Monitor State</button>
+        <button id="testMonitorUIBtn">Test Monitor UI Data</button>
+        <button id="loadCharacterBtn">Load Character & Test</button>
+        <button id="clearResultsBtn">Clear Results</button>
     </div>
     
     <div id="results"></div>
@@ -83,7 +83,14 @@
                 });
             });
         });
-        
+
+        // Add event listeners for test buttons
+        document.getElementById('testStateManagerBtn').addEventListener('click', testStateManagerData);
+        document.getElementById('testMonitorStateBtn').addEventListener('click', testMonitorState);
+        document.getElementById('testMonitorUIBtn').addEventListener('click', testMonitorUI);
+        document.getElementById('loadCharacterBtn').addEventListener('click', loadCharacterAndTest);
+        document.getElementById('clearResultsBtn').addEventListener('click', clearResults);
+
         window.testStateManagerData = function() {
             const results = document.getElementById('results');
             results.innerHTML += '<h2>StateManager Data Test:</h2>';

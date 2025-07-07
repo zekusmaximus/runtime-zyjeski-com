@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="/css/context-menu.css">
     <link rel="stylesheet" href="/css/help.css">
     <link rel="stylesheet" href="/css/intervention.css">
+    <link rel="stylesheet" href="/css/onboarding.css">
+    <link rel="stylesheet" href="/css/visual-cues.css">
 
     <!-- Component CSS Files -->
     <link rel="stylesheet" href="/css/components/process-list.css">
@@ -107,7 +109,7 @@
                     </p>
                     <div class="hero-actions">
                         <button class="btn btn-primary" id="startDebugging">Start Debugging</button>
-                        <button class="btn btn-primary" onclick="window.onboardingSystem?.restart()">
+                        <button class="btn btn-primary" id="startTutorialBtn">
                             🧠 Start Tutorial
                         </button>
                     </div>
@@ -201,14 +203,14 @@
                 <div class="monitor-header">
                     <h2>Consciousness Monitor</h2>
                     <div class="monitor-controls">
-                        <div class="connection-status disconnected" id="connectionStatus" style="display: none;">No Consciousness Connected</div>
-                        <select id="characterSelect" class="character-selector" style="display: none;">
+                        <div class="connection-status disconnected hidden" id="connectionStatus">No Consciousness Connected</div>
+                        <select id="characterSelect" class="character-selector hidden">
                             <option value="">Select Character</option>
                             <option value="alexander-kane">Alexander Kane</option>
                         </select>
-                        
+
                         <!-- Updated monitoring toggle button -->
-                        <button class="btn btn-primary" id="toggleMonitoring" disabled style="display: none;">
+                        <button class="btn btn-primary hidden" id="toggleMonitoring" disabled>
                             <span class="btn-icon">▶</span>
                             <span class="btn-text">Start Monitoring</span>
                         </button>
@@ -218,7 +220,7 @@
                             Refresh
                         </button>
 
-                        <button class="btn btn-small" id="testMemoryBtn" onclick="injectTestMemoryData()">
+                        <button class="btn btn-small" id="testMemoryBtn">
                             <span class="btn-icon">🧠</span>
                             Test Memory
                         </button>
@@ -357,29 +359,51 @@
     </div>
 
     <!-- Socket.io -->
-    <script src="/socket.io/socket.io.js"></script>
+    <script nonce="<%= nonce %>" src="/socket.io/socket.io.js"></script>
 
-    <!-- Core JavaScript Modules with Dependency Injection -->
-    <!-- Bootstrap handles ALL module initialization with proper dependency injection -->
-    <script type="module" src="/js/bootstrap.js"></script>
-
-    <!-- Non-critical utility modules (no dependencies) -->
-    <script src="/js/connection-manager.js"></script>
-    <script type="module" src="/test-ground-state-compliance.js"></script>
-    <script type="module" src="js/onboarding.js"></script>
-    <script type="module" src="/js/manual-system.js"></script>
-    <script type="module" src="/js/home-manual.js"></script>
-    <script type="module" src="/js/narrative-integration.js"></script>
-    <script type="module" src="js/intervention-system.js"></script>
-
-    <!-- Inline script with CSP nonce for configuration -->
+    <!-- Inline script with CSP nonce for configuration - MUST come before modules -->
     <script nonce="<%= nonce %>">
     // Application configuration - injected securely with CSP nonce
     window.APP_CONFIG = {
         wsEndpoint: '<%= wsEndpoint %>',
         environment: '<%= process.env.NODE_ENV || "development" %>',
-        debug: <%= process.env.NODE_ENV !== 'production' %>
+        debug: <%= process.env.NODE_ENV !== 'production' %>,
+        cspNonce: '<%= nonce %>'
     };
+    </script>
+
+    <!-- Core JavaScript Modules with Dependency Injection -->
+    <!-- Bootstrap handles ALL module initialization with proper dependency injection -->
+    <script nonce="<%= nonce %>" type="module" src="/js/bootstrap.js"></script>
+
+    <!-- Non-critical utility modules (no dependencies) -->
+    <script nonce="<%= nonce %>" src="/js/connection-manager.js"></script>
+    <script nonce="<%= nonce %>" type="module" src="/test-ground-state-compliance.js"></script>
+    <script nonce="<%= nonce %>" type="module" src="js/onboarding.js"></script>
+    <script nonce="<%= nonce %>" type="module" src="/js/manual-system.js"></script>
+    <script nonce="<%= nonce %>" type="module" src="/js/home-manual.js"></script>
+    <script nonce="<%= nonce %>" type="module" src="/js/narrative-integration.js"></script>
+    <script nonce="<%= nonce %>" type="module" src="js/intervention-system.js"></script>
+
+    <script nonce="<%= nonce %>">
+    // Event listeners for buttons (CSP compliant)
+    document.addEventListener('DOMContentLoaded', function() {
+        // Start Tutorial button
+        const startTutorialBtn = document.getElementById('startTutorialBtn');
+        if (startTutorialBtn) {
+            startTutorialBtn.addEventListener('click', function() {
+                if (window.onboardingSystem) {
+                    window.onboardingSystem.restart();
+                }
+            });
+        }
+
+        // Test Memory button
+        const testMemoryBtn = document.getElementById('testMemoryBtn');
+        if (testMemoryBtn) {
+            testMemoryBtn.addEventListener('click', injectTestMemoryData);
+        }
+    });
 
     // Test function to inject sample memory data
     function injectTestMemoryData() {
@@ -450,11 +474,11 @@
         const testBtn = document.getElementById('testMemoryBtn');
         const originalText = testBtn.innerHTML;
         testBtn.innerHTML = '<span class="btn-icon">✅</span>Loaded!';
-        testBtn.style.background = '#4CAF50';
+        testBtn.classList.add('success-state');
 
         setTimeout(() => {
             testBtn.innerHTML = originalText;
-            testBtn.style.background = '';
+            testBtn.classList.remove('success-state');
         }, 2000);
 
         console.log('✅ Test memory data injected successfully');

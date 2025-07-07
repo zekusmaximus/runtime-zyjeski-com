@@ -88,6 +88,9 @@ class DebuggerInterface {
     // Update debugger with current character if available
     if (this.currentCharacter) {
       this.updateDebuggerForCharacter(this.currentCharacter);
+    } else {
+      // Even without a character, update memory visualization with available state data
+      this.updateMemoryVisualizationFromState();
     }
 
     // Refresh code editor display
@@ -240,6 +243,90 @@ updateMemoryVisualization(consciousnessData) {
   } catch (error) {
     console.error('Failed to update memory visualization:', error);
   }
+}
+
+/**
+ * Update memory visualization with current StateManager data
+ * @private
+ */
+updateMemoryVisualizationFromState() {
+  if (!this.memoryMap) {
+    console.warn('MemoryMap: No memory map component available');
+    return;
+  }
+
+  if (!this.stateManager) {
+    console.warn('MemoryMap: No state manager available');
+    return;
+  }
+
+  try {
+    // Check if we have a current character
+    const currentCharacter = this.stateManager.getCurrentCharacter();
+    if (!currentCharacter) {
+      console.log('MemoryMap: No character selected, showing placeholder data');
+      this.showMemoryMapPlaceholder();
+      return;
+    }
+
+    // Get current state data
+    const stateData = {
+      processes: this.stateManager.getProcesses() || [],
+      memory: this.stateManager.getMemory() || {},
+      resources: this.stateManager.getResources() || {}
+    };
+
+    console.log('MemoryMap: State data retrieved:', {
+      processCount: stateData.processes.length,
+      memoryKeys: Object.keys(stateData.memory),
+      resourceKeys: Object.keys(stateData.resources)
+    });
+
+    // If no data available, show placeholder
+    if (stateData.processes.length === 0 && Object.keys(stateData.memory).length === 0) {
+      console.log('MemoryMap: No consciousness data available, showing placeholder');
+      this.showMemoryMapPlaceholder();
+      return;
+    }
+
+    // Convert state data to memory map format
+    const memoryData = this.convertConsciousnessToMemoryData(stateData);
+
+    console.log('MemoryMap: Converted memory data:', {
+      totalSize: memoryData.totalSize,
+      usedSize: memoryData.usedSize,
+      blockCount: memoryData.blocks.length,
+      blocks: memoryData.blocks.slice(0, 3) // Show first 3 blocks for debugging
+    });
+
+    // Update memory map
+    this.memoryMap.update(memoryData);
+
+    console.log('Memory visualization updated with current state data');
+
+  } catch (error) {
+    console.error('Failed to update memory visualization from state:', error);
+  }
+}
+
+/**
+ * Show placeholder data in memory map when no consciousness data is available
+ * @private
+ */
+showMemoryMapPlaceholder() {
+  if (!this.memoryMap) return;
+
+  // Create placeholder memory data to show the component is working
+  const placeholderData = {
+    totalSize: 2048,
+    usedSize: 0,
+    blocks: [],
+    fragmentation: 0,
+    layout: 'segmented'
+  };
+
+  console.log('MemoryMap: Showing placeholder data');
+  this.memoryMap.update(placeholderData);
 }
 
 /**
@@ -497,6 +584,19 @@ convertConsciousnessToMemoryData(consciousnessData) {
     this.stateManager.subscribe('debuggerCallStack', (callStack) => {
       this.updateCallStack();
     });
+
+    // Subscribe to processes and memory changes to update memory visualization
+    this.stateManager.subscribe('processes', (processes) => {
+      this.updateMemoryVisualizationFromState();
+    });
+
+    this.stateManager.subscribe('memory', (memory) => {
+      this.updateMemoryVisualizationFromState();
+    });
+
+    this.stateManager.subscribe('resources', (resources) => {
+      this.updateMemoryVisualizationFromState();
+    });
   }
 
   // Update debugger interface for character
@@ -505,25 +605,28 @@ convertConsciousnessToMemoryData(consciousnessData) {
 
     // Character is now managed by StateManager, no need to set locally
     // this.currentCharacter = character; // ❌ Removed - now a getter
-    
+
     // Request current consciousness state if character is attached
     if (character.id && this.consciousness) {
       // Request fresh consciousness state for the debugger through consciousness manager
       this.consciousness.requestConsciousnessUpdate();
     }
-    
+
     // Update call stack and variables
     this.updateCallStackFromCharacter(character);
     this.updateVariablesFromCharacter(character);
-    
+
     // Refresh displays
     this.updateCallStack();
     this.updateVariablesView();
-    
+
+    // Update memory visualization with current state data
+    this.updateMemoryVisualizationFromState();
+
     // Regenerate code (will use static code until consciousness state arrives)
     this.generateConsciousnessCode();
     this.renderCodeEditor();
-    
+
     console.log('Debugger updated for character:', character.name);
   }
 

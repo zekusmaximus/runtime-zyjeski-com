@@ -1,0 +1,367 @@
+/* Visual Cues System Styles */
+
+/* Base visual cue styles */
+.visual-cue {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10000;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.visual-cue.active {
+  opacity: 1;
+}
+
+/* Success cue */
+.visual-cue.success {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  animation: successPulse 0.6s ease-out;
+}
+
+@keyframes successPulse {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Error cue */
+.visual-cue.error {
+  background: linear-gradient(135deg, #f44336, #d32f2f);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+  animation: errorShake 0.6s ease-out;
+}
+
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+/* Warning cue */
+.visual-cue.warning {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+  animation: warningBounce 0.6s ease-out;
+}
+
+@keyframes warningBounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-8px); }
+  60% { transform: translateY(-4px); }
+}
+
+/* Info cue */
+.visual-cue.info {
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+  animation: infoSlide 0.6s ease-out;
+}
+
+@keyframes infoSlide {
+  0% { transform: translateX(-20px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+/* Process highlight */
+.process-highlight {
+  position: relative;
+  z-index: 1;
+}
+
+.process-highlight::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #00ff88, #00aaff);
+  border-radius: 6px;
+  z-index: -1;
+  animation: processGlow 2s infinite;
+}
+
+@keyframes processGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Memory highlight */
+.memory-highlight-container {
+  position: relative;
+}
+
+.memory-highlight-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 107, 107, 0.2);
+  border: 2px solid rgba(255, 107, 107, 0.5);
+  animation: memoryPulse 2s infinite;
+  pointer-events: none;
+}
+
+@keyframes memoryPulse {
+  0% {
+    border-color: #ff6b6b;
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
+  }
+  70% {
+    border-color: #ff6b6b;
+    box-shadow: 0 0 0 10px rgba(255, 107, 107, 0);
+  }
+  100% {
+    border-color: #ff6b6b;
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+  }
+}
+
+/* Terminal highlight */
+.terminal-highlight-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 165, 0, 0.1);
+  border: 2px solid rgba(255, 165, 0, 0.3);
+  animation: terminalGlow 2s ease-in-out;
+  pointer-events: none;
+}
+
+@keyframes terminalGlow {
+  0% { opacity: 0; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+/* Process pulse */
+.process-pulse-container {
+  position: relative;
+}
+
+.process-pulse-overlay {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid #ff4444;
+  border-radius: 4px;
+  animation: processPulse 3s infinite;
+  pointer-events: none;
+}
+
+@keyframes processPulse {
+  0% { opacity: 0; transform: scale(1); }
+  20% { opacity: 1; transform: scale(1.1); }
+  80% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+/* Command highlight */
+.command-highlight {
+  background: linear-gradient(90deg, rgba(0, 255, 136, 0.1), rgba(0, 170, 255, 0.1));
+  border-left: 4px solid #00ff88;
+  animation: commandFlash 0.8s ease-out;
+}
+
+@keyframes commandFlash {
+  0% { background-color: rgba(0, 255, 136, 0.3); }
+  100% { background-color: transparent; }
+}
+
+/* Debug highlight */
+.debug-highlight {
+  outline: 2px dashed #ffeb3b;
+  outline-offset: 2px;
+  animation: debugBlink 1s infinite;
+}
+
+@keyframes debugBlink {
+  0%, 50% { outline-color: #ffeb3b; }
+  51%, 100% { outline-color: transparent; }
+}
+
+/* Attention grabber */
+.attention-grabber {
+  position: relative;
+}
+
+.attention-grabber::before {
+  content: '⚠️';
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #ff4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  animation: attentionBounce 1s infinite;
+  z-index: 10;
+}
+
+@keyframes attentionBounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-5px); }
+  60% { transform: translateY(-3px); }
+}
+
+/* Fade out animation for removing cues */
+.visual-cue.fade-out {
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.3s ease;
+}
+
+/* Tooltip-style cues */
+.visual-cue.tooltip {
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.visual-cue.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border: 5px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Progress indicator */
+.progress-indicator {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 10001;
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  0% { transform: translateX(100%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+.progress-indicator .progress-bar {
+  width: 200px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.progress-indicator .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ff88, #00aaff);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  animation: progressShimmer 2s infinite;
+}
+
+@keyframes progressShimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .visual-cue {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  
+  .progress-indicator {
+    top: 10px;
+    right: 10px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  .progress-indicator .progress-bar {
+    width: 150px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .visual-cue.success {
+    background: #4CAF50;
+    border: 2px solid #2E7D32;
+  }
+  
+  .visual-cue.error {
+    background: #f44336;
+    border: 2px solid #C62828;
+  }
+  
+  .visual-cue.warning {
+    background: #ff9800;
+    border: 2px solid #E65100;
+  }
+  
+  .visual-cue.info {
+    background: #2196F3;
+    border: 2px solid #0D47A1;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .visual-cue,
+  .process-highlight::before,
+  .memory-highlight::after,
+  .command-highlight,
+  .debug-highlight,
+  .attention-grabber::before,
+  .progress-indicator,
+  .progress-fill {
+    animation: none;
+  }
+  
+  .visual-cue.active {
+    opacity: 1;
+    transform: none;
+  }
+}

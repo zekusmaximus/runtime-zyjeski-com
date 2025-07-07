@@ -95,6 +95,11 @@
   color: var(--accent-yellow);
 }
 
+.terminal-line.terminal-formatted {
+  font-family: var(--font-mono);
+  white-space: pre;
+}
+
 .terminal-input-line {
   display: flex;
   align-items: center;

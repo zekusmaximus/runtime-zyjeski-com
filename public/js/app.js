@@ -132,8 +132,7 @@ class RuntimeApp {
       
       // Add disabled styling
       if (!link.hasAttribute('data-ground-state-disabled')) {
-        link.style.opacity = '0.5';
-        link.style.pointerEvents = 'none';
+        link.classList.add('ground-state-disabled');
         link.setAttribute('data-ground-state-disabled', 'true');
         link.setAttribute('title', 'Select a character first');
       }
@@ -405,14 +404,14 @@ class RuntimeApp {
       status.className = 'app-status loading';
       // XSS Prevention: Use textContent for user-provided messages
       status.textContent = HTMLEscaper.escape(message);
-      status.style.display = 'block';
+      status.classList.remove('hidden');
     }
   }
 
   hideLoading() {
     const status = document.getElementById('appStatus');
     if (status) {
-      status.style.display = 'none';
+      status.classList.add('hidden');
     }
   }
 
@@ -422,7 +421,7 @@ class RuntimeApp {
       status.className = 'app-status error';
       // XSS Prevention: Use textContent for user-provided error messages
       status.textContent = HTMLEscaper.escape(message);
-      status.style.display = 'block';
+      status.classList.remove('hidden');
       setTimeout(() => this.hideLoading(), 5000);
     }
   }
@@ -433,7 +432,7 @@ class RuntimeApp {
       status.className = 'app-status success';
       // XSS Prevention: Use textContent for user-provided success messages
       status.textContent = HTMLEscaper.escape(message);
-      status.style.display = 'block';
+      status.classList.remove('hidden');
       setTimeout(() => this.hideLoading(), 3000);
     }
   }

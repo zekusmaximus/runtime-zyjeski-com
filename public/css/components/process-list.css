@@ -263,6 +263,14 @@
   position: relative;
 }
 
+/* Status indicator color classes for CSP compliance */
+.status-indicator.status-running { background-color: #00ff00; }
+.status-indicator.status-sleeping { background-color: #ffaa00; }
+.status-indicator.status-waiting { background-color: #0080ff; }
+.status-indicator.status-terminated { background-color: #ff0000; }
+.status-indicator.status-zombie { background-color: #800080; }
+.status-indicator.status-stopped { background-color: #808080; }
+
 .status-indicator i {
   font-size: 8px;
   color: white;
