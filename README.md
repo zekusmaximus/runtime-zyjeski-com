@@ -222,3 +222,10 @@ This project is licensed under the MIT License.
 - Built with modern web technologies and real-time communication
 - Designed for education, empathy, and understanding
 - Created to explore consciousness through the lens of computer science
+
+## 🔐 Authentication
+
+The platform now supports optional JWT-based authentication.
+Users can register, login, refresh tokens and logout via the `/api/auth` endpoints.
+Tokens are stored client side and automatically refreshed.
+See `.env.example` for required secrets.
