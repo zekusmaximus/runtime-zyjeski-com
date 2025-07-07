@@ -111,5 +111,7 @@ class AuthClient {
   }
 }
 
-export const authClient = new AuthClient();
-authClient.startTokenRefreshTimer();
+// Make AuthClient available globally
+window.AuthClient = AuthClient;
+window.authClient = new AuthClient();
+window.authClient.startTokenRefreshTimer();

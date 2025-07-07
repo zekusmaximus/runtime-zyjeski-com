@@ -2,7 +2,6 @@
 // Prevents infinite user interaction logging loop
 
 import { createLogger } from './logger.js';
-import { authClient } from './auth-client.js';
 
 class SocketClient {
   constructor(dependencies = {}) {
@@ -45,7 +44,7 @@ class SocketClient {
         reconnection: false,
         timeout: 5000,
         auth: {
-          token: authClient.getAuthHeader()?.replace('Bearer ', '')
+          token: window.authClient?.getAuthHeader()?.replace('Bearer ', '')
         }
       });
       
@@ -487,7 +486,7 @@ class SocketClient {
     this.socket = io('/', {
       transports: ['websocket', 'polling'],
       auth: {
-        token: authClient.getAuthHeader()?.replace('Bearer ', '')
+        token: window.authClient?.getAuthHeader()?.replace('Bearer ', '')
       }
     });
     this.setupSocketEventListeners();

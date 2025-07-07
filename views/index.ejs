@@ -85,6 +85,13 @@
                 <a href="/component-showcase.html" class="nav-link">Components</a>
             </div>
             <div class="nav-status">
+                <div class="auth-status" id="authStatus">
+                    <button class="btn btn-secondary" id="signInBtn">Sign In</button>
+                    <div class="user-info hidden" id="userInfo">
+                        <span class="user-name" id="userName"></span>
+                        <button class="btn btn-secondary" id="signOutBtn">Sign Out</button>
+                    </div>
+                </div>
                 <div class="connection-status" id="connectionStatus">
                     <span class="status-dot"></span>
                     <span class="status-text">Disconnected</span>
@@ -358,6 +365,51 @@
         <div class="loading-text">Initializing consciousness debugger...</div>
     </div>
 
+    <!-- Authentication Modal -->
+    <div class="modal-overlay hidden" id="authModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Sign In</h2>
+                <button class="modal-close" id="authModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="authForm">
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Sign In</button>
+                        <button type="button" class="btn btn-secondary" id="showRegisterBtn">Register</button>
+                    </div>
+                </form>
+                <form id="registerForm" class="hidden">
+                    <div class="form-group">
+                        <label for="regEmail">Email:</label>
+                        <input type="email" id="regEmail" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Password:</label>
+                        <input type="password" id="regPassword" name="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="displayName">Display Name:</label>
+                        <input type="text" id="displayName" name="displayName" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Register</button>
+                        <button type="button" class="btn btn-secondary" id="showLoginBtn">Back to Sign In</button>
+                    </div>
+                </form>
+                <div class="auth-error hidden" id="authError"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Socket.io -->
     <script nonce="<%= nonce %>" src="/socket.io/socket.io.js"></script>
 
@@ -375,6 +427,9 @@
     <!-- Core JavaScript Modules with Dependency Injection -->
     <!-- Bootstrap handles ALL module initialization with proper dependency injection -->
     <script nonce="<%= nonce %>" type="module" src="/js/bootstrap.js"></script>
+
+    <!-- Authentication client -->
+    <script nonce="<%= nonce %>" src="/js/auth-client.js"></script>
 
     <!-- Non-critical utility modules (no dependencies) -->
     <script nonce="<%= nonce %>" src="/js/connection-manager.js"></script>
@@ -403,6 +458,9 @@
         if (testMemoryBtn) {
             testMemoryBtn.addEventListener('click', injectTestMemoryData);
         }
+
+        // Authentication UI setup
+        setupAuthenticationUI();
     });
 
     // Test function to inject sample memory data
@@ -482,6 +540,130 @@
         }, 2000);
 
         console.log('✅ Test memory data injected successfully');
+    }
+
+    // Authentication UI setup
+    function setupAuthenticationUI() {
+        const authClient = window.authClient;
+        const signInBtn = document.getElementById('signInBtn');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const authModal = document.getElementById('authModal');
+        const authModalClose = document.getElementById('authModalClose');
+        const authForm = document.getElementById('authForm');
+        const registerForm = document.getElementById('registerForm');
+        const showRegisterBtn = document.getElementById('showRegisterBtn');
+        const showLoginBtn = document.getElementById('showLoginBtn');
+        const authError = document.getElementById('authError');
+        const userInfo = document.getElementById('userInfo');
+        const userName = document.getElementById('userName');
+
+        // Update UI based on auth state
+        function updateAuthUI() {
+            if (authClient.user) {
+                signInBtn.classList.add('hidden');
+                userInfo.classList.remove('hidden');
+                userName.textContent = authClient.user.displayName || authClient.user.email;
+            } else {
+                signInBtn.classList.remove('hidden');
+                userInfo.classList.add('hidden');
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            authError.textContent = message;
+            authError.classList.remove('hidden');
+        }
+
+        // Hide error message
+        function hideError() {
+            authError.classList.add('hidden');
+        }
+
+        // Show modal
+        function showModal() {
+            authModal.classList.remove('hidden');
+            hideError();
+        }
+
+        // Hide modal
+        function hideModal() {
+            authModal.classList.add('hidden');
+            authForm.reset();
+            registerForm.reset();
+            hideError();
+        }
+
+        // Switch to register form
+        function showRegisterForm() {
+            authForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+            hideError();
+        }
+
+        // Switch to login form
+        function showLoginForm() {
+            registerForm.classList.add('hidden');
+            authForm.classList.remove('hidden');
+            hideError();
+        }
+
+        // Event listeners
+        signInBtn.addEventListener('click', showModal);
+        signOutBtn.addEventListener('click', async () => {
+            await authClient.logout();
+            updateAuthUI();
+        });
+        authModalClose.addEventListener('click', hideModal);
+        showRegisterBtn.addEventListener('click', showRegisterForm);
+        showLoginBtn.addEventListener('click', showLoginForm);
+
+        // Handle login form submission
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const result = await authClient.login(email, password);
+            if (result.success) {
+                hideModal();
+                updateAuthUI();
+            } else {
+                showError(result.error || 'Login failed');
+            }
+        });
+
+        // Handle register form submission
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const displayName = document.getElementById('displayName').value;
+
+            const result = await authClient.register(email, password, displayName);
+            if (result.success !== false) {
+                // Registration successful, now login
+                const loginResult = await authClient.login(email, password);
+                if (loginResult.success) {
+                    hideModal();
+                    updateAuthUI();
+                } else {
+                    showError('Registration successful, but login failed. Please try signing in.');
+                }
+            } else {
+                showError(result.error || 'Registration failed');
+            }
+        });
+
+        // Close modal when clicking outside
+        authModal.addEventListener('click', (e) => {
+            if (e.target === authModal) {
+                hideModal();
+            }
+        });
+
+        // Initialize UI
+        updateAuthUI();
     }
     </script>
 </body>

@@ -67,6 +67,7 @@ import {
 
 // Import routes
 import apiRoutes from './routes/api.js';
+import authRoutes from './routes/auth.js';
 import consciousnessRoutes from './routes/consciousness.js';
 import debuggingStateRoutes from './routes/debugging-states.js';
 import { enhancedSecurityHeaders } from './lib/security/security-middleware.js';
@@ -290,6 +291,9 @@ app.get('/api/rate-limit-stats', (req, res) => {
 // Routes with rate limiting
 // Apply optional authentication to all API routes
 app.use('/api', apiRateLimiter, optionalAuth);
+
+// Authentication routes (with specific auth rate limiting)
+app.use('/api/auth', authRoutes);
 
 // General API routes with standard rate limiting
 app.use('/api', generalApiLimiter, apiRoutes);

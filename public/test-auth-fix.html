@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Fix Test - Runtime.zyjeski.com</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 4px;
+        }
+        .success { border-color: #00ff00; background: rgba(0, 255, 0, 0.1); }
+        .error { border-color: #ff0000; background: rgba(255, 0, 0, 0.1); color: #ff0000; }
+        .warning { border-color: #ffff00; background: rgba(255, 255, 0, 0.1); color: #ffff00; }
+        button {
+            background: #333;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        button:hover {
+            background: rgba(0, 255, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Authentication Fix Test</h1>
+    <p>Testing the fixes for auth-client.js and Feature-Policy headers</p>
+    
+    <div id="testResults"></div>
+    
+    <button onclick="runTests()">Run Tests</button>
+    <button onclick="clearResults()">Clear Results</button>
+    
+    <!-- Load auth-client.js as regular script (not module) -->
+    <script src="/js/auth-client.js"></script>
+    
+    <script>
+        let testResults = [];
+        
+        function addTestResult(name, status, message) {
+            const result = { name, status, message, timestamp: new Date().toISOString() };
+            testResults.push(result);
+            updateDisplay();
+        }
+        
+        function updateDisplay() {
+            const container = document.getElementById('testResults');
+            container.innerHTML = testResults.map(result => `
+                <div class="test-result ${result.status}">
+                    <strong>${result.name}</strong>: ${result.message}
+                    <br><small>${result.timestamp}</small>
+                </div>
+            `).join('');
+        }
+        
+        function clearResults() {
+            testResults = [];
+            updateDisplay();
+        }
+        
+        function runTests() {
+            testResults = [];
+            
+            // Test 1: Check if AuthClient class is available
+            addTestResult('AuthClient Class', 
+                window.AuthClient ? 'success' : 'error',
+                window.AuthClient ? 'AuthClient class is available globally' : 'AuthClient class not found'
+            );
+            
+            // Test 2: Check if authClient instance is available
+            addTestResult('AuthClient Instance', 
+                window.authClient ? 'success' : 'error',
+                window.authClient ? 'authClient instance is available globally' : 'authClient instance not found'
+            );
+            
+            // Test 3: Check if authClient has required methods
+            if (window.authClient) {
+                const requiredMethods = ['login', 'register', 'logout', 'getAuthHeader', 'isAuthenticated'];
+                const missingMethods = requiredMethods.filter(method => typeof window.authClient[method] !== 'function');
+                
+                addTestResult('AuthClient Methods', 
+                    missingMethods.length === 0 ? 'success' : 'error',
+                    missingMethods.length === 0 ? 'All required methods available' : `Missing methods: ${missingMethods.join(', ')}`
+                );
+            }
+            
+            // Test 4: Check for Feature-Policy header errors in console
+            addTestResult('Feature-Policy Headers', 
+                'warning',
+                'Check browser console for Feature-Policy header errors. Should show quoted values like \'none\' instead of unquoted none.'
+            );
+            
+            // Test 5: Check for export syntax errors
+            addTestResult('Export Syntax', 
+                'success',
+                'No export syntax errors should appear in console since auth-client.js is loaded as regular script'
+            );
+            
+            // Test 6: Test basic functionality
+            if (window.authClient) {
+                try {
+                    const authHeader = window.authClient.getAuthHeader();
+                    const isAuth = window.authClient.isAuthenticated();
+                    
+                    addTestResult('Basic Functionality', 
+                        'success',
+                        `getAuthHeader(): ${authHeader || 'null'}, isAuthenticated(): ${isAuth}`
+                    );
+                } catch (error) {
+                    addTestResult('Basic Functionality', 
+                        'error',
+                        `Error calling methods: ${error.message}`
+                    );
+                }
+            }
+            
+            console.log('🧪 Auth Fix Tests Completed');
+            console.log('📊 Results:', testResults);
+        }
+        
+        // Auto-run tests when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runTests, 1000); // Wait a bit for auth-client to load
+        });
+    </script>
+</body>
+</html>

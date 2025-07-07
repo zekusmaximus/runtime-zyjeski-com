@@ -130,8 +130,15 @@ export default class MemoryMap {
       this.initCanvases();
       this.setupEventListeners();
       this.buildSpatialIndex();
-      this.render();
-      
+
+      // Only render if we have memory data, otherwise wait for update()
+      if (this.memoryData) {
+        this.render();
+      } else {
+        // Just draw the grid background for initial state
+        this.drawGrid(this.baseCtx);
+      }
+
       console.log('MemoryMap: Initialized successfully', {
         options: this.options,
         container: this.container
@@ -358,6 +365,9 @@ export default class MemoryMap {
       this.memoryData.blocks.forEach(block => {
         this.drawMemoryBlock(this.baseCtx, block);
       });
+    } else if (this.memoryData === null) {
+      // Component is initializing - no warning needed
+      return;
     } else {
       console.warn('MemoryMap: No memory data available for rendering', this.memoryData);
     }
